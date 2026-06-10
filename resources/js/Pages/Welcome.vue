@@ -1,157 +1,99 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Head } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3';
 
-const stats = [
-  { label: 'Total Complaints', value: '12,480', type: 'primary' },
-  { label: 'Pending Issues', value: '1,240', type: 'danger' },
-  { label: 'Resolved Cases', value: '10,200', type: 'secondary' },
-  { label: 'Active Users', value: '8,540', type: 'dark' },
-]
-
-const recentComplaints = [
-  { title: 'Broken Street Light', ward: 'Ward 5', status: 'Pending', type: 'danger' },
-  { title: 'Water Leakage', ward: 'Ward 3', status: 'In Progress', type: 'primary' },
-  { title: 'Garbage Overflow', ward: 'Ward 7', status: 'Resolved', type: 'secondary' },
-  { title: 'Road Damage', ward: 'Ward 2', status: 'Pending', type: 'danger' },
-]
-
-// COLOR MAP (IMPORTANT FIX)
-const colorMap = {
-  primary: 'text-[#064789]',
-  secondary: 'text-[#427aa1]',
-  danger: 'text-red-600',
-  dark: 'text-slate-800',
-}
-
-const bgMap = {
-  primary: 'bg-[#064789]/10 text-[#064789]',
-  secondary: 'bg-[#427aa1]/10 text-[#427aa1]',
-  danger: 'bg-red-50 text-red-600',
-  dark: 'bg-slate-100 text-slate-800',
-}
+const props = defineProps({
+    canLogin: Boolean,
+    canRegister: Boolean,
+    laravelVersion: String,
+    phpVersion: String,
+});
 </script>
 
 <template>
-<Head title="Dashboard" />
+    <Head title="Welcome" />
 
-<AuthenticatedLayout>
-
-  <template #header>
-    <div class="flex items-center justify-between">
-      <h2 class="text-xl font-bold text-[#064789]">
-        Civic Dashboard
-      </h2>
-
-      <span class="text-xs bg-white border border-[#427aa1] text-[#064789] px-3 py-1 rounded-full">
-        Live System
-      </span>
-    </div>
-  </template>
-
-  <div class="min-h-screen bg-[#ebf2fa] py-10">
-
-    <div class="mx-auto max-w-7xl px-6 lg:px-8 space-y-8">
-
-      <!-- STATS -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
-        <div
-          v-for="stat in stats"
-          :key="stat.label"
-          class="bg-white border border-[#427aa1]/20 rounded-2xl p-6 shadow-sm hover:shadow-md transition"
-        >
-          <p class="text-sm text-[#427aa1]">
-            {{ stat.label }}
-          </p>
-
-          <p class="text-3xl font-extrabold mt-2"
-             :class="colorMap[stat.type]">
-            {{ stat.value }}
-          </p>
-
-          <div class="mt-3 h-1 w-full bg-[#ebf2fa] rounded-full overflow-hidden">
-            <div class="h-full bg-[#064789] w-2/3 rounded-full"></div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- TABLE -->
-      <div class="bg-white border border-[#427aa1]/20 rounded-2xl shadow-sm overflow-hidden">
-
-        <table class="w-full text-sm">
-
-          <thead class="bg-[#064789] text-white">
-            <tr>
-              <th class="px-6 py-4 text-left">Issue</th>
-              <th class="px-6 py-4 text-left">Ward</th>
-              <th class="px-6 py-4 text-left">Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            <tr
-              v-for="(item, index) in recentComplaints"
-              :key="index"
-              class="border-b border-[#ebf2fa] hover:bg-[#ebf2fa] transition"
-            >
-
-              <td class="px-6 py-4 font-medium text-[#064789]">
-                {{ item.title }}
-              </td>
-
-              <td class="px-6 py-4 text-[#427aa1]">
-                {{ item.ward }}
-              </td>
-
-              <td class="px-6 py-4">
-                <span
-                  class="px-3 py-1 rounded-full text-xs font-semibold"
-                  :class="bgMap[item.type]"
+    <div class="flex min-h-screen flex-col bg-gray-50">
+        <header class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                    <i class="fas fa-shield-alt text-indigo-500 text-xs"></i>
+                </div>
+                <span class="text-sm font-semibold text-gray-900">CiviSense</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <Link
+                    v-if="canLogin"
+                    :href="route('login')"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
-                  {{ item.status }}
-                </span>
-              </td>
+                    Sign In
+                </Link>
+                <Link
+                    v-if="canRegister"
+                    :href="route('register')"
+                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all duration-150"
+                >
+                    Get Started
+                </Link>
+                <Link
+                    v-if="!canLogin"
+                    :href="route('dashboard')"
+                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all duration-150"
+                >
+                    Dashboard
+                </Link>
+            </div>
+        </header>
 
-            </tr>
+        <main class="flex-1 flex flex-col items-center justify-center px-6 py-16">
+            <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mb-6">
+                <i class="fas fa-shield-alt text-indigo-500 text-3xl"></i>
+            </div>
 
-          </tbody>
+            <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight text-center">
+                CiviSense
+            </h1>
+            <p class="mt-3 text-lg text-gray-500 text-center max-w-md">
+                Smart Civic. Stronger Communities.
+            </p>
+            <p class="mt-2 text-sm text-gray-400 text-center max-w-lg">
+                A community-driven platform for reporting and tracking civic issues.
+                Submit complaints, monitor progress, and help build a better city.
+            </p>
 
-        </table>
+            <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-2xl w-full">
+                <div class="rounded-xl border border-gray-100 bg-white p-5 text-left shadow-sm">
+                    <div class="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center mb-3">
+                        <i class="fas fa-flag text-indigo-500 text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900">Report Issues</h3>
+                    <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                        Submit complaints about civic issues in your area quickly and easily.
+                    </p>
+                </div>
+                <div class="rounded-xl border border-gray-100 bg-white p-5 text-left shadow-sm">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center mb-3">
+                        <i class="fas fa-search text-emerald-500 text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900">Track Progress</h3>
+                    <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                        Monitor the status of complaints from submission to resolution.
+                    </p>
+                </div>
+                <div class="rounded-xl border border-gray-100 bg-white p-5 text-left shadow-sm">
+                    <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center mb-3">
+                        <i class="fas fa-robot text-amber-500 text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900">AI Powered</h3>
+                    <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                        Intelligent analysis for priority, categorization, and spam detection.
+                    </p>
+                </div>
+            </div>
 
-      </div>
-
-      <!-- QUICK ACTIONS -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <div class="bg-[#064789] text-white rounded-2xl p-6 shadow">
-          <h4 class="font-bold text-lg">View Complaints</h4>
-          <p class="text-sm mt-1 text-[#ebf2fa]">
-            Manage all citizen reports
-          </p>
-        </div>
-
-        <div class="bg-[#427aa1] text-white rounded-2xl p-6 shadow">
-          <h4 class="font-bold text-lg">Urgent Issues</h4>
-          <p class="text-sm mt-1 text-[#ebf2fa]">
-            High priority civic problems
-          </p>
-        </div>
-
-        <div class="bg-white border border-[#427aa1]/30 text-[#064789] rounded-2xl p-6 shadow">
-          <h4 class="font-bold text-lg">Analytics</h4>
-          <p class="text-sm mt-1 text-[#427aa1]">
-            Performance & reports
-          </p>
-        </div>
-
-      </div>
-
+            <p class="mt-12 text-xs text-gray-400">
+                Laravel {{ laravelVersion }} / PHP {{ phpVersion }}
+            </p>
+        </main>
     </div>
-
-  </div>
-
-</AuthenticatedLayout>
 </template>

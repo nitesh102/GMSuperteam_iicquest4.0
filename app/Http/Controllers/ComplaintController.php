@@ -11,9 +11,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-
+use App\Services\ComplaintAiService;
 class ComplaintController extends Controller
 {
+    protected $aiService;
+
+    // Inject our new Gemini-powered service
+    public function __construct(ComplaintAiService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
     public function create(): Response
     {
         return Inertia::render('Complaint/Create', [
@@ -50,22 +57,74 @@ class ComplaintController extends Controller
             'attachments.*' => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
         ]);
 
+        $tempPaths = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $tempPaths[] = $file->getRealPath();
+            }
+        }
+
+        $departments = Department::orderBy('name')->get(['id', 'name']);
+        $categories = ComplaintCategory::with('department')->orderBy('name')->get();
+
+        try {
+            $ai = $this->aiService->analyzeComplaint(
+                $validated['title'],
+                $validated['description'],
+                $tempPaths,
+                $departments->toArray(),
+                $categories->toArray(),
+            );
+        } catch (\Exception $e) {
+            \Log::error("CiviSense AI processing failure: " . $e->getMessage());
+
+            $lower = strtolower($validated['description']);
+            $ai = [
+                'priority' => $this->simulatePriority($lower),
+                'summary' => $this->simulateSummary($validated['description']),
+                'department_name' => null,
+                'category_name' => null,
+            ];
+        }
+
+        if (!empty($ai['department_name']) && !empty($ai['category_name'])) {
+            $department = Department::firstOrCreate(
+                ['name' => $ai['department_name']],
+                ['description' => 'Auto-created by AI'],
+            );
+
+            $category = ComplaintCategory::firstOrCreate(
+                [
+                    'name' => $ai['category_name'],
+                    'department_id' => $department->id,
+                ],
+                [
+                    'description' => 'Auto-created by AI',
+                    'created_by' => $request->user()->id,
+                ],
+            );
+
+            $validated['category_id'] = $category->id;
+        }
+
         $validated['complaint_no'] = 'CMP-' . now()->format('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
         $validated['citizen_id'] = $request->user()->id;
         $validated['created_by'] = $request->user()->id;
-
-        $description = $validated['description'];
-        $lower = strtolower($description);
-
-        $validated['priority'] = $this->simulatePriority($lower);
-
-        $validated['ai_summary'] = $this->simulateSummary($description);
-
-        $validated['is_spam'] = $this->simulateSpamCheck($lower);
-
         $validated['current_status'] = 'submitted';
+        $validated['priority'] = $ai['priority'];
+        $validated['is_spam'] = false;
+        $validated['ai_summary'] = $ai['summary'];
 
         $complaint = Complaint::create($validated);
+
+        $complaint->aiAnalysis()->create([
+            'detected_category' => $complaint->category?->name ?? 'Uncategorized',
+            'detected_priority' => $ai['priority'],
+            'confidence_score' => 0.85,
+            'ai_summary' => $ai['summary'],
+            'created_by' => $request->user()->id,
+            'updated_by' => $request->user()->id,
+        ]);
 
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
@@ -82,9 +141,8 @@ class ComplaintController extends Controller
         }
 
         return redirect()->route('complaints.index')
-            ->with('success', 'Complaint submitted successfully. AI analysis complete.');
+            ->with('success', 'Complaint submitted successfully. CiviSense AI analysis complete.');
     }
-
     public function update(Request $request, Complaint $complaint): RedirectResponse
     {
         $validated = $request->validate([

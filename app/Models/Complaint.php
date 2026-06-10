@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Complaint extends Model
@@ -30,8 +31,6 @@ class Complaint extends Model
         'created_by',
         'updated_by',
     ];
-
-    protected $with = ['attachments'];
 
     protected function casts(): array
     {
@@ -70,5 +69,10 @@ class Complaint extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(ComplaintAttachment::class);
+    }
+
+    public function aiAnalysis(): HasOne
+    {
+        return $this->hasOne(ComplaintAiAnalysis::class, 'complaint_id');
     }
 }
