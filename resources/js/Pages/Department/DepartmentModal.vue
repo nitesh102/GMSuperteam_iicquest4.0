@@ -4,12 +4,17 @@
 
             <!-- Header -->
             <div class="flex items-center gap-4 mb-8">
-                <div
-                    class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <i class="fas fa-building text-white text-lg"></i>
+                <!-- Logo Branding -->
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <img
+                        src="/logo.png"
+                        alt="CiviSense Logo"
+                        class="h-12 object-contain"
+                    />
+                    <span class="font-bold text-gray-900">CiviSense</span>
                 </div>
 
-                <div>
+                <div class="flex-1">
                     <h3 class="text-2xl font-bold text-gray-900">
                         {{ isEditMode ? 'Edit Department' : 'Create Department' }}
                     </h3>

@@ -1,261 +1,225 @@
 <template>
     <Modal :show="show" @close="closeModal">
+        <div class="mx-auto max-w-4xl rounded-2xl bg-white p-8 shadow-xl">
 
-        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-3xl mx-auto">
-
-            <!-- HEADER -->
-            <div class="flex items-center gap-4 mb-6">
-                <div class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white">
-                    <i class="fas fa-tags"></i>
+            <!-- Header -->
+            <div class="flex items-start gap-4 border-b border-gray-200 pb-6">
+                <!-- Logo Branding -->
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <img
+                        src="/logo.png"
+                        alt="CiviSense Logo"
+                        class="h-12 object-contain"
+                    />
+                    <span class="font-bold text-gray-900">CiviSense</span>
                 </div>
 
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">
-                        {{ isEditMode ? 'Edit Category' : 'Create Category' }}
+                <div class="flex-1">
+                    <h3 class="text-2xl font-semibold text-gray-900">
+                        {{ isEditMode ? 'Edit Complaint Category' : 'Create Complaint Category' }}
                     </h3>
-                    <p class="text-sm text-gray-500">
-                        Manage complaint categories under departments
+
+                    <p class="mt-1 text-sm text-gray-500">
+                        Manage complaint categories for organizing and tracking citizen submissions.
                     </p>
                 </div>
             </div>
 
-            <!-- STATS -->
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                    <p class="text-xs text-gray-500">Complaints</p>
-                    <h3 class="text-lg font-bold text-blue-600">1,245</h3>
-                </div>
+            <!-- Form -->
+            <form @submit.prevent="submitForm" class="mt-8">
 
-                <div class="bg-green-50 border border-green-100 rounded-xl p-3">
-                    <p class="text-xs text-gray-500">Resolved</p>
-                    <h3 class="text-lg font-bold text-green-600">1,010</h3>
-                </div>
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
-                <div class="bg-red-50 border border-red-100 rounded-xl p-3">
-                    <p class="text-xs text-gray-500">Pending</p>
-                    <h3 class="text-lg font-bold text-red-600">235</h3>
-                </div>
-            </div>
-
-            <!-- FORM -->
-            <form @submit.prevent="submitForm" class="space-y-5">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                    <!-- Department -->
+                    <!-- Department Name -->
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">
-                            Department *
-                        </label>
-
-                        <select
-                            v-model="form.department_id"
-                            class="w-full rounded-xl border px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600">
-
-                            <option value="">Select Department</option>
-
-                            <option
-                                v-for="dept in departments"
-                                :key="dept.id"
-                                :value="dept.id">
-
-                                {{ dept.name }}
-
-                            </option>
-
-                        </select>
-                    </div>
-
-                    <!-- Category Name -->
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">
-                            Category Name *
+                        <label class="mb-2 block text-sm font-medium text-gray-700">
+                            Department Name
                         </label>
 
                         <input
-                            v-model="form.name"
                             type="text"
-                            placeholder="e.g. Water Supply Issue"
-                            class="w-full rounded-xl border px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600"
+                            v-model="form.name"
+                            placeholder="Road Maintenance Department"
+                            class="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-100"
                         />
+
+                        <p
+                            v-if="form.errors.name"
+                            class="mt-2 text-sm text-red-500"
+                        >
+                            {{ form.errors.name }}
+                        </p>
                     </div>
 
-                    <!-- Icon -->
+                    <!-- Department Icon -->
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">
-                            Icon
+                        <label class="mb-2 block text-sm font-medium text-gray-700">
+                            Department Icon
                         </label>
 
                         <select
                             v-model="form.icon"
-                            class="w-full rounded-xl border px-4 py-3">
-
-                            <option value="fa-water">💧 Water</option>
-                            <option value="fa-road">🛣 Road</option>
-                            <option value="fa-trash">🗑 Waste</option>
-                            <option value="fa-bolt">⚡ Electricity</option>
-                            <option value="fa-tree">🌳 Environment</option>
-                            <option value="fa-hospital">🏥 Health</option>
-
+                            class="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                        >
+                            <option value="fa-road">Road Department</option>
+                            <option value="fa-hospital">Health</option>
+                            <option value="fa-school">Education</option>
+                            <option value="fa-tree">Environment</option>
+                            <option value="fa-water">Water Supply</option>
+                            <option value="fa-bolt">Electricity</option>
+                            <option value="fa-trash">Waste Management</option>
+                            <option value="fa-shield-alt">Public Safety</option>
                         </select>
                     </div>
 
-                    <!-- Priority -->
+                    <!-- Department Color -->
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">
-                            Priority
+                        <label class="mb-2 block text-sm font-medium text-gray-700">
+                            Department Color
                         </label>
 
-                        <select
-                            v-model="form.priority"
-                            class="w-full rounded-xl border px-4 py-3">
+                        <div class="flex items-center gap-4">
+                            <input
+                                type="color"
+                                v-model="form.color"
+                                class="h-12 w-16 cursor-pointer rounded-lg border"
+                            />
 
-                            <option>Low</option>
-                            <option>Medium</option>
-                            <option>High</option>
-                            <option>Critical</option>
-
-                        </select>
+                            <span class="text-sm text-gray-500">
+                                {{ form.color }}
+                            </span>
+                        </div>
                     </div>
 
-                    <!-- Color -->
+                    <!-- Status -->
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">
-                            Theme Color
+                        <label class="mb-2 block text-sm font-medium text-gray-700">
+                            Department Status
                         </label>
 
-                        <input
-                            type="color"
-                            v-model="form.color"
-                            class="w-20 h-12 border rounded-lg"
-                        />
+                        <div class="flex gap-3">
+                            <button
+                                type="button"
+                                @click="form.status='active'"
+                                :class="[
+                                    'rounded-xl px-4 py-2 text-sm font-medium transition',
+                                    form.status === 'active'
+                                        ? 'bg-red-500 text-white'
+                                        : 'border border-gray-300 text-gray-600'
+                                ]"
+                            >
+                                Active
+                            </button>
+
+                            <button
+                                type="button"
+                                @click="form.status='inactive'"
+                                :class="[
+                                    'rounded-xl px-4 py-2 text-sm font-medium transition',
+                                    form.status === 'inactive'
+                                        ? 'bg-red-500 text-white'
+                                        : 'border border-gray-300 text-gray-600'
+                                ]"
+                            >
+                                Inactive
+                            </button>
+                        </div>
                     </div>
 
                 </div>
 
-                <!-- DESCRIPTION -->
-                <div>
-                    <label class="text-sm font-medium text-gray-700 mb-2 block">
+                <!-- Description -->
+                <div class="mt-6">
+                    <label class="mb-2 block text-sm font-medium text-gray-700">
                         Description
                     </label>
 
                     <textarea
                         v-model="form.description"
-                        rows="4"
+                        rows="5"
                         maxlength="1000"
-                        class="w-full rounded-xl border px-4 py-3 focus:ring-4 focus:ring-blue-100"
-                        placeholder="Describe category purpose...">
-                    </textarea>
+                        placeholder="Describe department responsibilities..."
+                        class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                    />
 
-                    <!-- PROGRESS -->
-                    <div class="mt-2">
-                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                                class="h-full bg-blue-600 transition-all"
-                                :style="{ width: `${(form.description.length / 1000) * 100}%` }">
-                            </div>
-                        </div>
-
-                        <p class="text-xs text-right text-gray-500 mt-1">
+                    <div class="mt-2 flex justify-end">
+                        <span class="text-xs text-gray-500">
                             {{ form.description.length }}/1000
-                        </p>
+                        </span>
                     </div>
+
+                    <p
+                        v-if="form.errors.description"
+                        class="mt-2 text-sm text-red-500"
+                    >
+                        {{ form.errors.description }}
+                    </p>
                 </div>
 
-                <!-- LIVE PREVIEW -->
-                <div class="bg-gray-50 border rounded-2xl p-5">
-
-                    <h4 class="font-semibold mb-3 text-gray-800">
-                        Live Preview
+                <!-- Preview -->
+                <div class="mt-8 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <h4 class="mb-4 text-sm font-semibold text-gray-900">
+                        Department Preview
                     </h4>
 
-                    <div class="flex gap-4">
-
+                    <div class="flex items-center gap-4">
                         <div
-                            class="w-12 h-12 rounded-xl flex items-center justify-center text-white"
-                            :style="{ backgroundColor: form.color }">
-
-                            <i class="fas" :class="form.icon"></i>
-
+                            class="flex h-12 w-12 items-center justify-center rounded-xl text-white"
+                            :style="{ backgroundColor: form.color }"
+                        >
+                            <span class="font-bold">D</span>
                         </div>
 
                         <div class="flex-1">
+                            <h5 class="font-medium text-gray-900">
+                                {{ form.name || 'Department Preview' }}
+                            </h5>
 
-                            <div class="flex justify-between">
-
-                                <h3 class="font-semibold text-gray-900">
-                                    {{ form.name || 'Category Name' }}
-                                </h3>
-
-                                <span
-                                    class="px-2 py-1 rounded-full text-xs"
-                                    :class="{
-                                        'bg-green-100 text-green-700': form.priority === 'Low',
-                                        'bg-yellow-100 text-yellow-700': form.priority === 'Medium',
-                                        'bg-orange-100 text-orange-700': form.priority === 'High',
-                                        'bg-red-100 text-red-700': form.priority === 'Critical'
-                                    }">
-
-                                    {{ form.priority }}
-
-                                </span>
-
-                            </div>
-
-                            <p class="text-sm text-gray-500 mt-1">
-                                {{ form.description || 'Category description preview...' }}
+                            <p class="text-sm text-gray-500">
+                                {{ form.description || 'Department description will appear here.' }}
                             </p>
-
-                            <p class="text-xs text-gray-400 mt-2">
-                                Department:
-                                {{
-                                    departments.find(
-                                        d => d.id == form.department_id
-                                    )?.name || 'Not selected'
-                                }}
-                            </p>
-
                         </div>
 
+                        <span
+                            :class="[
+                                'rounded-full px-3 py-1 text-xs font-medium',
+                                form.status === 'active'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-gray-100 text-gray-600'
+                            ]"
+                        >
+                            {{ form.status }}
+                        </span>
                     </div>
-
                 </div>
 
-                <!-- FOOTER -->
-                <div class="flex justify-end gap-3 pt-5 border-t">
-
+                <!-- Footer -->
+                <div class="mt-8 flex justify-end gap-3 border-t border-gray-200 pt-6">
                     <button
                         type="button"
                         @click="closeModal"
-                        class="px-5 py-2.5 rounded-xl border hover:bg-gray-50">
-
+                        class="rounded-xl border border-gray-300 px-5 py-3 text-gray-700 transition hover:bg-gray-50"
+                    >
                         Cancel
-
                     </button>
 
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="px-6 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
-
+                        class="rounded-xl bg-red-500 px-6 py-3 font-medium text-white transition hover:bg-red-600 disabled:opacity-50"
+                    >
                         <span v-if="form.processing">
-                            <i class="fas fa-spinner fa-spin mr-2"></i>
                             Saving...
                         </span>
 
                         <span v-else>
-                            <i class="fas fa-save mr-2"></i>
-                            {{ isEditMode ? 'Update' : 'Create' }}
+                            {{ isEditMode ? 'Update Department' : 'Create Department' }}
                         </span>
-
                     </button>
-
                 </div>
 
             </form>
-
         </div>
-
     </Modal>
 </template>
 
