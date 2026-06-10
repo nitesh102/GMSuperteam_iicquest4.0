@@ -567,18 +567,3 @@ ComplaintAiService (app/Services/ComplaintAiService.php)
       Status: RESOLVED.
 
 ================================================================================
-RECENT UPDATES
-================================================================================
-
-- ComplaintModal.vue: Added conditional "Remarks / Note" textarea that appears only
-  when current_status is changed in edit mode. Remarks are included in the edit
-  payload and passed through to ComplaintController::update() for storage in
-  complaint_status_histories. Optimistic update pattern preserved (remarks not
-  needed on local item).
-- ComplaintModal.vue: Added "Status History" section (visible only in edit mode
-  when complaint.statusHistories has records). Shows simple list of old→new
-  status with colored badges, optional remarks, and date/time. Uses existing
-  status color map and minimal card styling. Data consumed via relationship if
-  loaded on the complaint prop (no other files changed).
-
-================================================================================

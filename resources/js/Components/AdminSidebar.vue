@@ -22,7 +22,7 @@ const page = usePage()
 const menuItems = [
   { name: 'Dashboard', href: route('dashboard'), icon: HomeIcon },
   { name: 'Departments', href: route('departments.index'), icon: BuildingOffice2Icon },
-  { name: 'Categories', href: route('categories.index'), icon: ListBulletIcon },
+  { name: 'Categories', href: route('complaint-categories.index'), icon: ListBulletIcon },
   { name: 'Complaints', href: route('complaints.index'), icon: ClipboardDocumentListIcon },
   { name: 'Profile', href: route('profile.edit'), icon: UserCircleIcon },
 ]
