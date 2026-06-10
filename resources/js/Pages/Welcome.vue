@@ -1,268 +1,157 @@
-```vue
-<template>
-  <div class="min-h-screen bg-slate-50">
-
-    <!-- Navbar -->
-    <nav class="bg-white shadow-sm border-b">
-      <div class="max-w-7xl mx-auto px-6">
-        <div class="flex justify-between items-center h-16">
-
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center text-white font-bold">
-              C
-            </div>
-            <div>
-              <h1 class="font-bold text-lg text-slate-900">CiviSense</h1>
-              <p class="text-xs text-gray-500">
-                Smart Civic. Stronger Communities.
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <button
-              class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
-            >
-              Login
-            </button>
-
-            <button
-              class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
-            >
-              Submit Complaint
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </nav>
-
-    <!-- Hero -->
-    <section class="max-w-7xl mx-auto px-6 py-20">
-      <div class="grid lg:grid-cols-2 gap-12 items-center">
-
-        <div>
-          <span
-            class="inline-block px-4 py-2 rounded-full bg-green-100 text-green-700 text-sm font-semibold"
-          >
-            AI-Powered Civic Reporting
-          </span>
-
-          <h2
-            class="text-5xl lg:text-6xl font-black text-slate-900 mt-6 leading-tight"
-          >
-            Report Issues.<br />
-            Track Progress.<br />
-            Build Better Communities.
-          </h2>
-
-          <p class="mt-6 text-lg text-gray-600">
-            Report road damage, garbage issues, water leakage, broken street
-            lights and more. Our AI automatically categorizes complaints and
-            routes them to the correct authority.
-          </p>
-
-          <div class="mt-8 flex flex-wrap gap-4">
-            <button
-              class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700"
-            >
-              Get Started
-            </button>
-
-            <button
-              class="border border-gray-300 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50"
-            >
-              Learn More
-            </button>
-          </div>
-        </div>
-
-        <div class="flex justify-center">
-          <div class="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm">
-
-            <div
-              class="h-48 rounded-2xl bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center"
-            >
-              <span class="text-7xl">📍</span>
-            </div>
-
-            <div class="mt-6">
-              <h3 class="font-bold text-lg">
-                Broken Street Light
-              </h3>
-
-              <p class="text-sm text-gray-500 mt-1">
-                Ward 5, Kathmandu
-              </p>
-
-              <div class="mt-4">
-                <div class="flex justify-between text-sm">
-                  <span>Status</span>
-                  <span class="font-semibold text-orange-500">
-                    In Progress
-                  </span>
-                </div>
-
-                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div
-                    class="bg-orange-500 h-2 rounded-full"
-                    style="width:60%"
-                  ></div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- Features -->
-    <section class="bg-white py-20">
-      <div class="max-w-7xl mx-auto px-6">
-
-        <div class="text-center mb-12">
-          <h2 class="text-4xl font-black text-slate-900">
-            Platform Features
-          </h2>
-
-          <p class="text-gray-500 mt-3">
-            Everything needed to manage civic issues efficiently.
-          </p>
-        </div>
-
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-          <div
-            v-for="feature in features"
-            :key="feature.title"
-            class="bg-slate-50 rounded-2xl p-6 border hover:shadow-lg transition"
-          >
-            <div class="text-4xl mb-4">
-              {{ feature.icon }}
-            </div>
-
-            <h3 class="font-bold text-lg">
-              {{ feature.title }}
-            </h3>
-
-            <p class="text-gray-600 mt-2">
-              {{ feature.desc }}
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-    <!-- Statistics -->
-    <section class="py-20">
-      <div class="max-w-7xl mx-auto px-6">
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-
-          <div
-            v-for="stat in stats"
-            :key="stat.label"
-            class="bg-white rounded-2xl shadow p-6 text-center"
-          >
-            <h3 class="text-4xl font-black text-green-600">
-              {{ stat.value }}
-            </h3>
-
-            <p class="font-semibold mt-2">
-              {{ stat.label }}
-            </p>
-
-            <p class="text-sm text-gray-500">
-              {{ stat.sub }}
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-slate-900 text-white py-10">
-      <div class="max-w-7xl mx-auto px-6 text-center">
-        <h3 class="font-bold text-xl">
-          CiviSense
-        </h3>
-
-        <p class="text-gray-400 mt-2">
-          Smart Civic. Stronger Communities.
-        </p>
-
-        <p class="text-gray-500 text-sm mt-4">
-          © {{ currentYear }} CiviSense. All rights reserved.
-        </p>
-      </div>
-    </footer>
-
-  </div>
-</template>
-
 <script setup>
-const currentYear = new Date().getFullYear();
-
-const features = [
-  {
-    icon: "🤖",
-    title: "AI Categorization",
-    desc: "Automatically categorizes complaints."
-  },
-  {
-    icon: "📍",
-    title: "GPS Location",
-    desc: "Capture exact complaint location."
-  },
-  {
-    icon: "📡",
-    title: "Live Tracking",
-    desc: "Track complaint progress in real-time."
-  },
-  {
-    icon: "🔔",
-    title: "Notifications",
-    desc: "Receive updates via alerts."
-  },
-  {
-    icon: "📊",
-    title: "Analytics Dashboard",
-    desc: "Visualize complaint trends."
-  },
-  {
-    icon: "🔒",
-    title: "Secure Platform",
-    desc: "Safe and reliable reporting."
-  }
-];
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import { Head } from '@inertiajs/vue3'
 
 const stats = [
-  {
-    value: "12,000+",
-    label: "Complaints",
-    sub: "Filed successfully"
-  },
-  {
-    value: "95%",
-    label: "Resolved",
-    sub: "Issues resolved"
-  },
-  {
-    value: "50+",
-    label: "Municipalities",
-    sub: "Using the platform"
-  },
-  {
-    value: "150K",
-    label: "Citizens",
-    sub: "Active users"
-  }
-];
+  { label: 'Total Complaints', value: '12,480', type: 'primary' },
+  { label: 'Pending Issues', value: '1,240', type: 'danger' },
+  { label: 'Resolved Cases', value: '10,200', type: 'secondary' },
+  { label: 'Active Users', value: '8,540', type: 'dark' },
+]
+
+const recentComplaints = [
+  { title: 'Broken Street Light', ward: 'Ward 5', status: 'Pending', type: 'danger' },
+  { title: 'Water Leakage', ward: 'Ward 3', status: 'In Progress', type: 'primary' },
+  { title: 'Garbage Overflow', ward: 'Ward 7', status: 'Resolved', type: 'secondary' },
+  { title: 'Road Damage', ward: 'Ward 2', status: 'Pending', type: 'danger' },
+]
+
+// COLOR MAP (IMPORTANT FIX)
+const colorMap = {
+  primary: 'text-[#064789]',
+  secondary: 'text-[#427aa1]',
+  danger: 'text-red-600',
+  dark: 'text-slate-800',
+}
+
+const bgMap = {
+  primary: 'bg-[#064789]/10 text-[#064789]',
+  secondary: 'bg-[#427aa1]/10 text-[#427aa1]',
+  danger: 'bg-red-50 text-red-600',
+  dark: 'bg-slate-100 text-slate-800',
+}
 </script>
-```
+
+<template>
+<Head title="Dashboard" />
+
+<AuthenticatedLayout>
+
+  <template #header>
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-bold text-[#064789]">
+        Civic Dashboard
+      </h2>
+
+      <span class="text-xs bg-white border border-[#427aa1] text-[#064789] px-3 py-1 rounded-full">
+        Live System
+      </span>
+    </div>
+  </template>
+
+  <div class="min-h-screen bg-[#ebf2fa] py-10">
+
+    <div class="mx-auto max-w-7xl px-6 lg:px-8 space-y-8">
+
+      <!-- STATS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <div
+          v-for="stat in stats"
+          :key="stat.label"
+          class="bg-white border border-[#427aa1]/20 rounded-2xl p-6 shadow-sm hover:shadow-md transition"
+        >
+          <p class="text-sm text-[#427aa1]">
+            {{ stat.label }}
+          </p>
+
+          <p class="text-3xl font-extrabold mt-2"
+             :class="colorMap[stat.type]">
+            {{ stat.value }}
+          </p>
+
+          <div class="mt-3 h-1 w-full bg-[#ebf2fa] rounded-full overflow-hidden">
+            <div class="h-full bg-[#064789] w-2/3 rounded-full"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TABLE -->
+      <div class="bg-white border border-[#427aa1]/20 rounded-2xl shadow-sm overflow-hidden">
+
+        <table class="w-full text-sm">
+
+          <thead class="bg-[#064789] text-white">
+            <tr>
+              <th class="px-6 py-4 text-left">Issue</th>
+              <th class="px-6 py-4 text-left">Ward</th>
+              <th class="px-6 py-4 text-left">Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            <tr
+              v-for="(item, index) in recentComplaints"
+              :key="index"
+              class="border-b border-[#ebf2fa] hover:bg-[#ebf2fa] transition"
+            >
+
+              <td class="px-6 py-4 font-medium text-[#064789]">
+                {{ item.title }}
+              </td>
+
+              <td class="px-6 py-4 text-[#427aa1]">
+                {{ item.ward }}
+              </td>
+
+              <td class="px-6 py-4">
+                <span
+                  class="px-3 py-1 rounded-full text-xs font-semibold"
+                  :class="bgMap[item.type]"
+                >
+                  {{ item.status }}
+                </span>
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="bg-[#064789] text-white rounded-2xl p-6 shadow">
+          <h4 class="font-bold text-lg">View Complaints</h4>
+          <p class="text-sm mt-1 text-[#ebf2fa]">
+            Manage all citizen reports
+          </p>
+        </div>
+
+        <div class="bg-[#427aa1] text-white rounded-2xl p-6 shadow">
+          <h4 class="font-bold text-lg">Urgent Issues</h4>
+          <p class="text-sm mt-1 text-[#ebf2fa]">
+            High priority civic problems
+          </p>
+        </div>
+
+        <div class="bg-white border border-[#427aa1]/30 text-[#064789] rounded-2xl p-6 shadow">
+          <h4 class="font-bold text-lg">Analytics</h4>
+          <p class="text-sm mt-1 text-[#427aa1]">
+            Performance & reports
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</AuthenticatedLayout>
+</template>
