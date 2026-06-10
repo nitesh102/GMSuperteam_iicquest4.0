@@ -1,13 +1,16 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import { Link } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
+import LanguageSwitcher from '@/Components/LanguageSwitcher.vue'
 import {
   MagnifyingGlassIcon,
   BellIcon,
   QuestionMarkCircleIcon,
   Bars3Icon,
 } from '@heroicons/vue/24/outline'
+
+const { t } = useI18n()
 
 defineEmits(['toggleSidebar'])
 
@@ -38,7 +41,7 @@ const handleSearch = () => {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search..."
+            :placeholder="t('nav.search')"
             class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-4 pr-10 text-sm placeholder-gray-400 focus:border-red-500 focus:bg-white focus:outline-none"
             @keyup.enter="handleSearch"
           />
@@ -48,6 +51,8 @@ const handleSearch = () => {
 
       <!-- Right: Icons and User -->
       <div class="flex items-center gap-4">
+        <LanguageSwitcher />
+
         <!-- Notification -->
         <button class="relative p-2 rounded-lg hover:bg-gray-100 transition">
           <BellIcon class="h-5 w-5 text-gray-600" />

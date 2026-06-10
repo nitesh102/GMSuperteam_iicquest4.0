@@ -1,6 +1,9 @@
 <script setup>
 import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
     collapsed: Boolean,
@@ -32,7 +35,7 @@ const linkClass = (path) => [
 <template>
     <!-- Mobile: close button -->
     <div v-if="isMobile" class="flex items-center justify-between px-4 pt-3 pb-1 lg:hidden">
-        <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Menu</span>
+        <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">{{ t('nav.menu') }}</span>
         <button
             @click="emit('close')"
             class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -47,20 +50,20 @@ const linkClass = (path) => [
         <ul class="space-y-0.5">
             <!-- Section label -->
             <li v-if="!collapsed" class="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                Main
+                {{ t('nav.main') }}
             </li>
 
             <!-- Dashboard -->
             <li>
                 <a :href="route('dashboard')" :class="linkClass('/dashboard')" @click="onLink">
                     <i class="fas fa-home icon" :class="isActive('/dashboard') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">Dashboard</span>
+                    <span v-if="!collapsed">{{ t('nav.dashboard') }}</span>
                 </a>
             </li>
 
             <!-- Management -->
             <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                Management
+                {{ t('nav.management') }}
             </li>
             <li v-else class="my-2 border-t border-gray-100 mx-1" />
 
@@ -68,7 +71,7 @@ const linkClass = (path) => [
             <li>
                 <a :href="route('departments.index')" :class="linkClass('/departments')" @click="onLink">
                     <i class="fas fa-building icon" :class="isActive('/departments') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">Departments</span>
+                    <span v-if="!collapsed">{{ t('nav.departments') }}</span>
                 </a>
             </li>
 
@@ -76,7 +79,7 @@ const linkClass = (path) => [
             <li>
                 <a :href="route('complaint-categories.index')" :class="linkClass('/complaint-categories')" @click="onLink">
                     <i class="fas fa-tags icon" :class="isActive('/complaint-categories') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">Categories</span>
+                    <span v-if="!collapsed">{{ t('nav.categories') }}</span>
                 </a>
             </li>
 
@@ -84,20 +87,20 @@ const linkClass = (path) => [
             <li>
                 <a :href="route('complaints.index')" :class="linkClass('/complaints')" @click="onLink">
                     <i class="fas fa-flag icon" :class="isActive('/complaints') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">Complaints</span>
+                    <span v-if="!collapsed">{{ t('nav.complaints') }}</span>
                 </a>
             </li>
 
             <!-- Profile -->
             <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                Account
+                {{ t('nav.account') }}
             </li>
             <li v-else class="my-2 border-t border-gray-100 mx-1" />
 
             <li>
                 <a :href="route('profile.edit')" :class="linkClass('/profile')" @click="onLink">
                     <i class="fas fa-user icon" :class="isActive('/profile') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">Profile</span>
+                    <span v-if="!collapsed">{{ t('nav.profile') }}</span>
                 </a>
             </li>
         </ul>

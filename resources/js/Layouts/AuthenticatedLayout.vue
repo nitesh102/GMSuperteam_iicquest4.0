@@ -1,9 +1,12 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 
 import Navbar  from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
 import Footer  from '@/Components/Footer.vue'
+import VoiceCommandPanel from '@/Components/VoiceCommandPanel.vue'
+
+const voiceFormHandlers = inject('voiceFormHandlers', null)
 
 /* ── Sidebar state ── */
 const sidebarCollapsed  = ref(false)
@@ -126,6 +129,11 @@ onUnmounted(() => {
 
             <Footer />
         </div>
+
+        <VoiceCommandPanel
+            :on-fill-field="voiceFormHandlers?.onFillField"
+            :on-submit-form="voiceFormHandlers?.onSubmitForm"
+        />
     </div>
 </template>
 

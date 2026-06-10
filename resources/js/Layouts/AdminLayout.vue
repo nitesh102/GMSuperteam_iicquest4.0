@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Sidebar from '@/Components/AdminSidebar.vue'
 import TopNavbar from '@/Components/AdminTopNavbar.vue'
+import VoiceCommandPanel from '@/Components/VoiceCommandPanel.vue'
 
 const mobileSidebarOpen = ref(false)
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
@@ -74,6 +75,8 @@ onUnmounted(() => {
         </div>
       </main>
     </div>
+
+    <VoiceCommandPanel />
   </div>
 </template>
 

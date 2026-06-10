@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
 
 defineProps({
     canLogin: Boolean,
@@ -8,6 +9,8 @@ defineProps({
     laravelVersion: String,
     phpVersion: String,
 });
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -19,18 +22,19 @@ defineProps({
             <div class="relative hidden lg:flex flex-col justify-between w-[58%] bg-[#0A111E] p-16 overflow-hidden z-10">
 
                 <header class="w-full z-10">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-between gap-3">
                         <img src="logo.png" alt="CiviSense Logo" class="h-12 w-auto object-contain" />
+                        <LanguageSwitcher />
                     </div>
                 </header>
 
                 <div class="my-auto max-w-xl z-10">
                     <h1 class="m-0 text-white leading-tight">
-                        <span class="block text-4xl font-normal text-slate-200 opacity-90">Welcome to</span>
+                        <span class="block text-4xl font-normal text-slate-200 opacity-90">{{ t('welcome.title') }}</span>
                         <span class="block text-5xl font-bold tracking-tight">Civi<span class="text-[#E63946]">Sense</span></span>
                     </h1>
                     <p class="mt-4 text-[15.5px] text-slate-400 font-light leading-relaxed">
-                        Empowering citizens through technology and transparency.
+                        {{ t('welcome.subtitle') }}
                     </p>
 
                     <div class="mt-12 grid grid-cols-2 gap-5 max-w-xl">
@@ -39,8 +43,8 @@ defineProps({
                                 <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                             </div>
                             <div>
-                                <h4 class="m-0 text-white text-sm font-semibold">Report Issues</h4>
-                                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">Notify issues in your area</p>
+                                <h4 class="m-0 text-white text-sm font-semibold">{{ t('welcome.reportIssues') }}</h4>
+                                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">{{ t('welcome.reportIssuesDesc') }}</p>
                             </div>
                         </div>
 
@@ -49,8 +53,8 @@ defineProps({
                                 <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                             </div>
                             <div>
-                                <h4 class="m-0 text-white text-sm font-semibold">Track Requests</h4>
-                                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">Track and view your requests</p>
+                                <h4 class="m-0 text-white text-sm font-semibold">{{ t('welcome.trackRequests') }}</h4>
+                                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">{{ t('welcome.trackRequestsDesc') }}</p>
                             </div>
                         </div>
 
@@ -59,8 +63,8 @@ defineProps({
                                 <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
                             </div>
                             <div>
-                                <h4 class="m-0 text-white text-sm font-semibold">Community Forum</h4>
-                                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">Engage & connect with others</p>
+                                <h4 class="m-0 text-white text-sm font-semibold">{{ t('welcome.communityForum') }}</h4>
+                                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">{{ t('welcome.communityForumDesc') }}</p>
                             </div>
                         </div>
 
@@ -69,8 +73,8 @@ defineProps({
                                 <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
                             </div>
                             <div>
-                                <h4 class="m-0 text-white text-sm font-semibold">AI Powered Analytics</h4>
-                                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">Intelligent categorization mapping</p>
+                                <h4 class="m-0 text-white text-sm font-semibold">{{ t('welcome.aiAnalytics') }}</h4>
+                                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">{{ t('welcome.aiAnalyticsDesc') }}</p>
                             </div>
                         </div>
                     </div>
@@ -112,7 +116,9 @@ defineProps({
 
             <div class="flex flex-col justify-between items-center flex-1 bg-white p-10 z-10">
 
-                <div class="hidden lg:block h-12"></div>
+                <div class="hidden lg:flex h-12 w-full max-w-[420px] justify-end">
+                    <LanguageSwitcher />
+                </div>
 
                 <div class="w-full max-w-[420px] flex flex-col my-auto">
 
@@ -123,16 +129,16 @@ defineProps({
                             <div class="w-full flex flex-col items-center mt-1">
                                 <div class="flex items-center w-full justify-center gap-2">
                                     <span class="h-[1px] w-8 bg-slate-200"></span>
-                                    <span class="text-[13px] font-medium text-slate-700 tracking-wide">तपाईको आवाज, हाम्रो प्राथमिकता</span>
+                                    <span class="text-[13px] font-medium text-slate-700 tracking-wide">{{ t('welcome.nepaliTagline') }}</span>
                                     <span class="h-[1px] w-8 bg-slate-200"></span>
                                 </div>
-                                <span class="text-[10px] font-semibold text-slate-400 tracking-[0.2em] uppercase mt-1">Listen &bull; Engage &bull; Improve</span>
+                                <span class="text-[10px] font-semibold text-slate-400 tracking-[0.2em] uppercase mt-1">{{ t('welcome.listenEngage') }}</span>
                             </div>
                         </div>
 
-                        <h3 class="m-0 text-[28px] font-bold text-[#0F172A] tracking-tight">Smart Civic Hub</h3>
+                        <h3 class="m-0 text-[28px] font-bold text-[#0F172A] tracking-tight">{{ t('welcome.hubTitle') }}</h3>
                         <p class="m-0 mt-2 text-sm text-slate-500 leading-relaxed px-4">
-                            Connect with local administration metrics, monitor complaints progress, and help build a stronger community.
+                            {{ t('welcome.hubDesc') }}
                         </p>
                     </div>
 
@@ -142,7 +148,7 @@ defineProps({
                                 :href="route('login')"
                                 class="w-full bg-[#0A111E] text-white text-center py-4 rounded-xl text-[15px] font-semibold tracking-wide shadow-md hover:bg-slate-800 transition-all duration-200"
                             >
-                                Sign In to Account
+                                {{ t('welcome.signIn') }}
                             </Link>
 
                             <Link
@@ -150,7 +156,7 @@ defineProps({
                                 :href="route('register')"
                                 class="w-full bg-white text-[#0A111E] text-center py-4 rounded-xl text-[15px] font-semibold tracking-wide border border-slate-200 shadow-sm hover:bg-slate-50 transition-all duration-200"
                             >
-                                Get Started / Register
+                                {{ t('welcome.register') }}
                             </Link>
                         </div>
 
@@ -159,7 +165,7 @@ defineProps({
                             :href="route('dashboard')"
                             class="w-full bg-emerald-600 text-white text-center py-4 rounded-xl text-[15px] font-semibold tracking-wide shadow-md hover:bg-emerald-700 transition-all duration-200"
                         >
-                            Return to Dashboard
+                            {{ t('welcome.returnDashboard') }}
                         </Link>
                     </div>
 
