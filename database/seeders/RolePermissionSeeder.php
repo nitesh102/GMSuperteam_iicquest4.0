@@ -33,20 +33,9 @@ class RolePermissionSeeder extends Seeder
 
         // Roles
         $superadmin = Role::firstOrCreate(['name' => 'Superadmin']);
-        $admin      = Role::firstOrCreate(['name' => 'Admin']);
-        $employee   = Role::firstOrCreate(['name' => 'Employee']);
-
-        $technician   = Role::firstOrCreate(['name' => 'Technician']);
 
         // Assign permissions
         $superadmin->givePermissionTo(Permission::all());
-        $admin->givePermissionTo([
-            'index-category', 'create-category', 'edit-category', 'destroy-category', 'show-category',
-            'index-sub_cateegory', 'create-sub_cateegory', 'edit-sub_cateegory', 'destroy-sub_cateegory', 'show-sub_cateegory',
-            'index-measuring_unit', 'create-measuring_unit', 'edit-measuring_unit', 'destroy-measuring_unit', 'show-measuring_unit',
-            'index-tax', 'create-tax', 'edit-tax', 'destroy-tax', 'show-tax',
-            'index-product', 'create-product', 'edit-product', 'destroy-product', 'show-product',
-        ]);
-
+       
     }
 }
