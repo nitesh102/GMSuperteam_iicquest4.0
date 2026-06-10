@@ -1,200 +1,321 @@
 <template>
     <Modal :show="show" @close="closeModal">
-        <div>
-            <div class="flex items-center gap-3.5 mb-6">
-                <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-tags text-indigo-600"></i>
+
+        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-3xl mx-auto">
+
+            <!-- HEADER -->
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white">
+                    <i class="fas fa-tags"></i>
                 </div>
+
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900">
-                        {{ isEditMode ? 'Edit Category' : 'New Category' }}
+                    <h3 class="text-xl font-bold text-gray-900">
+                        {{ isEditMode ? 'Edit Category' : 'Create Category' }}
                     </h3>
-                    <p class="text-sm text-gray-500 mt-0.5">
-                        {{ isEditMode ? 'Update the category details below.' : 'Add a new complaint category.' }}
+                    <p class="text-sm text-gray-500">
+                        Manage complaint categories under departments
                     </p>
                 </div>
             </div>
 
+            <!-- STATS -->
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                    <p class="text-xs text-gray-500">Complaints</p>
+                    <h3 class="text-lg font-bold text-blue-600">1,245</h3>
+                </div>
+
+                <div class="bg-green-50 border border-green-100 rounded-xl p-3">
+                    <p class="text-xs text-gray-500">Resolved</p>
+                    <h3 class="text-lg font-bold text-green-600">1,010</h3>
+                </div>
+
+                <div class="bg-red-50 border border-red-100 rounded-xl p-3">
+                    <p class="text-xs text-gray-500">Pending</p>
+                    <h3 class="text-lg font-bold text-red-600">235</h3>
+                </div>
+            </div>
+
+            <!-- FORM -->
             <form @submit.prevent="submitForm" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Department <span class="text-red-400">*</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-building text-gray-400 text-sm"></i>
-                        </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <!-- Department -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">
+                            Department *
+                        </label>
+
                         <select
                             v-model="form.department_id"
-                            :class="[
-                                'w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-150 appearance-none bg-white',
-                                form.errors.department_id
-                                    ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
-                                    : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
-                            ]"
-                            required
-                        >
-                            <option value="" disabled>Select a department</option>
+                            class="w-full rounded-xl border px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600">
+
+                            <option value="">Select Department</option>
+
                             <option
                                 v-for="dept in departments"
                                 :key="dept.id"
-                                :value="dept.id"
-                            >
-                                {{ dept.name }}
-                            </option>
-                        </select>
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
-                        </div>
-                    </div>
-                    <p v-if="form.errors.department_id" class="mt-1.5 text-sm text-red-600 flex items-center gap-1.5">
-                        <i class="fas fa-exclamation-circle text-xs"></i>
-                        <span>{{ form.errors.department_id }}</span>
-                    </p>
-                </div>
+                                :value="dept.id">
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Category Name <span class="text-red-400">*</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-tag text-gray-400 text-sm"></i>
-                        </div>
+                                {{ dept.name }}
+
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <!-- Category Name -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">
+                            Category Name *
+                        </label>
+
                         <input
-                            type="text"
                             v-model="form.name"
-                            :class="[
-                                'w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-150 placeholder:text-gray-400',
-                                form.errors.name
-                                    ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
-                                    : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
-                            ]"
-                            placeholder="e.g. Sanitation Issue"
-                            required
+                            type="text"
+                            placeholder="e.g. Water Supply Issue"
+                            class="w-full rounded-xl border px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600"
                         />
                     </div>
-                    <p v-if="form.errors.name" class="mt-1.5 text-sm text-red-600 flex items-center gap-1.5">
-                        <i class="fas fa-exclamation-circle text-xs"></i>
-                        <span>{{ form.errors.name }}</span>
-                    </p>
+
+                    <!-- Icon -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">
+                            Icon
+                        </label>
+
+                        <select
+                            v-model="form.icon"
+                            class="w-full rounded-xl border px-4 py-3">
+
+                            <option value="fa-water">💧 Water</option>
+                            <option value="fa-road">🛣 Road</option>
+                            <option value="fa-trash">🗑 Waste</option>
+                            <option value="fa-bolt">⚡ Electricity</option>
+                            <option value="fa-tree">🌳 Environment</option>
+                            <option value="fa-hospital">🏥 Health</option>
+
+                        </select>
+                    </div>
+
+                    <!-- Priority -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">
+                            Priority
+                        </label>
+
+                        <select
+                            v-model="form.priority"
+                            class="w-full rounded-xl border px-4 py-3">
+
+                            <option>Low</option>
+                            <option>Medium</option>
+                            <option>High</option>
+                            <option>Critical</option>
+
+                        </select>
+                    </div>
+
+                    <!-- Color -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">
+                            Theme Color
+                        </label>
+
+                        <input
+                            type="color"
+                            v-model="form.color"
+                            class="w-20 h-12 border rounded-lg"
+                        />
+                    </div>
+
                 </div>
 
+                <!-- DESCRIPTION -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                    <label class="text-sm font-medium text-gray-700 mb-2 block">
+                        Description
+                    </label>
+
                     <textarea
                         v-model="form.description"
                         rows="4"
-                        :class="[
-                            'w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-150 resize-none placeholder:text-gray-400',
-                            form.errors.description
-                                ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
-                                : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
-                        ]"
-                        placeholder="Describe what kind of complaints fall under this category..."
                         maxlength="1000"
-                    ></textarea>
-                    <div class="flex items-center justify-between mt-1.5">
-                        <p v-if="form.errors.description" class="text-sm text-red-600 flex items-center gap-1.5">
-                            <i class="fas fa-exclamation-circle text-xs"></i>
-                            <span>{{ form.errors.description }}</span>
+                        class="w-full rounded-xl border px-4 py-3 focus:ring-4 focus:ring-blue-100"
+                        placeholder="Describe category purpose...">
+                    </textarea>
+
+                    <!-- PROGRESS -->
+                    <div class="mt-2">
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                                class="h-full bg-blue-600 transition-all"
+                                :style="{ width: `${(form.description.length / 1000) * 100}%` }">
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-right text-gray-500 mt-1">
+                            {{ form.description.length }}/1000
                         </p>
-                        <p v-else></p>
-                        <p class="text-xs text-gray-400">{{ form.description.length }}/1000</p>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <!-- LIVE PREVIEW -->
+                <div class="bg-gray-50 border rounded-2xl p-5">
+
+                    <h4 class="font-semibold mb-3 text-gray-800">
+                        Live Preview
+                    </h4>
+
+                    <div class="flex gap-4">
+
+                        <div
+                            class="w-12 h-12 rounded-xl flex items-center justify-center text-white"
+                            :style="{ backgroundColor: form.color }">
+
+                            <i class="fas" :class="form.icon"></i>
+
+                        </div>
+
+                        <div class="flex-1">
+
+                            <div class="flex justify-between">
+
+                                <h3 class="font-semibold text-gray-900">
+                                    {{ form.name || 'Category Name' }}
+                                </h3>
+
+                                <span
+                                    class="px-2 py-1 rounded-full text-xs"
+                                    :class="{
+                                        'bg-green-100 text-green-700': form.priority === 'Low',
+                                        'bg-yellow-100 text-yellow-700': form.priority === 'Medium',
+                                        'bg-orange-100 text-orange-700': form.priority === 'High',
+                                        'bg-red-100 text-red-700': form.priority === 'Critical'
+                                    }">
+
+                                    {{ form.priority }}
+
+                                </span>
+
+                            </div>
+
+                            <p class="text-sm text-gray-500 mt-1">
+                                {{ form.description || 'Category description preview...' }}
+                            </p>
+
+                            <p class="text-xs text-gray-400 mt-2">
+                                Department:
+                                {{
+                                    departments.find(
+                                        d => d.id == form.department_id
+                                    )?.name || 'Not selected'
+                                }}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- FOOTER -->
+                <div class="flex justify-end gap-3 pt-5 border-t">
+
                     <button
                         type="button"
                         @click="closeModal"
-                        class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-150"
-                    >
+                        class="px-5 py-2.5 rounded-xl border hover:bg-gray-50">
+
                         Cancel
+
                     </button>
+
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        :class="[
-                            'px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-all duration-150 inline-flex items-center gap-2',
-                            form.processing
-                                ? 'bg-indigo-400 cursor-not-allowed'
-                                : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md'
-                        ]"
-                    >
-                        <span v-if="form.processing" class="inline-flex items-center gap-2">
-                            <i class="fas fa-spinner fa-spin"></i>
+                        class="px-6 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+
+                        <span v-if="form.processing">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
                             Saving...
                         </span>
-                        <span v-else class="inline-flex items-center gap-2">
-                            <i class="fas" :class="isEditMode ? 'fa-save' : 'fa-plus'"></i>
-                            {{ isEditMode ? 'Update Category' : 'Create Category' }}
+
+                        <span v-else>
+                            <i class="fas fa-save mr-2"></i>
+                            {{ isEditMode ? 'Update' : 'Create' }}
                         </span>
+
                     </button>
+
                 </div>
+
             </form>
+
         </div>
+
     </Modal>
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
-import { useForm } from '@inertiajs/vue3';
-import Modal from '@/Components/Modal.vue';
+import { computed, watch } from 'vue'
+import { useForm } from '@inertiajs/vue3'
+import Modal from '@/Components/Modal.vue'
 
 const props = defineProps({
     show: Boolean,
     category: Object,
     departments: Array,
-});
+})
 
-const emit = defineEmits(['close', 'success', 'submitting']);
+const emit = defineEmits(['close', 'success', 'submitting'])
 
-const isEditMode = computed(() => !!props.category);
+const isEditMode = computed(() => !!props.category)
 
 const form = useForm({
-    department_id: props.category?.department_id || '',
-    name: props.category?.name || '',
-    description: props.category?.description || '',
-});
+    department_id: '',
+    name: '',
+    description: '',
+    icon: 'fa-tag',
+    color: '#2563EB',
+    priority: 'Medium',
+})
 
-watch(() => props.category, (newCat) => {
-    if (newCat) {
-        form.department_id = newCat.department_id || '';
-        form.name = newCat.name || '';
-        form.description = newCat.description || '';
+watch(() => props.category, (cat) => {
+    if (cat) {
+        form.department_id = cat.department_id || ''
+        form.name = cat.name || ''
+        form.description = cat.description || ''
+        form.icon = cat.icon || 'fa-tag'
+        form.color = cat.color || '#2563EB'
+        form.priority = cat.priority || 'Medium'
     }
-}, { immediate: true });
+}, { immediate: true })
 
 function closeModal() {
-    form.reset();
-    emit('close');
+    form.reset()
+    emit('close')
 }
 
 function submitForm() {
-    const payload = {
-        department_id: form.department_id,
-        name: form.name,
-        description: form.description,
-    };
+    const payload = { ...form }
+
     if (isEditMode.value) {
         form.put(route('complaint-categories.update', props.category.id), {
-            preserveScroll: true,
             onSuccess: () => {
-                emit('submitting', { ...payload, id: props.category.id, isEdit: true });
-                emit('success');
-                closeModal();
-            },
-        });
+                emit('success')
+                closeModal()
+            }
+        })
     } else {
         form.post(route('complaint-categories.store'), {
-            preserveScroll: true,
             onSuccess: () => {
-                emit('submitting', { ...payload, isEdit: false });
-                emit('success');
-                closeModal();
-            },
-        });
+                emit('success')
+                closeModal()
+            }
+        })
     }
 }
 </script>
