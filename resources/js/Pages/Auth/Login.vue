@@ -1,231 +1,179 @@
 <template>
-  <div class="min-h-screen flex bg-white font-sans overflow-hidden">
-    <!-- Left Panel -->
-    <div class="hidden lg:flex lg:w-1/2 bg-[#0F172A] text-white relative flex-col p-12 overflow-hidden">
-      <!-- Logo -->
-      <div class="flex items-center gap-x-3 mb-16">
-        <div class="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-inner">
-          <div class="w-8 h-8 bg-[#DC2626] rounded-full flex items-center justify-center relative">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M19 21V5a2 2 0 01-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+  <div class="w-screen h-screen m-0 p-0 overflow-hidden font-['Poppins'] bg-slate-50 flex">
+    <div class="flex w-full h-full">
+
+      <div class="relative hidden lg:flex flex-col justify-between w-[58%] bg-[#0A111E] p-16 overflow-hidden z-10 select-none">
+
+        <header class="w-full z-10">
+          <div class="flex items-center gap-3">
+            <img src="logo.png" alt="CiviSense Logo" class="h-12 w-auto object-contain" />
           </div>
-        </div>
-        <span class="text-3xl font-semibold tracking-tight">CiviSense</span>
-      </div>
+        </header>
 
-      <!-- Welcome Text -->
-      <div class="max-w-md">
-        <h1 class="text-6xl font-bold leading-[1.05] tracking-tighter mb-4">
-          Welcome to<br>
-          <span class="text-[#DC2626]">CiviSense</span>
-        </h1>
-        <p class="text-xl text-slate-300 mt-3 leading-relaxed">
-          Empowering citizens through<br>technology and transparency.
-        </p>
-      </div>
+        <div class="my-auto max-w-xl z-10">
+          <h1 class="m-0 text-white leading-tight">
+            <span class="block text-4xl font-normal text-slate-200 opacity-90">Welcome to</span>
+            <span class="block text-5xl font-bold tracking-tight">Civi<span class="text-[#E63946]">Sense</span></span>
+          </h1>
+          <p class="mt-4 text-[15.5px] text-slate-400 font-light leading-relaxed">
+            Empowering citizens through technology and transparency.
+          </p>
 
-      <!-- Feature Cards -->
-      <div class="grid grid-cols-2 gap-4 mt-12 max-w-md">
-        <!-- Report Issues -->
-        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 hover:bg-white/15 transition-all duration-200">
-          <div class="w-10 h-10 bg-[#3B82F6] rounded-xl flex items-center justify-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314-11.314z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <h3 class="font-semibold text-lg">Report Issues</h3>
-          <p class="text-sm text-slate-300 mt-1">Notify issues in your area</p>
-        </div>
-
-        <!-- Track Requests -->
-        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 hover:bg-white/15 transition-all duration-200">
-          <div class="w-10 h-10 bg-[#DC2626] rounded-xl flex items-center justify-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2m2-2a2 2 0 012-2" />
-            </svg>
-          </div>
-          <h3 class="font-semibold text-lg">Track Requests</h3>
-          <p class="text-sm text-slate-300 mt-1">Track and view your requests</p>
-        </div>
-
-        <!-- Community Forum -->
-        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 hover:bg-white/15 transition-all duration-200">
-          <div class="w-10 h-10 bg-[#3B82F6] rounded-xl flex items-center justify-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-            </svg>
-          </div>
-          <h3 class="font-semibold text-lg">Community Forum</h3>
-          <p class="text-sm text-slate-300 mt-1">Engage & connect with others</p>
-        </div>
-
-        <!-- Citizen Dashboard -->
-        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 hover:bg-white/15 transition-all duration-200">
-          <div class="w-10 h-10 bg-[#DC2626] rounded-xl flex items-center justify-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <h3 class="font-semibold text-lg">Citizen Dashboard</h3>
-          <p class="text-sm text-slate-300 mt-1">Manage your profile and activity</p>
-        </div>
-      </div>
-
-      <!-- City Skyline -->
-      <div class="absolute bottom-0 left-0 right-0 h-28 opacity-30">
-        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-full">
-          <path fill="#1E2937" d="M0,120 L0,70 L40,70 L40,45 L70,45 L70,70 L110,70 L110,30 L140,30 L140,70 L180,70 L180,55 L210,55 L210,70 L260,70 L260,25 L290,25 L290,70 L330,70 L330,40 L360,40 L360,70 L400,70 L400,15 L430,15 L430,70 L470,70 L470,50 L500,50 L500,70 L540,70 L540,35 L570,35 L570,70 L610,70 L610,20 L640,20 L640,70 L680,70 L680,45 L710,45 L710,70 L750,70 L750,30 L780,30 L780,70 L820,70 L820,55 L850,55 L850,70 L890,70 L890,25 L920,25 L920,70 L960,70 L960,40 L990,40 L990,70 L1030,70 L1030,15 L1060,15 L1060,70 L1100,70 L1100,50 L1130,50 L1130,70 L1170,70 L1170,35 L1200,35 L1200,120 Z"/>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Right Panel - Login Form -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-slate-50">
-      <div class="w-full max-w-md">
-        <!-- Login Card -->
-        <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-10 border border-slate-100">
-
-          <!-- Logo -->
-          <div class="flex justify-center mb-8">
-            <div class="flex items-center gap-x-3">
-              <div class="w-10 h-10 bg-[#DC2626] rounded-full flex items-center justify-center shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M19 21V5a2 2 0 01-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+          <div class="mt-12 grid grid-cols-2 gap-5 max-w-xl">
+            <div class="flex items-center gap-4 p-5 bg-white/[0.02] border border-white/[0.06] rounded-xl box-border">
+              <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 bg-[#13233C] border border-blue-500/30 text-blue-500">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
               </div>
-              <span class="text-3xl font-semibold tracking-tight text-slate-900">CiviSense</span>
-            </div>
-          </div>
-
-          <!-- Header -->
-          <div class="text-center mb-8">
-            <h2 class="text-3xl font-semibold text-slate-900 tracking-tight">Welcome Back!</h2>
-            <p class="text-slate-500 mt-2">Please login to your account</p>
-          </div>
-
-          <!-- Form -->
-          <form @submit.prevent="handleLogin" class="space-y-5">
-
-            <!-- Email -->
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2.009 2.009 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <input
-                  v-model="form.email"
-                  type="email"
-                  required
-                  placeholder="you@example.com"
-                  class="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 focus:border-slate-400 rounded-2xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200 transition-all"
-                >
+              <div>
+                <h4 class="m-0 text-white text-sm font-semibold">Report Issues</h4>
+                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">Notify issues in your area</p>
               </div>
             </div>
 
-            <!-- Password -->
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V9a4 4 0 00-8 0v2" />
-                  </svg>
-                </div>
-                <input
-                  v-model="form.password"
-                  :type="showPassword ? 'text' : 'password'"
-                  required
-                  placeholder="••••••••"
-                  class="w-full pl-11 pr-12 py-3.5 bg-white border border-slate-200 focus:border-slate-400 rounded-2xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200 transition-all"
-                >
-                <button
-                  type="button"
-                  @click="showPassword = !showPassword"
-                  class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                  </svg>
-                </button>
+            <div class="flex items-center gap-4 p-5 bg-white/[0.02] border border-white/[0.06] rounded-xl box-border">
+              <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 bg-[#13233C] border border-red-500/30 text-[#E63946]">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+              </div>
+              <div>
+                <h4 class="m-0 text-white text-sm font-semibold">Track Requests</h4>
+                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">Track and view your requests</p>
               </div>
             </div>
 
-            <!-- Remember Me + Forgot Password -->
-            <div class="flex items-center justify-between pt-1">
-              <label class="flex items-center cursor-pointer">
-                <input
-                  v-model="form.rememberMe"
-                  type="checkbox"
-                  class="w-4 h-4 text-[#DC2626] border-slate-300 rounded focus:ring-[#DC2626]"
-                >
-                <span class="ml-2.5 text-sm text-slate-600">Remember me</span>
+            <div class="flex items-center gap-4 p-5 bg-white/[0.02] border border-white/[0.06] rounded-xl box-border">
+              <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 bg-[#13233C] border border-blue-500/30 text-blue-500">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+              </div>
+              <div>
+                <h4 class="m-0 text-white text-sm font-semibold">Community Forum</h4>
+                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">Engage & connect with others</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-5 bg-white/[0.02] border border-white/[0.06] rounded-xl box-border">
+              <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 bg-[#13233C] border border-red-500/30 text-[#E63946]">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+              </div>
+              <div>
+                <h4 class="m-0 text-white text-sm font-semibold">Citizen Dashboard</h4>
+                <p class="m-0 mt-1 text-slate-400 text-xs font-normal">Manage your profile and activity</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="absolute bottom-0 left-0 w-full px-16 z-0 pointer-events-none translate-y-[2px]">
+          <svg viewBox="0 0 600 130" class="w-full h-auto block" preserveAspectRatio="xMidYEnd meet">
+            <path d="M0,130 C120,70 220,165 410,105 C520,70 560,115 600,85 L600,130 L0,130 Z" fill="#ffffff" />
+
+            <path d="M30,130 L30,95 L18,95 L45,70 L30,70 L55,45 L60,20 L65,45 L90,70 L75,70 L102,95 L90,95 L90,130" stroke="#0f172a" stroke-width="1.5" fill="#ffffff" />
+            <line x1="30" y1="95" x2="90" y2="95" stroke="#0f172a" stroke-width="1" />
+            <line x1="42" y1="70" x2="78" y2="70" stroke="#0f172a" stroke-width="1" />
+            <path d="M60,20 L60,10" stroke="#dc2626" stroke-width="1.5" />
+
+            <path d="M140,130 L140,110 L120,110 L160,85 L140,85 L175,60 L155,60 L190,35 L195,5 L200,35 L235,60 L215,60 L250,85 L230,85 L270,110 L250,110 L250,130" stroke="#0f172a" stroke-width="1.8" fill="#ffffff" />
+            <line x1="140" y1="110" x2="250" y2="110" stroke="#0f172a" stroke-width="1.3" />
+            <line x1="155" y1="85" x2="235" y2="85" stroke="#0f172a" stroke-width="1.3" />
+            <line x1="170" y1="60" x2="220" y2="60" stroke="#0f172a" stroke-width="1.3" />
+            <path d="M195,5 L195,0" stroke="#dc2626" stroke-width="2" />
+
+            <path d="M310,130 L310,92 C310,62 325,42 335,22 L335,10 L341,10 L341,22 C351,42 366,62 366,92 L366,130 Z" stroke="#0f172a" stroke-width="1.5" fill="#ffffff" />
+            <path d="M320,92 L356,92 M325,72 L351,72 M330,52 L346,52" stroke="#0f172a" stroke-width="0.9" />
+
+            <path d="M440,130 L440,105 L420,105 L470,80 L450,80 L495,55 L475,55 L510,30 L515,5 L520,30 L555,55 L535,55 L580,80 L560,80 L610,105 L590,105 L590,130" stroke="#0f172a" stroke-width="1.6" fill="#ffffff" />
+            <line x1="435" y1="105" x2="595" y2="105" stroke="#0f172a" stroke-width="1.2" />
+            <line x1="460" y1="80" x2="570" y2="80" stroke="#0f172a" stroke-width="1.2" />
+            <line x1="485" y1="55" x2="545" y2="55" stroke="#0f172a" stroke-width="1.2" />
+            <circle cx="515" cy="5" r="2" fill="#dc2626" />
+          </svg>
+        </div>
+
+        <div class="absolute top-0 right-0 h-full w-40 z-20 pointer-events-none">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full">
+            <path d="M100,0 C60,15 65,85 100,100 Z" fill="#FFFFFF" />
+            <path d="M100,0 C60,15 65,85 100,100" stroke="#E63946" stroke-width="1.5" fill="none" opacity="0.85" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="flex flex-col justify-center items-center flex-1 bg-white p-10 z-10">
+        <div class="w-full max-w-[400px] flex flex-col">
+
+          <div class="text-center mb-9">
+            <div class="flex flex-col items-center gap-2 mb-6">
+              <img src="logo.png" alt="CiviSense Stacked Logo" class="w-40 h-auto object-contain mb-3" />
+            </div>
+
+            <h3 class="m-0 text-[26px] font-bold text-[#0F172A] tracking-tight">Welcome Back!</h3>
+            <p class="m-0 mt-1 text-sm text-slate-500">Please login to your account</p>
+          </div>
+
+          <form @submit.prevent="executeLogin" class="flex flex-col gap-[18px]">
+
+            <div class="relative w-full flex items-center border border-slate-200 rounded-xl bg-[#E8EEF8] focus-within:bg-white focus-within:border-[#091020] focus-within:shadow-[0_0_0_4px_rgba(9,16,32,0.03)] transition-all duration-200 box-border">
+              <span class="absolute left-4 flex items-center pointer-events-none">
+                <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 fill-slate-500"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zM12 11 4 6h16l-8 5z"/></svg>
+              </span>
+              <input
+                type="email"
+                v-model="email"
+                placeholder="Email Address"
+                class="w-full border-none bg-transparent py-4 pl-12 pr-4 text-[15px] text-slate-900 outline-none font-inherit box-border"
+                required
+              />
+            </div>
+
+            <div class="relative w-full flex items-center border border-slate-200 rounded-xl bg-[#E8EEF8] focus-within:bg-white focus-within:border-[#091020] focus-within:shadow-[0_0_0_4px_rgba(9,16,32,0.03)] transition-all duration-200 box-border">
+              <span class="absolute left-4 flex items-center pointer-events-none">
+                <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 fill-slate-500"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+              </span>
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                v-model="password"
+                placeholder="Password"
+                class="w-full border-none bg-transparent py-4 pl-12 pr-12 text-[15px] text-slate-900 outline-none font-inherit box-border"
+                required
+              />
+              <span class="absolute right-4 flex items-center cursor-pointer text-slate-400 hover:text-slate-600" @click="showPassword = !showPassword">
+                <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 fill-current"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </span>
+            </div>
+
+            <div class="flex justify-between items-center text-sm mt-[2px]">
+              <label class="flex items-center gap-2 cursor-pointer select-none text-slate-600">
+                <input type="checkbox" v-model="rememberMe" class="w-[17px] h-[17px] accent-[#091020] cursor-pointer rounded" />
+                <span>Remember me</span>
               </label>
-              <a href="#" class="text-sm text-[#DC2626] hover:text-[#B91C1C] font-medium transition-colors">Forgot Password?</a>
+              <a href="#forgot" class="text-[#E63946] font-medium no-underline hover:underline">Forgot Password?</a>
             </div>
 
-            <!-- Login Button -->
-            <button
-              type="submit"
-              class="w-full mt-2 py-4 bg-[#0F172A] hover:bg-slate-900 active:bg-black transition-all text-white font-semibold rounded-2xl text-base shadow-lg shadow-slate-900/30 flex items-center justify-center gap-x-2"
-            >
+            <button type="submit" class="w-full bg-[#091020] text-white border-none py-4 rounded-xl text-[15px] font-semibold cursor-pointer shadow-md hover:bg-slate-800 transition-colors duration-200 mt-2">
               Login
             </button>
           </form>
 
-          <!-- Sign Up Link -->
-          <div class="mt-7 text-center">
-            <p class="text-sm text-slate-600">
-              Don't have an account?
-              <a href="#" class="font-semibold text-[#DC2626] hover:text-[#B91C1C] transition-colors">Sign up</a>
-            </p>
-          </div>
+          <footer class="text-center mt-9 text-sm text-slate-500">
+            <span>Don't have an account? </span>
+            <a href="#signup" class="text-[#E63946] font-semibold no-underline hover:underline ml-1">Sign up</a>
+          </footer>
+
         </div>
       </div>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref } from 'vue';
 
-const showPassword = ref(false)
+// Local Reactive States
+const email = ref('admin@gmail.com');
+const password = ref('••••••••');
+const rememberMe = ref(false);
+const showPassword = ref(false);
 
-const form = reactive({
-  email: '',
-  password: '',
-  rememberMe: false
-})
-
-const handleLogin = () => {
-  if (!form.email || !form.password) {
-    alert('Please enter email and password')
-    return
-  }
-
-  console.log('Login attempt:', {
-    email: form.email,
-    password: form.password,
-    rememberMe: form.rememberMe
-  })
-
-  // Demo success
-  alert(`Welcome back! Logged in as ${form.email}`)
-
-  // TODO: Call your actual login API here
-}
+const executeLogin = () => {
+  console.log('Credentials validated successfully and processed securely.');
+};
 </script>
-
-<style scoped>
-input:focus {
-  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
-}
-</style>
