@@ -36,6 +36,6 @@ class RolePermissionSeeder extends Seeder
 
         // Assign permissions
         $superadmin->givePermissionTo(Permission::all());
-       
+
     }
 }
