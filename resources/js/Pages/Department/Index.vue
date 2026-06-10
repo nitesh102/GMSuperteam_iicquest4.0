@@ -3,7 +3,11 @@ import { ref } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdminDataTable from '@/Components/AdminDataTable.vue'
+import DepartmentModal from './DepartmentModal.vue'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+
+const showModal = ref(false)
+const selectedDepartment = ref(null)
 
 const departments = ref([
   {
@@ -45,6 +49,26 @@ const columns = [
 ]
 
 const totalDepartments = departments.value.length
+
+const openCreateModal = () => {
+  selectedDepartment.value = null
+  showModal.value = true
+}
+
+const openEditModal = (dept) => {
+  selectedDepartment.value = dept
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  selectedDepartment.value = null
+}
+
+const handleSuccess = () => {
+  closeModal()
+  // Refresh departments list if needed
+}
 </script>
 
 <template>
@@ -56,15 +80,15 @@ const totalDepartments = departments.value.length
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-semibold text-gray-900">Departments</h1>
-          <p class="text-sm text-gray-500 mt-1">Manage all departments in your system.</p>
+          <p class="text-sm text-gray-500 mt-1">Manage departments for complaint routing and organization.</p>
         </div>
-        <Link
-          href="departments.create"
+        <button
+          @click="openCreateModal"
           class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-medium text-white hover:bg-red-600 transition"
         >
           <PlusIcon class="h-5 w-5" />
           New Department
-        </Link>
+        </button>
       </div>
     </div>
 
@@ -92,9 +116,12 @@ const totalDepartments = departments.value.length
         </span>
       </template>
 
-      <template #cell-actions>
+      <template #cell-actions="{ row }">
         <div class="flex items-center gap-3">
-          <button class="text-blue-500 hover:text-blue-600 font-medium text-sm transition">
+          <button
+            @click="openEditModal(row)"
+            class="text-blue-500 hover:text-blue-600 font-medium text-sm transition"
+          >
             <PencilIcon class="h-4 w-4" />
           </button>
           <button class="text-red-500 hover:text-red-600 font-medium text-sm transition">
@@ -103,5 +130,13 @@ const totalDepartments = departments.value.length
         </div>
       </template>
     </AdminDataTable>
+
+    <!-- Department Modal -->
+    <DepartmentModal
+      :show="showModal"
+      :department="selectedDepartment"
+      @close="closeModal"
+      @success="handleSuccess"
+    />
   </AdminLayout>
 </template>
