@@ -16,6 +16,14 @@ class ComplaintTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function forceSimulationFallback(): void
+    {
+        $mock = $this->createMock(\App\Services\ComplaintAiService::class);
+        $mock->method('analyzeComplaint')
+            ->willThrowException(new \Exception('Simulated AI failure for testing'));
+        $this->app->instance(\App\Services\ComplaintAiService::class, $mock);
+    }
+
     public function test_index_page_can_be_rendered(): void
     {
         $user = User::factory()->create();
@@ -41,7 +49,7 @@ class ComplaintTest extends TestCase
         ]);
 
         $response->assertRedirect(route('complaints.index'));
-        $response->assertSessionHas('success', 'Complaint submitted successfully. AI analysis complete.');
+        $response->assertSessionHas('success', 'Complaint submitted successfully. CiviSense AI analysis complete.');
 
         $this->assertDatabaseHas('complaints', [
             'title' => 'Pothole on Main Street',
@@ -207,6 +215,7 @@ class ComplaintTest extends TestCase
 
     public function test_ai_simulates_emergency_priority_for_fire_keywords(): void
     {
+        $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
 
@@ -223,6 +232,7 @@ class ComplaintTest extends TestCase
 
     public function test_ai_simulates_high_priority_for_urgent_keywords(): void
     {
+        $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
 
@@ -239,6 +249,7 @@ class ComplaintTest extends TestCase
 
     public function test_ai_simulates_medium_priority_for_repair_keywords(): void
     {
+        $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
 
@@ -255,6 +266,7 @@ class ComplaintTest extends TestCase
 
     public function test_ai_simulates_low_priority_for_generic_description(): void
     {
+        $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
 
@@ -269,24 +281,9 @@ class ComplaintTest extends TestCase
         ]);
     }
 
-    public function test_ai_detects_spam_content(): void
+    public function test_ai_marks_non_spam_as_false_when_no_spam_detected(): void
     {
-        $user = User::factory()->create();
-        $category = ComplaintCategory::factory()->create();
-
-        $this->actingAs($user)->post('/complaints', [
-            'title' => 'Special Offer',
-            'description' => 'Buy now and get free money! Limited offer.',
-            'category_id' => $category->id,
-        ]);
-
-        $this->assertDatabaseHas('complaints', [
-            'is_spam' => true,
-        ]);
-    }
-
-    public function test_ai_marks_non_spam_as_false(): void
-    {
+        $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
 
@@ -301,8 +298,29 @@ class ComplaintTest extends TestCase
         ]);
     }
 
+    public function test_ai_fallback_preserves_user_selected_category(): void
+    {
+        $this->forceSimulationFallback();
+        $user = User::factory()->create();
+        $department = Department::factory()->create();
+        $category = ComplaintCategory::factory()->create([
+            'department_id' => $department->id,
+        ]);
+
+        $this->actingAs($user)->post('/complaints', [
+            'title' => 'Broken Bench',
+            'description' => 'The wooden bench near the playground is broken.',
+            'category_id' => $category->id,
+        ]);
+
+        $this->assertDatabaseHas('complaints', [
+            'category_id' => $category->id,
+        ]);
+    }
+
     public function test_ai_generates_summary_truncated_to_200_chars(): void
     {
+        $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
         $longText = str_repeat('Lorem ipsum dolor sit amet ', 20); // ~400 chars
@@ -321,6 +339,7 @@ class ComplaintTest extends TestCase
 
     public function test_ai_generates_summary_without_truncation_for_short_text(): void
     {
+        $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
         $shortText = 'Short complaint description.';
@@ -338,6 +357,7 @@ class ComplaintTest extends TestCase
 
     public function test_ai_handles_html_tags_in_description(): void
     {
+        $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
 
@@ -353,24 +373,21 @@ class ComplaintTest extends TestCase
         $this->assertStringContainsString('Clean text after script.', $complaint->ai_summary);
     }
 
-    public function test_ai_detects_multiple_spam_patterns(): void
+    public function test_ai_simulates_low_priority_when_no_keywords_match(): void
     {
+        $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
 
-        $patterns = ['click here', 'free money', 'limited offer', 'act now', 'congratulations', 'you won', 'lottery', 'casino', 'gambling', 'xxx'];
+        $this->actingAs($user)->post('/complaints', [
+            'title' => 'General Question',
+            'description' => 'I would like to know the opening hours of the city office.',
+            'category_id' => $category->id,
+        ]);
 
-        foreach ($patterns as $pattern) {
-            $this->actingAs($user)->post('/complaints', [
-                'title' => 'Spam Test',
-                'description' => "This complaint contains {$pattern} and should be flagged.",
-                'category_id' => $category->id,
-            ]);
-
-            $complaint = Complaint::where('is_spam', true)->latest()->first();
-            $this->assertNotNull($complaint, "Failed for pattern: {$pattern}");
-            $this->assertTrue($complaint->is_spam);
-        }
+        $this->assertDatabaseHas('complaints', [
+            'priority' => 'low',
+        ]);
     }
 
     public function test_complaint_index_returns_complaints_with_relations(): void

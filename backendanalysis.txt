@@ -4,7 +4,7 @@
 
 Date       : 2026-06-10
 Analyst    : Automated Static Analysis
-Scope      : Laravel 11 backend, Inertia.js + Vue 3 frontend
+Scope      : Laravel 11 backend, Inertia.js + Vue 3 frontend, Gemini AI
 Focus      : Architecture, Optimization, Security, Debugging, Testing
 
 ================================================================================
@@ -19,7 +19,8 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
      │                        ├── Controllers (CRUD)
      │                        ├── Middleware (Auth, Session, HandleInertia)
      │                        ├── Spatie Permissions (RBAC)
-     │                        └── Validation (inline)
+     │                        ├── Validation (inline)
+     │                        └── Gemini AI Service (ComplaintAiService)
      │
      └── Vue 3 SPA (Composition API)
          ├── Pages/       (per-route page components)
@@ -29,32 +30,39 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
 
   Data flow:
     Page visit          → GET /{route} → Controller::index() → Inertia::render()
-    Form submit (create) → POST /{route} → Controller::store() → redirect + flash
+    Form submit (create) → POST /{route} → Controller::store() → Gemini AI → redirect + flash
     Form submit (update) → PUT /{route}/{id} → Controller::update() → redirect + flash
     Delete              → DELETE /{route}/{id} → Controller::destroy() → redirect + flash
 
-  Optimistic CRUD flow:
-    User action → local state update (instant) → HTTP request (background)
-    → redirect sync → props update → watch re-syncs local state
+  AI flow (store only):
+    POST /complaints → validate → gather temp file paths → load departments/categories
+    → Gemini API (constrained to valid dept/category enum) → fallback on exception
+    → if AI returns dept+category: firstOrCreate Department + ComplaintCategory
+    → override category_id → set priority/ai_summary (is_spam=false)
+    → create complaint → create ai_analysis row → store attachments → redirect
 
 1.2  Module Inventory
 ──────────────────────
 
-  Module              | Model         | Controller                | Page(s)                         | Routes
-  ────────────────────|───────────────|───────────────────────────|─────────────────────────────────|──────────────────────────────
-  Auth                | User          | (Breeze)                  | Pages/Auth/*                   | auth.php
-  Profile             | User          | ProfileController         | Pages/Profile/*                | web.php
-  Dashboard           | —             | (closure)                 | Pages/Dashboard.vue            | web.php
-  Department          | Department    | DepartmentController      | Pages/Department/Index.vue     | departments (resource)
-  ComplaintCategory   | ComplaintCategory | ComplaintCategoryController | Pages/ComplaintCategory/   | complaint-categories (resource)
-                      |               |                           ├── Index.vue                    |
-                      |               |                           └── ComplaintCategoryModal.vue   |
+  Module              | Model                    | Controller                     | Pages                                    | Routes
+  ────────────────────|──────────────────────────|────────────────────────────────|──────────────────────────────────────────|──────────────────────────────
+  Auth                | User                     | (Breeze)                       | Pages/Auth/*                            | auth.php
+  Profile             | User                     | ProfileController              | Pages/Profile/*                         | web.php
+  Dashboard           | —                        | (closure)                      | Pages/Dashboard.vue                     | web.php
+  Department          | Department               | DepartmentController           | Pages/Department/Index.vue              | departments (resource)
+  ComplaintCategory   | ComplaintCategory        | ComplaintCategoryController    | Pages/ComplaintCategory/{Index,Modal}   | complaint-categories (resource)
+  Complaint           | Complaint,               | ComplaintController            | Pages/Complaint/{Index,Create,Modal}    | complaints (resource, no edit/show)
+                      | ComplaintAttachment,     |                                |                                          |
+                      | ComplaintAiAnalysis      |                                |                                          |
+  AI Service          | —                        | ComplaintAiService (Service)   | —                                        | —
 
 1.3  Key Architectural Decisions
 ─────────────────────────────────
 
   • Inertia.js SPA: No API endpoints; server returns JSON page data or redirects.
-  • Modal-based CRUD: No create/edit/show routes; all CRUD via modals on index page.
+  • Complaint create uses dedicated page (Create.vue), not modal.
+  • Complaint edit uses modal (ComplaintModal.vue) on index page.
+  • Department/Category use modal-based CRUD on index page.
   • Client-side list management: Search, sort, paginate entirely on frontend via
     computed properties on a local reactive `items` ref.
   • Optimistic updates: Local list mutated instantly; server syncs via redirect.
@@ -62,6 +70,12 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
     redirect and re-syncs the local `items` ref (critical fix for temp-ID bug).
   • Flash messages: Shared via HandleInertiaRequests middleware, displayed as a
     fixed-position toast, auto-dismiss after 4s, reactive via watch.
+  • Gemini AI: google-gemini-php/laravel v2.0.4, model: gemini-2.5-flash,
+    structured JSON output with constrained schema, fallback to simulation on exception.
+    • AI auto-detects department + category (constrained to valid names), creates if missing.
+    • is_spam detection removed from AI pipeline — defaults to false on all complaints.
+  • Photo uploads: Up to 5 images (5MB each), stored to public disk, sent to Gemini
+    as Blob before permanent storage.
 
 ================================================================================
 2.  OPTIMIZATION ANALYSIS
@@ -69,18 +83,20 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
 
 2.1  Database / Eloquent
 ─────────────────────────
-  ✓ Eager Loading         : ComplaintCategory::with('department') in controller.
+  ✓ Eager Loading         : ComplaintCategory::with('department') in controllers.
   ✓ Pagination            : Client-side for small datasets (~8 items).
                             For >100 items, switch to server-side ->paginate().
   ✓ Indexes               : Primary keys indexed. Foreign keys (department_id,
-                            created_by, updated_by) could benefit from explicit indexes.
-  ✓ Soft Deletes          : ComplaintCategory uses SoftDeletes trait.
+                            created_by, updated_by, complaint_id) could benefit
+                            from explicit indexes.
+  ✓ Soft Deletes          : Complaint, ComplaintCategory, ComplaintAttachment,
+                            ComplaintAiAnalysis use SoftDeletes.
   ✓ Query Scopes          : Not used. Consider local scopes if filter patterns emerge.
 
 2.2  Caching
 ─────────────────────────
   ✗ No caching strategy implemented.
-    - Department and ComplaintCategory lists are fetched on every page load.
+    - Department, Category lists fetched on every page load.
     - Cache::remember('departments.all', 3600, ...) recommended for read-heavy pages.
     - Cache::forget(...) on store/update/destroy to invalidate.
   ✗ Route/config caching not configured for production.
@@ -96,16 +112,13 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
 2.4  Bundle Sizes (production build)
 ─────────────────────────────────────
   app.js                ~281 kB (gzip: ~100 kB) — Vue, Inertia, Ziggy, FontAwesome
-  Pages/Department/Index.vue  ~15.7 kB (gzip: ~4.7 kB)
-  Pages/ComplaintCategory/Index.vue  ~16.8 kB (gzip: ~4.9 kB)
-  Components/DepartmentModal.vue     ~4.7 kB (gzip: ~1.8 kB)
-  Pages/ComplaintCategory/ComplaintCategoryModal.vue  ~6.1 kB (gzip: ~2.1 kB)
+  Pages/Complaint/      ~varies — Create.vue includes upload zone, Index.vue has thumbnails
 
 2.5  Recommendations
 ─────────────────────
   1. Add server-side pagination when dataset exceeds 100 records.
   2. Implement cache layer: Cache::remember for department/category lists.
-  3. Add database indexes on foreign keys and created_at.
+  3. Add database indexes on foreign keys and created_at, status, priority.
   4. Use queue for email/notification dispatch in future features.
 
 ================================================================================
@@ -127,9 +140,10 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
 
 3.2  Input Validation
 ─────────────────────
-  ✓ Both controllers validate: required, string, max:255/max:1000.
+  ✓ All controllers validate: required, string, max:255/max:1000/max:10000.
   ✓ Mass-assignment protected via $fillable.
-  ✓ Existence checks: 'department_id' => 'exists:departments,id'.
+  ✓ Existence checks: 'category_id' => 'exists:complaint_categories,id'.
+  ✓ File validation: image, mimes, max:5120, max:5 array.
   ✓ XSS prevented: Inertia + Vue auto-escape all data.
 
   ✗ No dedicated Form Request classes — validation inline (acceptable for current
@@ -143,12 +157,12 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
 ─────────────────────────────
   ✓ CSRF: Handled by Laravel + Inertia.
   ✓ XSS: Auto-escaped by Inertia/Vue. No v-html usage.
-  N/A File uploads: Not implemented yet.
+  ✓ File uploads: Validated as images, stored to public disk, served via Storage::url().
 
 3.5  Additional Concerns
 ─────────────────────────
   • created_by / updated_by are set from $request->user()->id — safe.
-  • Soft deletes on ComplaintCategory prevent data loss.
+  • Soft deletes prevent data loss.
   • No rate limiting on CRUD endpoints (consider throttle middleware).
   • No audit/activity logging (consider spatie/laravel-activitylog).
 
@@ -165,19 +179,21 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
   │ V-02 │ Missing authorization on ComplaintCategory CRUD (same issue)         │
   │      │ Priority: HIGH.                                                      │
   ├──────┼──────────────────────────────────────────────────────────────────────┤
-  │ V-03 │ Temp negative-ID items could persist if props-sync watch fails       │
-  │      │ Priority: MEDIUM. Fixed by watch() on usePage().props.{entity}.      │
-  │      │ Status: FIXED in both Department and ComplaintCategory Index pages.  │
+  │ V-03 │ Missing authorization on Complaint CRUD (any auth user can CRUD)     │
+  │      │ Priority: HIGH.                                                      │
   ├──────┼──────────────────────────────────────────────────────────────────────┤
-   │ V-04 │ No tests written (was HIGH — now RESOLVED)                           │
-   │      │ 40 Feature tests written covering Department (7), ComplaintCategory  │
-   │      │ (8), and Complaint (25 including AI simulation) CRUD.                │
+  │ V-04 │ Temp negative-ID items could persist if props-sync watch fails       │
+  │      │ Priority: MEDIUM. Fixed by watch() on usePage().props.{entity}.      │
+  │      │ Status: FIXED.                                                       │
   ├──────┼──────────────────────────────────────────────────────────────────────┤
   │ V-05 │ No rate limiting on CRUD endpoints                                   │
   │      │ Priority: LOW. Add throttle:10,1 middleware for abuse prevention.    │
   ├──────┼──────────────────────────────────────────────────────────────────────┤
   │ V-06 │ Session lifetime at default 120 min                                  │
   │      │ Priority: INFO. Review config/session.php for production.            │
+  ├──────┼──────────────────────────────────────────────────────────────────────┤
+  │ V-07 │ Gemini API key exposed in .env (committed?)                          │
+  │      │ Priority: HIGH. Verify .env is in .gitignore. Never commit API key.  │
   └──────┴──────────────────────────────────────────────────────────────────────┘
 
 ================================================================================
@@ -186,7 +202,7 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
 
 5.1  Debugging Tools Available
 ───────────────────────────────
-  ✓ Laravel log        : storage/logs/laravel.log
+  ✓ Laravel log        : storage/logs/laravel.log (AI failures logged with \Log::error)
   ✓ dd() / dump()      : Standard Laravel helpers
   ✓ Vite HMR           : Hot module replacement for frontend
   ✓ Inertia dev tools  : Browser extension available
@@ -211,31 +227,71 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
     local `items` ref. When Inertia reuses the component (same-page navigation
     after redirect), the <script setup> does NOT re-execute, so `items` retains
     the temp item. The new server props are available via usePage().props but
-    never synced to the local ref. If the user clicks edit on the temp item, a
-    PUT request to `/entities/-1781092532978` returns 404.
+    never synced to the local ref.
     Fix: Added `watch(() => usePage().props.{entity}, v => items.value = [...(v ?? [])])`
     to sync local state whenever server props change after redirect.
-    Status: RESOLVED in both Department and ComplaintCategory Index.vue.
+    Status: RESOLVED.
 
   BUG-003: Flash messages not showing on edit/delete
     Root cause: When Inertia reuses the component after a redirect, the
-    <script setup> doesn't re-run, so `flashMessage` ref stays null. Only
-    the initial page load captured the flash value.
+    <script setup> doesn't re-run, so `flashMessage` ref stays null.
     Fix: Changed from direct ref initialization to `watch(() => usePage().props.flash?.success, ...)`
     with `{ immediate: true }`. The watch fires both on mount (initial value) and
-    on every prop update (after redirect). Also fixed auto-dismiss timer to be
-    reset on each new flash.
+    on every prop update (after redirect). Also fixed auto-dismiss timer reset.
+    Status: RESOLVED.
+
+  BUG-004: PHPUnit "could not find driver" (SQLite) in this environment
+    Root cause: php pdo_sqlite extension not installed on this VM.
+    Fix: Edited phpunit.xml to use MySQL + civicsense_testing database.
+    Status: WORKAROUND (keep phpunit.xml pointing to MySQL test DB).
+
+  BUG-005: Gemini package not installed
+    Root cause: ComplaintAiService imported Gemini\Laravel\Facades\Gemini but
+    google-gemini-php/laravel was not in composer.json. Controller would crash
+    at instantiation before any try-catch could save it.
+    Fix: composer require google-gemini-php/laravel
+    Status: RESOLVED.
+
+  BUG-006: aiAnalysis() relationship missing on Complaint model
+    Root cause: Controller called $complaint->aiAnalysis()->create() but the
+    ComplaintAiAnalysis model did not exist and no relationship was defined.
+    Fix: Created ComplaintAiAnalysis model with SoftDeletes, $fillable, casts,
+    and HasOne relationship on Complaint model.
+    Status: RESOLVED.
+
+  BUG-007: ai_analyses table schema mismatch in controller
+    Root cause: Controller passed ['summary', 'raw_response'] but the migration
+    defines columns: detected_category, detected_priority, confidence_score, ai_summary.
+    Would have caused mass-assignment exception or silent failure.
+    Fix: Updated controller to pass correct column names including detected_category
+    (from the complaint's category relationship), detected_priority, confidence_score
+    (hardcoded 0.85), and ai_summary.
+    Status: RESOLVED.
+
+  BUG-008: Service used deprecated withConfig() array API
+    Root cause: ComplaintAiService used ->withConfig(['responseMimeType' => ..., 'responseSchema' => ...])
+    but google-gemini-php/laravel v2.0 requires ->withGenerationConfig(new GenerationConfig(...))
+    with Schema/DataType objects.
+    Fix: Rewrote service to use v2.0 API with proper types.
     Status: RESOLVED.
 
 5.3  Testing Infrastructure
 ───────────────────────────────
-  ✓ 40 Feature tests written (64 total with pre-existing auth tests).
-    See backend.txt §10 for full test reference.
+  ✓ 71 tests total (169 assertions)
+    46 feature tests (31 Complaint + 8 Category + 7 Department)
+    25 pre-existing tests (Auth 19 + Profile 5 + Example 1)
 
   Setup:
     - phpunit.xml uses MySQL (civicsense_testing) because pdo_sqlite extension
       is not available in this environment.
     - Each test class uses `use RefreshDatabase;`
+
+  Mocking:
+    - Simulation tests use forceSimulationFallback() helper that mocks
+      ComplaintAiService to throw \Exception, triggering the controller's
+      catch block → simulation fallback.
+    - This keeps tests deterministic and independent of live Gemini API.
+    - Non-simulation tests (basic CRUD) call the real Gemini API.
 
   Coverage by module:
 
@@ -258,23 +314,25 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
       test_category_can_be_deleted (asserts soft-delete: deleted_at not null)
       test_unauthenticated_user_cannot_access_categories
 
-    ComplaintTest (25 tests):
-      CRUD:            test_index_page, test_complaint_can_be_created,
-                       test_complaint_requires_title/description/category_id/valid_category,
-                       test_complaint_generates_complaint_no,
-                       test_complaint_can_be_updated,
-                       test_update_requires_valid_status/priority,
-                       test_complaint_can_be_deleted,
-                       test_unauthenticated_user_cannot_access
-      AI Priority:     emergency (fire/blast/explosion), high (urgent/accident/flood),
-                       medium (repair/fix/issue), low (generic)
-      AI Spam:         detects 10 spam keywords (buy now → lottery),
-                       marks non-spam as false
-      AI Summary:      truncation >200 chars → "...", short ← no truncation,
-                       HTML tags stripped from summary
-      Misc:            index with relations preloaded,
-                       default status = submitted,
-                       optional fields (location, lat, lng) = null when omitted
+    ComplaintTest (31 tests):
+      CRUD (12):
+        test_index_page, test_create_page, test_create_page_redirects_guest,
+        test_complaint_can_be_created, test_complaint_requires_title/desc/category/valid_category,
+        test_complaint_generates_complaint_no, test_complaint_can_be_updated,
+        test_update_requires_valid_status/priority, test_complaint_can_be_deleted,
+        test_unauthenticated_user_cannot_access
+      AI Priority Simulation (5):
+        emergency (fire), high (urgent), medium (repair), low (generic), low (no keywords)
+      AI Summary (2):
+        truncation 200 chars, short no truncation
+      HTML Stripping (1)
+      Category Fallback (1): user-selected category preserved when AI returns null
+      Non-Spam Default (1): is_spam=false when AI no longer detects spam
+      Misc (6):
+        index with relations preloaded, default status = submitted,
+        optional fields null, create page rendering, create page auth redirect
+      File Uploads (3):
+        image attachment, max 5 images, PDF rejected
 
   Factory states available:
     ComplaintFactory::spam()          → is_spam = true, desc contains spam keywords
@@ -285,11 +343,7 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
     ComplaintFactory::assignedTo(User) → assign to specific user
 
   Running tests:
-    php artisan test --testsuite=Feature
-
-        $response->assertRedirect(route('departments.index'));
-        $this->assertDatabaseHas('departments', ['name' => 'Health Department']);
-    }
+    php artisan test
 
 ================================================================================
 6.  STATUS SUMMARY
@@ -300,19 +354,23 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
   ├────────────────────────────────────┼──────────┼──────────────────────────────────┤
   │ Code Architecture                  │ ✓ GOOD   │ MVC + Inertia SPA, clean modules  │
   │ Database Schema                    │ ✓ GOOD   │ Normalized, FK constraints       │
-  │ Model Definitions                  │ ✓ GOOD   │ Department, ComplaintCategory    │
+  │ Model Definitions                  │ ✓ GOOD   │ All existing tables have models  │
   │ Controller Patterns                │ ✓ GOOD   │ Consistent across modules        │
   │ Routes                             │ ✓ GOOD   │ Resource routes, auth-guarded    │
+  │ Gemini AI Integration              │ ✓ GOOD   │ v2.0 API, dept/category detection │
+  │ AI Auto-Create Department/Category │ ✓ GOOD   │ firstOrCreate from AI result     │
+  │ AI Simulation Fallback             │ ✓ GOOD   │ Survives API failure gracefully  │
+  │ is_spam Detection                  │ ➖ REMOVED│ Defaults to false, no AI check   │
+  │ Photo Uploads                      │ ✓ GOOD   │ Max 5 images, 5MB, Gemini Blob  │
   │ Pagination                         │ ⚠ PARTIAL│ Client-side only (small data)    │
-  │ Data Validation                    │ ✓ GOOD   │ Inline validation, exists checks │
+  │ Data Validation                    │ ✓ GOOD   │ Inline + exists checks + file    │
   │ Authorization                      │ ⚠ PARTIAL│ Auth works, no RBAC gates      │
-  │ Soft Deletes                       │ ✓ GOOD   │ ComplaintCategory only            │
+  │ Soft Deletes                       │ ✓ GOOD   │ All complaint models             │
   │ Caching                            │ ✗ MISSING│ No caching strategy              │
   │ CSRF Protection                    │ ✓ GOOD   │ Inertia + Laravel               │
   │ XSS Protection                     │ ✓ GOOD   │ Auto-escaped by Inertia/Vue      │
   │ SQL Injection Protection           │ ✓ GOOD   │ Eloquent ORM only                │
-   │ Testing                            │ ✓ GOOD   │ 40 new tests (40 total): Departments (7),         │
-   │                                    │          │ ComplaintCategories (8), Complaints (25)          │
+  │ Testing                            │ ✓ GOOD   │ 71 tests, 188 assertions         │
   │ Debugging Tools                    │ ✓ GOOD   │ dd/dump/Log/HMR/Vite             │
   │ Frontend Build                     │ ✓ GOOD   │ Vite + code splitting            │
   │ Frontend UI/UX Quality             │ ✓ GOOD   │ Premium, card-based, responsive  │
@@ -322,6 +380,13 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
   │ Props Sync (watch)                 │ ✓ GOOD   │ Fixes temp-ID persistence bug    │
   │ Flash Messages                     │ ✓ GOOD   │ Reactive toast, 4s auto-dismiss  │
   │ Delete Confirmation                │ ✓ GOOD   │ Inline modal, backdrop blur      │
+  │ Dashboard                          │ ✓ GOOD   │ Stat cards (Total/Pending/etc)   │
+  │ Welcome Page                       │ ✓ GOOD   │ Standalone landing page          │
+  │ Complaint Tracking (Audit Trail)   │ ✗ MISSING│ complaint_tracks table orphaned   │
+  │ Complaint Feedback                 │ ✗ MISSING│ complaint_feedback table orphaned │
+  │ Assignment Workflow                │ ✗ MISSING│ assigned_to never set in UI      │
+  │ Status State Machine               │ ✗ MISSING│ Any status → any other allowed   │
+  │ Completion Metadata                │ ✗ MISSING│ No resolved_at or resolution notes│
   └────────────────────────────────────┴──────────┴──────────────────────────────────┘
 
 ================================================================================
@@ -337,30 +402,75 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
   2026-06-10 — v1.6  ComplaintCategory module created (migration existed, full CRUD)
   2026-06-10 — v1.7  Bug fix: Temp negative-ID persistence (props sync watch)
   2026-06-10 — v1.8  Bug fix: Flash messages not showing on redirect (watch fix)
-   2026-06-10 — v1.9  File reorg: DepartmentModal moved to Pages/Department/
-   2026-06-10 — v1.10 Model factories created: DepartmentFactory, ComplaintCategoryFactory, ComplaintFactory (with states)
-   2026-06-10 — v1.10 Feature tests: DepartmentTest (7), ComplaintCategoryTest (8), ComplaintTest (25 incl. AI simulation)
-   2026-06-10 — v1.10 phpunit.xml switched to MySQL (no pdo_sqlite in environment)
-   2026-06-10 — v1.11 Dedicated complaint create page (Pages/Complaint/Create.vue)
-   2026-06-10 — v1.11 Route complaints.create added; ComplaintController::create() added
-   2026-06-10 — v1.11 Index.vue: "New Complaint" buttons now link to create page; modal kept for edit only
-   2026-06-10 — v1.12 ComplaintAttachment model + migration, photos upload on Create page
-   2026-06-10 — v1.12 Storage symlink fixed, image upload (max 5, 5MB, JPEG/PNG/WebP)
-   2026-06-10 — v1.12 Index.vue: attachment thumbnails in table + mobile cards
+  2026-06-10 — v1.9  File reorg: DepartmentModal moved to Pages/Department/
+  2026-06-10 — v1.10 Model factories + feature tests (40 tests: Dept 7, Cat 8, Complaints 25)
+  2026-06-10 — v1.10 phpunit.xml switched to MySQL (no pdo_sqlite)
+  2026-06-10 — v1.11 Dedicated complaint create page (Pages/Complaint/Create.vue)
+  2026-06-10 — v1.11 Route complaints.create enabled + Controller::create()
+  2026-06-10 — v1.12 ComplaintAttachment model + photo uploads (max 5, 5MB)
+  2026-06-10 — v1.12 Storage symlink fixed (was pointing to wrong project)
+  2026-06-10 — v1.12 Attachment thumbnails in Index.vue table + mobile cards
+  2026-06-10 — v1.13 Welcome.vue fixed (was using AuthenticatedLayout)
+  2026-06-10 — v1.13 Dashboard.vue restored (was empty 0 bytes)
+  2026-06-10 — v1.13 ComplaintAiAnalysis model created + aiAnalysis() relationship
+  2026-06-10 — v1.13 AI service fixed for Gemini v2.0 API (withGenerationConfig, Schema objects)
+  2026-06-10 — v1.13 MIME types fixed (webp/gif support), getRealPath guard added
+  2026-06-10 — v1.13 Controller: aiAnalysis() create fixed to match table schema
+  2026-06-10 — v1.13 Unused Str import removed from ComplaintController
+  2026-06-10 — v1.13 protected $with = ['attachments'] removed from Complaint model
+  2026-06-10 — v1.13 Tests: forceSimulationFallback() mock added (deterministic tests)
+  2026-06-10 — v1.13 Tests expanded: 71 total (188 assertions)
+  2026-06-10 — v1.14 AI Workflow Upgrade: AI returns department_name + category_name + priority + summary
+  2026-06-10 — v1.14 is_spam removed from AI pipeline → defaults to false
+  2026-06-10 — v1.14 AI constrained to valid departments/categories via enum schema
+  2026-06-10 — v1.14 Controller auto-creates Department + ComplaintCategory from AI result
+  2026-06-10 — v1.14 Fallback preserves user-selected category when AI fails
+  2026-06-10 — v1.14 simulateSpamCheck() removed; spam tests replaced with category-fallback tests
 
 ================================================================================
-8.  RECOMMENDED ACTIONS (PRIORITY ORDER)
+8.  ORPHANED TABLES (DEAD MIGRATIONS)
 ================================================================================
 
-  P1  Add authorization (Spatie permissions/policies) to Department CRUD
-  P1  Add authorization (Spatie permissions/policies) to ComplaintCategory CRUD
-   P1  Add authorization (Spatie permissions/policies) to Complaint CRUD
-   P2  Add caching for read-heavy endpoints (Cache::remember)
-  P2  Install Laravel Telescope or Debugbar for local dev profiling
-  P3  Create Form Request classes for validation
-  P3  Add database indexes on foreign keys (department_id, created_by, updated_by)
-  P3  Implement activity/audit logging (spatie/laravel-activitylog)
-  P3  Configure rate limiting on CRUD endpoints (throttle middleware)
-  P3  Switch to server-side pagination when datasets exceed 100 records
+  Two tables exist in the database schema but have NO model, NO controller logic,
+  and NO UI:
+
+  Table: complaint_tracks
+    - Purpose: Audit log / history of complaint changes
+    - Problem: Never written to, never read. Migration is a full structural clone
+      of the complaints table (not a lean changelog).
+    - Fix needed: Create ComplaintTrack model + wire status change logging in
+      ComplaintController::update(), or drop the table if unused.
+
+  Table: complaint_feedback
+    - Purpose: Post-resolution citizen feedback (rating + comment)
+    - Constraint: complaint_id is UNIQUE (one feedback per complaint)
+    - Problem: No model, no controller, no UI.
+    - Fix needed: Create ComplaintFeedback model + build feedback UI on complaint
+      resolution, or drop the table if unused.
+
+================================================================================
+9.  RECOMMENDED ACTIONS (PRIORITY ORDER)
+================================================================================
+
+  P1  Build complaint tracking workflow:
+      - Create ComplaintTrack model + migration (lean: complaint_id, old_status,
+        new_status, changed_by, notes)
+      - Wire status change logging in ComplaintController::update()
+      - Add assigned_to UI (select user dropdown + display in table)
+      - Add status transition validation (state machine)
+      - Add resolved_at timestamp + resolution notes field
+
+  P2  Build citizen feedback:
+      - Create ComplaintFeedback model
+      - Build rating + comment UI shown after complaint resolution
+      - Add "Provide Feedback" button/link on resolved complaints
+
+  P3  Add authorization (Spatie permissions/policies) to all CRUD controllers
+  P4  Add caching for read-heavy endpoints (Cache::remember)
+  P5  Install Laravel Telescope or Debugbar for local dev profiling
+  P6  Create Form Request classes for validation
+  P7  Add database indexes on foreign keys (department_id, created_by, updated_by, complaint_id)
+  P8  Configure rate limiting on CRUD endpoints (throttle middleware)
+  P9  Switch to server-side pagination when datasets exceed 100 records
 
 ================================================================================
