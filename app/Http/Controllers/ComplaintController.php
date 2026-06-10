@@ -21,13 +21,17 @@ class ComplaintController extends Controller
     {
         $this->aiService = $aiService;
     }
-    public function create(): Response
-    {
-        return Inertia::render('Complaint/Create', [
-            'departments' => Department::orderBy('name')->get(['id', 'name']),
-            'categories' => ComplaintCategory::with('department')->orderBy('name')->get(),
-        ]);
-    }
+   public function create(): Response
+{
+    return Inertia::render('Complaint/Create', [
+        'departments' => Department::orderBy('name')->get(['id', 'name']),
+
+        'categories' => ComplaintCategory::select('id', 'name', 'department_id')
+            ->with('department:id,name')
+            ->orderBy('name')
+            ->get(),
+    ]);
+}
 
     public function index(): Response
     {
