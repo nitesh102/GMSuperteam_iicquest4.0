@@ -1,158 +1,300 @@
 <template>
     <Modal :show="show" @close="closeModal">
-        <div>
-            <div class="flex items-center gap-3.5 mb-6">
-                <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-building text-indigo-600"></i>
+        <div class="bg-white rounded-2xl p-8 max-w-3xl mx-auto">
+
+            <!-- Header -->
+            <div class="flex items-center gap-4 mb-8">
+                <div
+                    class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                    <i class="fas fa-building text-white text-lg"></i>
                 </div>
+
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900">
-                        {{ isEditMode ? 'Edit Department' : 'New Department' }}
+                    <h3 class="text-2xl font-bold text-gray-900">
+                        {{ isEditMode ? 'Edit Department' : 'Create Department' }}
                     </h3>
-                    <p class="text-sm text-gray-500 mt-0.5">
-                        {{ isEditMode ? 'Update the department details below.' : 'Add a new department to organize complaints.' }}
+
+                    <p class="text-sm text-gray-500 mt-1">
+                        Manage departments responsible for handling civic complaints.
                     </p>
                 </div>
             </div>
 
-            <form @submit.prevent="submitForm" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Department Name <span class="text-red-400">*</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-tag text-gray-400 text-sm"></i>
-                        </div>
+            <!-- Form -->
+            <form @submit.prevent="submitForm">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Department Name -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Department Name
+                        </label>
+
                         <input
                             type="text"
                             v-model="form.name"
-                            :class="[
-                                'w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-150 placeholder:text-gray-400',
-                                form.errors.name
-                                    ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
-                                    : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
-                            ]"
-                            placeholder="e.g. Health Department"
-                            required
+                            placeholder="Road Maintenance Department"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition"
                         />
-                    </div>
-                    <p v-if="form.errors.name" class="mt-1.5 text-sm text-red-600 flex items-center gap-1.5">
-                        <i class="fas fa-exclamation-circle text-xs"></i>
-                        <span>{{ form.errors.name }}</span>
-                    </p>
-                </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
-                    <div class="relative">
-                        <textarea
-                            v-model="form.description"
-                            rows="4"
-                            :class="[
-                                'w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-150 resize-none placeholder:text-gray-400',
-                                form.errors.description
-                                    ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
-                                    : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
-                            ]"
-                            placeholder="Describe the department's purpose and responsibilities..."
-                            maxlength="1000"
-                        ></textarea>
-                    </div>
-                    <div class="flex items-center justify-between mt-1.5">
-                        <p v-if="form.errors.description" class="text-sm text-red-600 flex items-center gap-1.5">
-                            <i class="fas fa-exclamation-circle text-xs"></i>
-                            <span>{{ form.errors.description }}</span>
+                        <p
+                            v-if="form.errors.name"
+                            class="mt-2 text-sm text-red-600">
+                            {{ form.errors.name }}
                         </p>
-                        <p v-else></p>
-                        <p class="text-xs text-gray-400">{{ form.description.length }}/1000</p>
+                    </div>
+
+                    <!-- Department Icon -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Department Icon
+                        </label>
+
+                        <select
+                            v-model="form.icon"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600">
+
+                            <option value="fa-road">🛣 Road Department</option>
+                            <option value="fa-hospital">🏥 Health</option>
+                            <option value="fa-school">🏫 Education</option>
+                            <option value="fa-tree">🌳 Environment</option>
+                            <option value="fa-water">💧 Water Supply</option>
+                            <option value="fa-bolt">⚡ Electricity</option>
+                            <option value="fa-trash">🗑 Waste Management</option>
+                            <option value="fa-shield-alt">🚓 Public Safety</option>
+
+                        </select>
+                    </div>
+
+                    <!-- Department Color -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Department Color
+                        </label>
+
+                        <div class="flex items-center gap-4">
+                            <input
+                                type="color"
+                                v-model="form.color"
+                                class="w-16 h-12 border rounded-lg cursor-pointer"
+                            />
+
+                            <span
+                                class="text-sm font-medium text-gray-500">
+                                {{ form.color }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Department Status
+                        </label>
+
+                        <select
+                            v-model="form.status"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3">
+
+                            <option value="active">
+                                Active
+                            </option>
+
+                            <option value="inactive">
+                                Inactive
+                            </option>
+
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Description -->
+                <div class="mt-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Description
+                    </label>
+
+                    <textarea
+                        v-model="form.description"
+                        rows="5"
+                        maxlength="1000"
+                        placeholder="Describe department responsibilities..."
+                        class="w-full rounded-xl border border-slate-300 px-4 py-3 resize-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600">
+                    </textarea>
+
+                    <!-- Progress -->
+                    <div class="mt-3">
+                        <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                                class="h-full bg-blue-600 transition-all"
+                                :style="{ width: `${(form.description.length / 1000) * 100}%` }">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between mt-2">
+                            <span
+                                v-if="form.errors.description"
+                                class="text-red-600 text-sm">
+                                {{ form.errors.description }}
+                            </span>
+
+                            <span
+                                class="ml-auto text-xs text-gray-500">
+                                {{ form.description.length }}/1000
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <!-- Preview Card -->
+                <div
+                    class="mt-8 p-5 rounded-2xl border border-slate-200 bg-slate-50">
+
+                    <div class="flex items-center gap-4">
+
+                        <div
+                            class="w-12 h-12 rounded-xl flex items-center justify-center text-white"
+                            :style="{ backgroundColor: form.color }">
+
+                            <i
+                                class="fas"
+                                :class="form.icon">
+                            </i>
+
+                        </div>
+
+                        <div>
+                            <h4 class="font-semibold text-gray-900">
+                                {{ form.name || 'Department Preview' }}
+                            </h4>
+
+                            <p class="text-sm text-gray-500">
+                                {{ form.description || 'Department description will appear here.' }}
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div
+                    class="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200">
+
                     <button
                         type="button"
                         @click="closeModal"
-                        class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-150"
-                    >
+                        class="px-5 py-3 rounded-xl border border-slate-300 text-gray-700 font-medium hover:bg-slate-50 transition">
+
                         Cancel
+
                     </button>
+
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        :class="[
-                            'px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-all duration-150 inline-flex items-center gap-2',
-                            form.processing
-                                ? 'bg-indigo-400 cursor-not-allowed'
-                                : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md'
-                        ]"
-                    >
-                        <span v-if="form.processing" class="inline-flex items-center gap-2">
+                        class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md transition flex items-center gap-2 disabled:opacity-50">
+
+                        <template v-if="form.processing">
                             <i class="fas fa-spinner fa-spin"></i>
                             Saving...
-                        </span>
-                        <span v-else class="inline-flex items-center gap-2">
-                            <i class="fas" :class="isEditMode ? 'fa-save' : 'fa-plus'"></i>
+                        </template>
+
+                        <template v-else>
+                            <i
+                                class="fas"
+                                :class="isEditMode ? 'fa-save' : 'fa-plus'">
+                            </i>
+
                             {{ isEditMode ? 'Update Department' : 'Create Department' }}
-                        </span>
+                        </template>
+
                     </button>
+
                 </div>
+
             </form>
+
         </div>
     </Modal>
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
-import { useForm } from '@inertiajs/vue3';
-import Modal from '@/Components/Modal.vue';
+import { computed, watch } from 'vue'
+import { useForm } from '@inertiajs/vue3'
+import Modal from '@/Components/Modal.vue'
 
 const props = defineProps({
     show: Boolean,
     department: Object,
-});
+})
 
-const emit = defineEmits(['close', 'success', 'submitting']);
+const emit = defineEmits([
+    'close',
+    'success',
+    'submitting'
+])
 
-const isEditMode = computed(() => !!props.department);
+const isEditMode = computed(() => !!props.department)
 
 const form = useForm({
-    name: props.department?.name || '',
-    description: props.department?.description || '',
-});
+    name: '',
+    description: '',
+    icon: 'fa-building',
+    color: '#2563EB',
+    status: 'active',
+})
 
-watch(() => props.department, (newDept) => {
-    if (newDept) {
-        form.name = newDept.name || '';
-        form.description = newDept.description || '';
-    }
-}, { immediate: true });
+watch(
+    () => props.department,
+    (dept) => {
+        if (dept) {
+            form.name = dept.name || ''
+            form.description = dept.description || ''
+            form.icon = dept.icon || 'fa-building'
+            form.color = dept.color || '#2563EB'
+            form.status = dept.status || 'active'
+        }
+    },
+    { immediate: true }
+)
 
 function closeModal() {
-    form.reset();
-    emit('close');
+    form.reset()
+
+    emit('close')
 }
 
 function submitForm() {
-    const payload = { name: form.name, description: form.description };
     if (isEditMode.value) {
-        form.put(route('departments.update', props.department.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                emit('submitting', { ...payload, id: props.department.id, isEdit: true });
-                emit('success');
-                closeModal();
-            },
-        });
+        form.put(
+            route(
+                'departments.update',
+                props.department.id
+            ),
+            {
+                preserveScroll: true,
+
+                onSuccess: () => {
+                    emit('success')
+                    closeModal()
+                },
+            }
+        )
     } else {
-        form.post(route('departments.store'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                emit('submitting', { ...payload, isEdit: false });
-                emit('success');
-                closeModal();
-            },
-        });
+        form.post(
+            route('departments.store'),
+            {
+                preserveScroll: true,
+
+                onSuccess: () => {
+                    emit('success')
+                    closeModal()
+                },
+            }
+        )
     }
 }
 </script>

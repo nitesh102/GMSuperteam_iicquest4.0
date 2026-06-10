@@ -474,3 +474,21 @@ Focus      : Architecture, Optimization, Security, Debugging, Testing
   P9  Switch to server-side pagination when datasets exceed 100 records
 
 ================================================================================
+RECENT UPDATES (Frontend)
+================================================================================
+
+-  ComplaintModal.vue updated for status history remarks:
+   - Conditional remarks textarea (rows=3) shown only when user changes the
+     current_status select (compared against initialStatus).
+   - form.remarks included in payload for edit submissions.
+   - Follows existing modal styling, error display, and optimistic emit flow.
+   - Backend already wired to create ComplaintStatusHistory rows on status change.
+-  Added "Status History" section inside ComplaintModal.vue (edit mode only).
+   - Renders only if complaint.statusHistories?.length > 0 (uses the hasMany
+     relationship data if provided on the prop).
+   - Displays old_status → new_status (with matching colored status pills),
+     remarks when present, and compact created_at date/time.
+   - Minimal consistent design (bordered gray cards, small typography).
+   - No changes to Index.vue, controllers, or data loading.
+
+================================================================================
