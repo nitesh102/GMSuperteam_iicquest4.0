@@ -116,12 +116,16 @@
               </span>
               <input
                 type="email"
-                v-model="email"
+                v-model="form.email"
                 placeholder="Email Address"
                 class="w-full border-none bg-transparent py-4 pl-12 pr-4 text-[15px] text-slate-900 outline-none font-inherit box-border"
                 required
               />
             </div>
+            <p v-if="form.errors.email" class="mt-1 text-sm text-red-600 flex items-center gap-1.5">
+              <i class="fas fa-exclamation-circle text-xs"></i>
+              <span>{{ form.errors.email }}</span>
+            </p>
 
             <div class="relative w-full flex items-center border border-slate-200 rounded-xl bg-[#E8EEF8] focus-within:bg-white focus-within:border-[#091020] focus-within:shadow-[0_0_0_4px_rgba(9,16,32,0.03)] transition-all duration-200 box-border">
               <span class="absolute left-4 flex items-center pointer-events-none">
@@ -129,7 +133,7 @@
               </span>
               <input
                 :type="showPassword ? 'text' : 'password'"
-                v-model="password"
+                v-model="form.password"
                 placeholder="Password"
                 class="w-full border-none bg-transparent py-4 pl-12 pr-12 text-[15px] text-slate-900 outline-none font-inherit box-border"
                 required
@@ -138,17 +142,31 @@
                 <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 fill-current"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
               </span>
             </div>
+            <p v-if="form.errors.password" class="mt-1 text-sm text-red-600 flex items-center gap-1.5">
+              <i class="fas fa-exclamation-circle text-xs"></i>
+              <span>{{ form.errors.password }}</span>
+            </p>
 
             <div class="flex justify-between items-center text-sm mt-[2px]">
               <label class="flex items-center gap-2 cursor-pointer select-none text-slate-600">
-                <input type="checkbox" v-model="rememberMe" class="w-[17px] h-[17px] accent-[#091020] cursor-pointer rounded" />
+                <input type="checkbox" v-model="form.remember" class="w-[17px] h-[17px] accent-[#091020] cursor-pointer rounded" />
                 <span>Remember me</span>
               </label>
               <a href="#forgot" class="text-[#E63946] font-medium no-underline hover:underline">Forgot Password?</a>
             </div>
 
-            <button type="submit" class="w-full bg-[#091020] text-white border-none py-4 rounded-xl text-[15px] font-semibold cursor-pointer shadow-md hover:bg-slate-800 transition-colors duration-200 mt-2">
-              Login
+            <button 
+              type="submit" 
+              :disabled="form.processing"
+              class="w-full bg-[#091020] text-white border-none py-4 rounded-xl text-[15px] font-semibold cursor-pointer shadow-md hover:bg-slate-800 transition-colors duration-200 mt-2 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <span v-if="form.processing">
+                <i class="fas fa-spinner fa-spin"></i>
+                Logging in...
+              </span>
+              <span v-else>
+                Login
+              </span>
             </button>
           </form>
 
@@ -166,14 +184,20 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 
-// Local Reactive States
-const email = ref('admin@gmail.com');
-const password = ref('••••••••');
-const rememberMe = ref(false);
+// Inertia Form for login submission
+const form = useForm({
+    email: 'admin@gmail.com',
+    password: 'admin@123',
+    remember: false,
+});
+
 const showPassword = ref(false);
 
 const executeLogin = () => {
-  console.log('Credentials validated successfully and processed securely.');
+    form.post(route('login'), {
+        onFinish: () => form.reset('password'),
+    });
 };
 </script>

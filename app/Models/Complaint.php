@@ -75,9 +75,4 @@ class Complaint extends Model
     {
         return $this->hasOne(ComplaintAiAnalysis::class, 'complaint_id');
     }
-
-    public function statusHistories(): HasMany
-    {
-        return $this->hasMany(ComplaintStatusHistory::class)->orderBy('created_at');
-    }
 }

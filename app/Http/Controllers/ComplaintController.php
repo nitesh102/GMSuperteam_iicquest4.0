@@ -154,26 +154,11 @@ class ComplaintController extends Controller
             'location' => ['nullable', 'string', 'max:500'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'remarks' => ['nullable', 'string'],
         ]);
-
-        $oldStatus = $complaint->current_status;
 
         $validated['updated_by'] = $request->user()->id;
 
-        $remarks = $validated['remarks'] ?? null;
-        unset($validated['remarks']);
-
         $complaint->update($validated);
-
-        if ($oldStatus !== $validated['current_status']) {
-            $complaint->statusHistories()->create([
-                'old_status' => $oldStatus,
-                'new_status' => $validated['current_status'],
-                'remarks' => $remarks,
-                'changed_by' => $request->user()->id,
-            ]);
-        }
 
         return redirect()->route('complaints.index')
             ->with('success', 'Complaint updated successfully.');

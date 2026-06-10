@@ -289,62 +289,6 @@
                             </p>
                         </div>
                     </div>
-
-                    <div v-if="form.current_status !== initialStatus" class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                            Remarks / Note
-                        </label>
-                        <textarea
-                            v-model="form.remarks"
-                            rows="3"
-                            :class="[
-                                'w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-150 resize-none placeholder:text-gray-400',
-                                form.errors.remarks
-                                    ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
-                                    : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
-                            ]"
-                            placeholder="Reason for status change (optional)..."
-                        ></textarea>
-                        <p v-if="form.errors.remarks" class="mt-1.5 text-sm text-red-600 flex items-center gap-1.5">
-                            <i class="fas fa-exclamation-circle text-xs"></i>
-                            <span>{{ form.errors.remarks }}</span>
-                        </p>
-                    </div>
-
-                    <!-- Status History (only in edit mode, only if history records are loaded) -->
-                    <div v-if="complaint?.statusHistories?.length" class="mt-5">
-                        <hr class="border-gray-100 mb-3" />
-                        <p class="text-sm font-medium text-gray-700 mb-2">Status History</p>
-                        <div class="space-y-2">
-                            <div
-                                v-for="h in complaint.statusHistories"
-                                :key="h.id"
-                                class="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2 text-xs"
-                            >
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span
-                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset"
-                                        :class="statusBadgeClass(h.old_status)"
-                                    >
-                                        {{ statusLabel(h.old_status) }}
-                                    </span>
-                                    <i class="fas fa-arrow-right text-gray-400 text-[10px]"></i>
-                                    <span
-                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset"
-                                        :class="statusBadgeClass(h.new_status)"
-                                    >
-                                        {{ statusLabel(h.new_status) }}
-                                    </span>
-                                </div>
-                                <div v-if="h.remarks" class="mt-1 text-gray-600 leading-snug">
-                                    {{ h.remarks }}
-                                </div>
-                                <div class="mt-1 text-[10px] text-gray-400">
-                                    {{ formatDateTime(h.created_at) }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </template>
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
@@ -381,7 +325,7 @@
 </template>
 
 <script setup>
-import { computed, watch, ref } from 'vue';
+import { computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 
@@ -396,8 +340,6 @@ const emit = defineEmits(['close', 'success', 'submitting']);
 
 const isEditMode = computed(() => !!props.complaint);
 
-const initialStatus = ref('');
-
 const form = useForm({
     department_id: props.complaint?.category?.department_id || '',
     category_id: props.complaint?.category_id || '',
@@ -408,7 +350,6 @@ const form = useForm({
     longitude: props.complaint?.longitude || '',
     current_status: props.complaint?.current_status || 'submitted',
     priority: props.complaint?.priority || 'medium',
-    remarks: '',
 });
 
 const filteredCategories = computed(() => {
@@ -418,7 +359,6 @@ const filteredCategories = computed(() => {
 
 watch(() => props.complaint, (newComplaint) => {
     if (newComplaint) {
-        initialStatus.value = newComplaint.current_status || '';
         form.department_id = newComplaint.category?.department_id || '';
         form.category_id = newComplaint.category_id || '';
         form.title = newComplaint.title || '';
@@ -428,7 +368,6 @@ watch(() => props.complaint, (newComplaint) => {
         form.longitude = newComplaint.longitude || '';
         form.current_status = newComplaint.current_status || 'submitted';
         form.priority = newComplaint.priority || 'medium';
-        form.remarks = '';
     }
 }, { immediate: true });
 
@@ -484,7 +423,6 @@ function submitForm() {
     if (isEditMode.value) {
         payload.current_status = form.current_status;
         payload.priority = form.priority;
-        payload.remarks = form.remarks || null;
         payload.id = props.complaint.id;
         payload.isEdit = true;
         form.put(route('complaints.update', props.complaint.id), {
