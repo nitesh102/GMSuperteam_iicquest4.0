@@ -1,6 +1,9 @@
 <?php
 
 
+use App\Http\Controllers\ComplaintCategoryController;
+use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\ProfileController;
 
 use Illuminate\Foundation\Application;
@@ -25,8 +28,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    
-
+    Route::resource('departments', DepartmentController::class)->except(['create', 'edit', 'show']);
+    Route::resource('complaint-categories', ComplaintCategoryController::class)->except(['create', 'edit', 'show']);
+    Route::resource('complaints', ComplaintController::class)->except(['edit', 'show']);
 
 });
 

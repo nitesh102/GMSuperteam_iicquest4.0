@@ -58,6 +58,36 @@ const linkClass = (path) => [
                 </a>
             </li>
 
+            <!-- Management -->
+            <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                Management
+            </li>
+            <li v-else class="my-2 border-t border-gray-100 mx-1" />
+
+            <!-- Departments -->
+            <li>
+                <a :href="route('departments.index')" :class="linkClass('/departments')" @click="onLink">
+                    <i class="fas fa-building icon" :class="isActive('/departments') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                    <span v-if="!collapsed">Departments</span>
+                </a>
+            </li>
+
+            <!-- Complaint Categories -->
+            <li>
+                <a :href="route('complaint-categories.index')" :class="linkClass('/complaint-categories')" @click="onLink">
+                    <i class="fas fa-tags icon" :class="isActive('/complaint-categories') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                    <span v-if="!collapsed">Categories</span>
+                </a>
+            </li>
+
+            <!-- Complaints -->
+            <li>
+                <a :href="route('complaints.index')" :class="linkClass('/complaints')" @click="onLink">
+                    <i class="fas fa-flag icon" :class="isActive('/complaints') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                    <span v-if="!collapsed">Complaints</span>
+                </a>
+            </li>
+
             <!-- Profile -->
             <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                 Account

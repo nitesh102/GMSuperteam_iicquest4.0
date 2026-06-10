@@ -1,0 +1,366 @@
+================================================================================
+  CIVISENSE – BACKEND ANALYSIS REPORT
+================================================================================
+
+Date       : 2026-06-10
+Analyst    : Automated Static Analysis
+Scope      : Laravel 11 backend, Inertia.js + Vue 3 frontend
+Focus      : Architecture, Optimization, Security, Debugging, Testing
+
+================================================================================
+1.  SYSTEM ARCHITECTURE
+================================================================================
+
+1.1  High-Level Architecture
+─────────────────────────────
+
+  Browser ──Inertia.js──▶ Laravel 11 (REST/JSON) ──Eloquent──▶ MySQL
+     │                        │
+     │                        ├── Controllers (CRUD)
+     │                        ├── Middleware (Auth, Session, HandleInertia)
+     │                        ├── Spatie Permissions (RBAC)
+     │                        └── Validation (inline)
+     │
+     └── Vue 3 SPA (Composition API)
+         ├── Pages/       (per-route page components)
+         ├── Components/  (shared — Modal, Sidebar, DataTable)
+         ├── Layouts/     (AuthenticatedLayout, GuestLayout)
+         └── Inertia App  (app.js + Ziggy routes)
+
+  Data flow:
+    Page visit          → GET /{route} → Controller::index() → Inertia::render()
+    Form submit (create) → POST /{route} → Controller::store() → redirect + flash
+    Form submit (update) → PUT /{route}/{id} → Controller::update() → redirect + flash
+    Delete              → DELETE /{route}/{id} → Controller::destroy() → redirect + flash
+
+  Optimistic CRUD flow:
+    User action → local state update (instant) → HTTP request (background)
+    → redirect sync → props update → watch re-syncs local state
+
+1.2  Module Inventory
+──────────────────────
+
+  Module              | Model         | Controller                | Page(s)                         | Routes
+  ────────────────────|───────────────|───────────────────────────|─────────────────────────────────|──────────────────────────────
+  Auth                | User          | (Breeze)                  | Pages/Auth/*                   | auth.php
+  Profile             | User          | ProfileController         | Pages/Profile/*                | web.php
+  Dashboard           | —             | (closure)                 | Pages/Dashboard.vue            | web.php
+  Department          | Department    | DepartmentController      | Pages/Department/Index.vue     | departments (resource)
+  ComplaintCategory   | ComplaintCategory | ComplaintCategoryController | Pages/ComplaintCategory/   | complaint-categories (resource)
+                      |               |                           ├── Index.vue                    |
+                      |               |                           └── ComplaintCategoryModal.vue   |
+
+1.3  Key Architectural Decisions
+─────────────────────────────────
+
+  • Inertia.js SPA: No API endpoints; server returns JSON page data or redirects.
+  • Modal-based CRUD: No create/edit/show routes; all CRUD via modals on index page.
+  • Client-side list management: Search, sort, paginate entirely on frontend via
+    computed properties on a local reactive `items` ref.
+  • Optimistic updates: Local list mutated instantly; server syncs via redirect.
+  • Props sync: A `watch` on `usePage().props` catches server-side changes after
+    redirect and re-syncs the local `items` ref (critical fix for temp-ID bug).
+  • Flash messages: Shared via HandleInertiaRequests middleware, displayed as a
+    fixed-position toast, auto-dismiss after 4s, reactive via watch.
+
+================================================================================
+2.  OPTIMIZATION ANALYSIS
+================================================================================
+
+2.1  Database / Eloquent
+─────────────────────────
+  ✓ Eager Loading         : ComplaintCategory::with('department') in controller.
+  ✓ Pagination            : Client-side for small datasets (~8 items).
+                            For >100 items, switch to server-side ->paginate().
+  ✓ Indexes               : Primary keys indexed. Foreign keys (department_id,
+                            created_by, updated_by) could benefit from explicit indexes.
+  ✓ Soft Deletes          : ComplaintCategory uses SoftDeletes trait.
+  ✓ Query Scopes          : Not used. Consider local scopes if filter patterns emerge.
+
+2.2  Caching
+─────────────────────────
+  ✗ No caching strategy implemented.
+    - Department and ComplaintCategory lists are fetched on every page load.
+    - Cache::remember('departments.all', 3600, ...) recommended for read-heavy pages.
+    - Cache::forget(...) on store/update/destroy to invalidate.
+  ✗ Route/config caching not configured for production.
+
+2.3  Frontend Performance
+─────────────────────────
+  ✓ Vite code splitting : Each page is a separate chunk (lazy-loaded).
+  ✓ Tree-shaking        : ES module imports, only used code bundled.
+  ✓ Client-side sort/search/paginate : Zero server round-trips for data filtering.
+  ✓ Optimistic CRUD     : Local state updates instantly, no wait for server.
+  ✓ Props sync watch    : Prevents temp-ID items from persisting after redirect.
+
+2.4  Bundle Sizes (production build)
+─────────────────────────────────────
+  app.js                ~281 kB (gzip: ~100 kB) — Vue, Inertia, Ziggy, FontAwesome
+  Pages/Department/Index.vue  ~15.7 kB (gzip: ~4.7 kB)
+  Pages/ComplaintCategory/Index.vue  ~16.8 kB (gzip: ~4.9 kB)
+  Components/DepartmentModal.vue     ~4.7 kB (gzip: ~1.8 kB)
+  Pages/ComplaintCategory/ComplaintCategoryModal.vue  ~6.1 kB (gzip: ~2.1 kB)
+
+2.5  Recommendations
+─────────────────────
+  1. Add server-side pagination when dataset exceeds 100 records.
+  2. Implement cache layer: Cache::remember for department/category lists.
+  3. Add database indexes on foreign keys and created_at.
+  4. Use queue for email/notification dispatch in future features.
+
+================================================================================
+3.  SECURITY ANALYSIS
+================================================================================
+
+3.1  Authentication & Authorization
+────────────────────────────────────
+  ✓ Laravel Breeze (secure auth scaffolding, bcrypt hashing, CSRF protection).
+  ✓ Inertia auto-handles CSRF tokens on every request.
+  ✓ Spatie Permission installed and seeded (RolePermissionSeeder).
+  ✓ All CRUD routes behind 'auth' middleware group.
+
+  ✗ No authorization gates on DepartmentController or ComplaintCategoryController.
+    - Any authenticated user can create/update/delete any entity.
+    - Recommendation: Add Spatie middleware or Laravel Policies:
+        $this->middleware('permission:manage departments');
+        $this->middleware('permission:manage complaint categories');
+
+3.2  Input Validation
+─────────────────────
+  ✓ Both controllers validate: required, string, max:255/max:1000.
+  ✓ Mass-assignment protected via $fillable.
+  ✓ Existence checks: 'department_id' => 'exists:departments,id'.
+  ✓ XSS prevented: Inertia + Vue auto-escape all data.
+
+  ✗ No dedicated Form Request classes — validation inline (acceptable for current
+    complexity, extract when rules grow).
+
+3.3  SQL Injection
+─────────────────────
+  ✓ Eloquent ORM with parameterised queries. No raw DB::raw() found.
+
+3.4  CSRF / XSS / File Upload
+─────────────────────────────
+  ✓ CSRF: Handled by Laravel + Inertia.
+  ✓ XSS: Auto-escaped by Inertia/Vue. No v-html usage.
+  N/A File uploads: Not implemented yet.
+
+3.5  Additional Concerns
+─────────────────────────
+  • created_by / updated_by are set from $request->user()->id — safe.
+  • Soft deletes on ComplaintCategory prevent data loss.
+  • No rate limiting on CRUD endpoints (consider throttle middleware).
+  • No audit/activity logging (consider spatie/laravel-activitylog).
+
+================================================================================
+4.  VULNERABILITIES & ISSUES IDENTIFIED
+================================================================================
+
+  ┌──────┬──────────────────────────────────────────────────────────────────────┐
+  │ ID   │ Issue                                                                │
+  ├──────┼──────────────────────────────────────────────────────────────────────┤
+  │ V-01 │ Missing authorization on Department CRUD (any auth user can CRUD)    │
+  │      │ Priority: HIGH. Add Spatie permission middleware or Policy.          │
+  ├──────┼──────────────────────────────────────────────────────────────────────┤
+  │ V-02 │ Missing authorization on ComplaintCategory CRUD (same issue)         │
+  │      │ Priority: HIGH.                                                      │
+  ├──────┼──────────────────────────────────────────────────────────────────────┤
+  │ V-03 │ Temp negative-ID items could persist if props-sync watch fails       │
+  │      │ Priority: MEDIUM. Fixed by watch() on usePage().props.{entity}.      │
+  │      │ Status: FIXED in both Department and ComplaintCategory Index pages.  │
+  ├──────┼──────────────────────────────────────────────────────────────────────┤
+   │ V-04 │ No tests written (was HIGH — now RESOLVED)                           │
+   │      │ 40 Feature tests written covering Department (7), ComplaintCategory  │
+   │      │ (8), and Complaint (25 including AI simulation) CRUD.                │
+  ├──────┼──────────────────────────────────────────────────────────────────────┤
+  │ V-05 │ No rate limiting on CRUD endpoints                                   │
+  │      │ Priority: LOW. Add throttle:10,1 middleware for abuse prevention.    │
+  ├──────┼──────────────────────────────────────────────────────────────────────┤
+  │ V-06 │ Session lifetime at default 120 min                                  │
+  │      │ Priority: INFO. Review config/session.php for production.            │
+  └──────┴──────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+5.  DEBUGGING & TESTING
+================================================================================
+
+5.1  Debugging Tools Available
+───────────────────────────────
+  ✓ Laravel log        : storage/logs/laravel.log
+  ✓ dd() / dump()      : Standard Laravel helpers
+  ✓ Vite HMR           : Hot module replacement for frontend
+  ✓ Inertia dev tools  : Browser extension available
+  ✓ Browser DevTools   : Network tab for XHR inspection
+
+  Recommendations:
+    - Install barryvdh/laravel-debugbar for SQL query profiling
+    - Install laravel/telescope for request monitoring (local only)
+
+5.2  Known Bugs & Resolutions
+───────────────────────────────
+
+  BUG-001: DELETE /departments/{id} → 404
+    Root cause: Departments table had no data (fresh migration). Route model
+    binding could not resolve the ID, returning 404.
+    Fix: Created DepartmentSeeder with 8 realistic departments, called from
+    DatabaseSeeder. Used `firstOrCreate` for idempotent re-seeding.
+    Status: RESOLVED.
+
+  BUG-002: Temp negative-ID items appear in list after optimistic create
+    Root cause: Optimistic create adds an item with `id: -Date.now()` to the
+    local `items` ref. When Inertia reuses the component (same-page navigation
+    after redirect), the <script setup> does NOT re-execute, so `items` retains
+    the temp item. The new server props are available via usePage().props but
+    never synced to the local ref. If the user clicks edit on the temp item, a
+    PUT request to `/entities/-1781092532978` returns 404.
+    Fix: Added `watch(() => usePage().props.{entity}, v => items.value = [...(v ?? [])])`
+    to sync local state whenever server props change after redirect.
+    Status: RESOLVED in both Department and ComplaintCategory Index.vue.
+
+  BUG-003: Flash messages not showing on edit/delete
+    Root cause: When Inertia reuses the component after a redirect, the
+    <script setup> doesn't re-run, so `flashMessage` ref stays null. Only
+    the initial page load captured the flash value.
+    Fix: Changed from direct ref initialization to `watch(() => usePage().props.flash?.success, ...)`
+    with `{ immediate: true }`. The watch fires both on mount (initial value) and
+    on every prop update (after redirect). Also fixed auto-dismiss timer to be
+    reset on each new flash.
+    Status: RESOLVED.
+
+5.3  Testing Infrastructure
+───────────────────────────────
+  ✓ 40 Feature tests written (64 total with pre-existing auth tests).
+    See backend.txt §10 for full test reference.
+
+  Setup:
+    - phpunit.xml uses MySQL (civicsense_testing) because pdo_sqlite extension
+      is not available in this environment.
+    - Each test class uses `use RefreshDatabase;`
+
+  Coverage by module:
+
+    DepartmentTest (7 tests):
+      test_index_page_can_be_rendered
+      test_department_can_be_created
+      test_department_creation_requires_name
+      test_department_creation_name_cannot_exceed_255_chars
+      test_department_can_be_updated
+      test_department_can_be_deleted
+      test_unauthenticated_user_cannot_access_departments
+
+    ComplaintCategoryTest (8 tests):
+      test_index_page_can_be_rendered
+      test_category_can_be_created
+      test_category_creation_requires_department_id
+      test_category_creation_requires_valid_department
+      test_category_creation_requires_name
+      test_category_can_be_updated
+      test_category_can_be_deleted (asserts soft-delete: deleted_at not null)
+      test_unauthenticated_user_cannot_access_categories
+
+    ComplaintTest (25 tests):
+      CRUD:            test_index_page, test_complaint_can_be_created,
+                       test_complaint_requires_title/description/category_id/valid_category,
+                       test_complaint_generates_complaint_no,
+                       test_complaint_can_be_updated,
+                       test_update_requires_valid_status/priority,
+                       test_complaint_can_be_deleted,
+                       test_unauthenticated_user_cannot_access
+      AI Priority:     emergency (fire/blast/explosion), high (urgent/accident/flood),
+                       medium (repair/fix/issue), low (generic)
+      AI Spam:         detects 10 spam keywords (buy now → lottery),
+                       marks non-spam as false
+      AI Summary:      truncation >200 chars → "...", short ← no truncation,
+                       HTML tags stripped from summary
+      Misc:            index with relations preloaded,
+                       default status = submitted,
+                       optional fields (location, lat, lng) = null when omitted
+
+  Factory states available:
+    ComplaintFactory::spam()          → is_spam = true, desc contains spam keywords
+    ComplaintFactory::emergency()     → priority = emergency
+    ComplaintFactory::high()          → priority = high
+    ComplaintFactory::medium()        → priority = medium
+    ComplaintFactory::status(string)  → set specific current_status
+    ComplaintFactory::assignedTo(User) → assign to specific user
+
+  Running tests:
+    php artisan test --testsuite=Feature
+
+        $response->assertRedirect(route('departments.index'));
+        $this->assertDatabaseHas('departments', ['name' => 'Health Department']);
+    }
+
+================================================================================
+6.  STATUS SUMMARY
+================================================================================
+
+  ┌────────────────────────────────────┬──────────┬──────────────────────────────────┐
+  │ Category                           │ Status   │ Notes                            │
+  ├────────────────────────────────────┼──────────┼──────────────────────────────────┤
+  │ Code Architecture                  │ ✓ GOOD   │ MVC + Inertia SPA, clean modules  │
+  │ Database Schema                    │ ✓ GOOD   │ Normalized, FK constraints       │
+  │ Model Definitions                  │ ✓ GOOD   │ Department, ComplaintCategory    │
+  │ Controller Patterns                │ ✓ GOOD   │ Consistent across modules        │
+  │ Routes                             │ ✓ GOOD   │ Resource routes, auth-guarded    │
+  │ Pagination                         │ ⚠ PARTIAL│ Client-side only (small data)    │
+  │ Data Validation                    │ ✓ GOOD   │ Inline validation, exists checks │
+  │ Authorization                      │ ⚠ PARTIAL│ Auth works, no RBAC gates      │
+  │ Soft Deletes                       │ ✓ GOOD   │ ComplaintCategory only            │
+  │ Caching                            │ ✗ MISSING│ No caching strategy              │
+  │ CSRF Protection                    │ ✓ GOOD   │ Inertia + Laravel               │
+  │ XSS Protection                     │ ✓ GOOD   │ Auto-escaped by Inertia/Vue      │
+  │ SQL Injection Protection           │ ✓ GOOD   │ Eloquent ORM only                │
+   │ Testing                            │ ✓ GOOD   │ 40 new tests (40 total): Departments (7),         │
+   │                                    │          │ ComplaintCategories (8), Complaints (25)          │
+  │ Debugging Tools                    │ ✓ GOOD   │ dd/dump/Log/HMR/Vite             │
+  │ Frontend Build                     │ ✓ GOOD   │ Vite + code splitting            │
+  │ Frontend UI/UX Quality             │ ✓ GOOD   │ Premium, card-based, responsive  │
+  │ Responsive Design                  │ ✓ GOOD   │ Table→cards on mobile            │
+  │ Empty/Loading States               │ ✓ GOOD   │ Hero empty + no-results          │
+  │ Optimistic CRUD                    │ ✓ GOOD   │ Instant local updates + sync     │
+  │ Props Sync (watch)                 │ ✓ GOOD   │ Fixes temp-ID persistence bug    │
+  │ Flash Messages                     │ ✓ GOOD   │ Reactive toast, 4s auto-dismiss  │
+  │ Delete Confirmation                │ ✓ GOOD   │ Inline modal, backdrop blur      │
+  └────────────────────────────────────┴──────────┴──────────────────────────────────┘
+
+================================================================================
+7.  CHANGELOG
+================================================================================
+
+  2026-06-10 — v1.0  Initial project scaffold (Breeze, Spatie, Inertia)
+  2026-06-10 — v1.1  Department module created (migration, model, controller, page)
+  2026-06-10 — v1.2  Department UI enhancement (premium card layout, sort, paginate)
+  2026-06-10 — v1.3  Bug fix: DELETE 404 (seeded departments data)
+  2026-06-10 — v1.4  Performance: optimistic CRUD (local state + background sync)
+  2026-06-10 — v1.5  Flash message toast added (reactive watch, auto-dismiss)
+  2026-06-10 — v1.6  ComplaintCategory module created (migration existed, full CRUD)
+  2026-06-10 — v1.7  Bug fix: Temp negative-ID persistence (props sync watch)
+  2026-06-10 — v1.8  Bug fix: Flash messages not showing on redirect (watch fix)
+   2026-06-10 — v1.9  File reorg: DepartmentModal moved to Pages/Department/
+   2026-06-10 — v1.10 Model factories created: DepartmentFactory, ComplaintCategoryFactory, ComplaintFactory (with states)
+   2026-06-10 — v1.10 Feature tests: DepartmentTest (7), ComplaintCategoryTest (8), ComplaintTest (25 incl. AI simulation)
+   2026-06-10 — v1.10 phpunit.xml switched to MySQL (no pdo_sqlite in environment)
+   2026-06-10 — v1.11 Dedicated complaint create page (Pages/Complaint/Create.vue)
+   2026-06-10 — v1.11 Route complaints.create added; ComplaintController::create() added
+   2026-06-10 — v1.11 Index.vue: "New Complaint" buttons now link to create page; modal kept for edit only
+   2026-06-10 — v1.12 ComplaintAttachment model + migration, photos upload on Create page
+   2026-06-10 — v1.12 Storage symlink fixed, image upload (max 5, 5MB, JPEG/PNG/WebP)
+   2026-06-10 — v1.12 Index.vue: attachment thumbnails in table + mobile cards
+
+================================================================================
+8.  RECOMMENDED ACTIONS (PRIORITY ORDER)
+================================================================================
+
+  P1  Add authorization (Spatie permissions/policies) to Department CRUD
+  P1  Add authorization (Spatie permissions/policies) to ComplaintCategory CRUD
+   P1  Add authorization (Spatie permissions/policies) to Complaint CRUD
+   P2  Add caching for read-heavy endpoints (Cache::remember)
+  P2  Install Laravel Telescope or Debugbar for local dev profiling
+  P3  Create Form Request classes for validation
+  P3  Add database indexes on foreign keys (department_id, created_by, updated_by)
+  P3  Implement activity/audit logging (spatie/laravel-activitylog)
+  P3  Configure rate limiting on CRUD endpoints (throttle middleware)
+  P3  Switch to server-side pagination when datasets exceed 100 records
+
+================================================================================

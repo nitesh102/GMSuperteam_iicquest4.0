@@ -1,0 +1,429 @@
+================================================================================
+  CIVISENSE – BACKEND DEVELOPER MANUAL
+================================================================================
+
+Project   : CiviSense ("Smart Civic. Stronger Communities.")
+Stack     : Laravel 11 + Inertia.js v2 + Vue 3 (Composition API) + Tailwind CSS 3
+Auth      : Laravel Breeze scaffold + Spatie Laravel Permission
+Build     : Vite
+JS Routes : Ziggy (tightenco/ziggy)
+
+================================================================================
+1.  DIRECTORY STRUCTURE
+================================================================================
+
+app/
+├── Http/
+│   ├── Controllers/
+│   │   ├── Auth/                          # Auth controllers (Breeze)
+│   │   ├── Controller.php                 # Base controller
+│   │   ├── ComplaintCategoryController.php
+│   │   ├── DepartmentController.php
+│   │   └── ProfileController.php
+│   └── Middleware/
+│       └── HandleInertiaRequests.php      # Shares auth + flash to Inertia
+├── Models/
+│   ├── Complaint.php                      # SoftDeletes, $with=['attachments'], citizen/category/assignee
+│   ├── ComplaintAttachment.php            # SoftDeletes, url accessor, complaint FK
+│   ├── ComplaintCategory.php              # SoftDeletes, FK to department + users
+│   ├── Department.php                     # HasFactory, fillable name/description
+│   └── User.php                           # Spatie HasRoles trait
+└── Providers/
+
+database/
+├── factories/
+│   ├── DepartmentFactory.php              # name, description
+│   ├── ComplaintCategoryFactory.php       # department_id, name, description, created_by
+│   └── ComplaintFactory.php               # full complaint with states: spam(), emergency(), ...
+├── migrations/
+│   ├── 0001_01_01_000000_create_users_table.php
+│   ├── 0001_01_01_000001_create_cache_table.php
+│   ├── 0001_01_01_000002_create_jobs_table.php
+│   ├── 2026_06_10_100044_create_permission_tables.php
+│   ├── 2026_06_10_102104_create_departments_table.php
+│   ├── 2026_06_10_103400_create_complaint_categories_table.php
+│   ├── 2026_06_10_105541_create_complaints_table.php
+│   └── ... (complaint_tracks, attachments, ai_analyses, feedback)
+└── seeders/
+    ├── DatabaseSeeder.php                 # Calls RolePermissionSeeder + DepartmentSeeder
+    ├── DepartmentSeeder.php               # 8 realistic departments (firstOrCreate)
+    └── RolePermissionSeeder.php           # Spatie roles/permissions
+
+tests/
+├── TestCase.php
+├── Feature/
+│   ├── DepartmentTest.php                 # 7 tests: index, create, validate name, max:255, update, delete, auth guard
+│   ├── ComplaintCategoryTest.php          # 8 tests: index, create, validate dept, validate name, update, delete, auth guard
+│   └── ComplaintTest.php                  # 25 tests: CRUD + validation + AI simulation (priority, spam, summary)
+└── Unit/
+
+routes/
+├── web.php                                # Web routes (Inertia pages)
+├── auth.php                               # Auth routes (Breeze)
+└── console.php                            # Artisan commands
+
+resources/
+├── css/app.css                            # Tailwind base styles
+├── js/
+│   ├── app.js                             # Inertia + Vue + Ziggy bootstrap
+│   ├── bootstrap.js                       # Axios global setup
+│   ├── Components/                        # Shared Vue components
+│   │   ├── Modal.vue                      # Generic modal wrapper (teleport, overlay)
+│   │   ├── DataTable.vue                  # Generic data table (search/sort/paginate)
+│   │   └── SidebarContent.vue             # Navigation sidebar items
+│   ├── Layouts/
+│   │   ├── AuthenticatedLayout.vue        # Main app layout (sidebar + navbar)
+│   │   ├── GuestLayout.vue
+│   │   └── Guest.vue
+│   └── Pages/                             # Per-route page components + modals
+│       ├── ComplaintCategory/
+│       │   ├── Index.vue                  # List page (search, sort, paginate, CRUD)
+│       │   └── ComplaintCategoryModal.vue # Create/edit form modal
+│       ├── Department/
+│       │   ├── Index.vue                  # List page (search, sort, paginate, CRUD)
+│       │   └── DepartmentModal.vue        # Create/edit form modal (moved from Components/)
+│       ├── Auth/                          # Auth pages (Breeze)
+│       ├── Profile/                       # Profile pages
+│       ├── Dashboard.vue
+│       └── Welcome.vue
+
+================================================================================
+2.  CONVENTIONS & PATTERNS
+================================================================================
+
+2.1  Naming Conventions
+─────────────────────
+  - Models             : Singular, PascalCase (e.g., ComplaintCategory)
+  - Controllers        : Singular, PascalCase + "Controller" suffix
+  - Migrations         : snake_case (e.g., create_complaint_categories_table)
+  - Routes             : kebab-case (e.g., complaint-categories.index)
+  - Vue Pages          : Singular, PascalCase, nested under folder matching route prefix
+                         (e.g., Pages/ComplaintCategory/Index.vue)
+  - Vue Modals         : PascalCase, co-located with page in Pages/{Module}/
+                         (e.g., Pages/ComplaintCategory/ComplaintCategoryModal.vue)
+
+2.2  Model Convention
+─────────────────────
+  - Extends Illuminate\Database\Eloquent\Model
+  - Uses HasFactory trait
+  - $fillable array for mass-assignment protection
+  - casts() method for attribute casting (datetime, etc.)
+  - Add SoftDeletes trait if table has deleted_at column
+  - Define relationships as BelongsTo/HasMany methods
+
+2.3  Controller Convention
+──────────────────────────
+  - Extends App\Http\Controllers\Controller
+  - Use Inertia\Response / RedirectResponse return types
+  - Inline $request->validate() for simplicity (extract to FormRequest when complex)
+  - CRUD methods: index (Inertia::render), store (redirect), update (redirect), destroy (redirect)
+  - Flash messages via ->with('success', '...') on redirect
+  - No create/edit/show — modals on index page
+
+2.4  Inertia Page Convention
+─────────────────────────────
+  - <script setup> Composition API
+  - Import AuthenticatedLayout for authenticated pages
+  - <Head> component from @inertiajs/vue3 for page title
+  - Local reactive `items` ref initialized from usePage().props.{entity}
+  - Props sync watch: watch(() => usePage().props.{entity}, ...) to sync after redirect
+  - Flash toast watch: watch(() => usePage().props.flash?.success, ...) for reactive messages
+  - Computed properties for filter/sort/paginate on local `items`
+
+2.5  Modal Convention
+─────────────────────
+  - Generic Modal.vue (Components/) handles teleport/overlay/animation
+  - Feature-specific modal co-located in Pages/{Module}/{Module}Modal.vue
+  - defineProps: show, {entity}, departments (or other FK lists)
+  - defineEmits: 'close', 'success', 'submitting'
+  - Uses useForm() from @inertiajs/vue3
+  - Computed isEditMode from presence of entity prop
+  - Emits 'submitting' with form data + isEdit flag in onSuccess
+  - Emits 'success' + calls closeModal() in onSuccess
+
+2.6  Route Convention
+─────────────────────
+  - Named routes using ->name() for Ziggy JS access (route() helper)
+  - Resource routes with except(['create', 'edit', 'show'])
+  - Grouped under 'auth' middleware
+  - Route parameter follows kebab-case convention (e.g., complaint-categories)
+
+2.7  Optimistic CRUD Data Flow
+───────────────────────────────
+  DELETE:
+    1. User confirms delete → local items ref filtered (item disappears instantly)
+    2. router.delete() fires in background
+    3. Server returns 302 redirect → Inertia follows → GET request
+    4. Server props update → watch re-syncs items ref
+    5. onError: router.reload() restores server state
+
+  CREATE:
+    1. User submits form → server processing
+    2. onSuccess fires → modal emits 'submitting' with form data
+    3. Items ref receives new item with temp negative ID
+    4. Redirect follows → props update → watch re-syncs (temp ID replaced by real data)
+
+  UPDATE:
+    1. User submits form → server processing
+    2. onSuccess fires → modal emits 'submitting' with form data + id
+    3. Items ref updated in-place
+    4. Redirect follows → props update → watch re-syncs
+
+2.8  Flash Message Convention
+───────────────────────────────
+  - Server sets flash via ->with('success', '...') on redirect
+  - HandleInertiaRequests middleware reads session('success') and shares as flash.success
+  - Vue watch: watch(() => usePage().props.flash?.success, ...) with { immediate: true }
+  - Auto-dismiss after 4000ms (timer reset on each new flash)
+  - Dismissible on click
+  - Fixed position top-right, slide-in animation, green success styling
+
+2.9  Modern List Page Convention
+─────────────────────────────────
+  - Stats card row at top showing summary metrics
+  - Integrated search bar (icon + clear button)
+  - Rows-per-page selector (10/25/50)
+  - Pure Tailwind table with sortable column headers + sort icons
+  - Row-level edit/delete icon buttons with hover tooltips
+  - Responsive: hidden md:table for desktop, md:hidden card list for mobile
+  - Client-side search, sort, pagination via Vue computed properties
+  - Empty state: hero icon + message + CTA button
+  - No-results state: icon + message + clear-search button
+  - Delete confirmation: teleported modal with backdrop blur
+  - Pagination bar: first/prev/page-numbers/next/last
+
+2.10 Enhanced Form Modal Convention
+────────────────────────────────────
+  - Icon + title header with subtitle description
+  - Select dropdown with leading icon for FK fields (department_id)
+  - Inputs with leading icon indicators (fa-tag, fa-building, etc.)
+  - Error state: red border + red-50 background + exclamation icon + message
+  - Normal state: subtle gray-200 border, indigo focus ring
+  - Character counter on textarea fields (e.g., "245/1000")
+  - Cancel (secondary outline) + Submit (primary filled with hover shadow)
+  - Processing state: spinner icon + "Saving..." + disabled button
+  - Submit button icon changes based on context (fa-plus for create, fa-save for update)
+
+================================================================================
+3.  CREATING A NEW FEATURE (STEP-BY-STEP)
+================================================================================
+
+  1. Create migration        : php artisan make:migration create_xxx_table
+  2. Run migration           : php artisan migrate
+  3. Create Model            : app/Models/Xxx.php
+                               - $fillable, casts, relationships
+                               - SoftDeletes if needed
+  4. Create Controller       : app/Http/Controllers/XxxController.php
+                               - Follow DepartmentController pattern
+                               - index: Inertia::render with ->with() for FK lists
+                               - store/update: redirect()->route()->with('success',...)
+                               - destroy: redirect with soft/hard delete
+  5. Create Vue Page         : resources/js/Pages/Xxx/Index.vue
+                               - items ref + props sync watch + flash watch
+                               - computed filter/sort/paginate
+                               - optimistic CRUD handlers
+                               - modal + delete confirmation
+  6. Create Vue Modal        : resources/js/Pages/Xxx/XxxModal.vue
+                               - Co-located with page in Pages/{Module}/
+                               - useForm(), emit 'submitting'/'success'/'close'
+  7. Add routes              : routes/web.php
+                               - Route::resource('xxx', XxxController::class)->except([...])
+  8. Add sidebar link        : resources/js/Components/SidebarContent.vue
+                               - <li> with <a href="route('xxx.index')">
+  9. Build                   : npm run build
+  10. Hard refresh           : Ctrl+Shift+R (browser cache)
+
+================================================================================
+4.  COMMANDS
+================================================================================
+
+  Development
+    php artisan serve              Start Laravel dev server
+    npm run dev                    Start Vite dev server
+    npm run build                  Build for production
+
+  Database
+    php artisan migrate            Run pending migrations
+    php artisan migrate:fresh      Drop all tables and re-run migrations
+    php artisan db:seed            Run database seeders
+    php artisan migrate:fresh --seed  Fresh + seed
+
+  Cache / Routes
+    php artisan optimize           Cache routes, config, events
+    php artisan route:list         List all registered routes
+    php artisan route:cache        Cache routes (production)
+
+================================================================================
+5.  AUTHENTICATION & AUTHORIZATION
+================================================================================
+
+  - Laravel Breeze scaffold (login, register, password reset, email verify)
+  - All CRUD routes behind 'auth' middleware
+  - Spatie Laravel Permission installed with RolePermissionSeeder
+  - No authorization gates yet on CRUD controllers (TODO: add middleware/policies)
+  - Check roles/permissions in Blade/Vue via Spatie helpers or can() method
+
+================================================================================
+6.  FRONTEND STACK NOTES
+================================================================================
+
+  - Ziggy: route() helper globally available in Vue templates
+  - Axios: window.axios available globally (configured in bootstrap.js)
+  - Font Awesome Free via CDN (fas, far classes)
+  - Tailwind CSS utility classes throughout
+  - Scoped <style scoped> for component-specific CSS
+  - Vue 3 Composition API with <script setup>
+  - Vite for dev server and production builds
+
+================================================================================
+7.  PERFORMANCE OPTIMIZATIONS
+================================================================================
+
+  Optimistic CRUD:
+    • Local reactive `items` ref initialized from Inertia props
+    • Mutations applied instantly (filter/push/update on items.value)
+    • HTTP requests fire in background; redirect re-syncs via props watch
+    • onError fallback: router.reload() restores server state
+
+  Props Sync Watch:
+    • watch(() => usePage().props.{entity}, v => items.value = [...(v ?? [])])
+    • Critical: prevents temp negative-ID items from persisting after redirect
+    • Applied in both Department and ComplaintCategory Index pages
+
+  Flash Toast:
+    • watch(() => usePage().props.flash?.success, ...) with { immediate: true }
+    • Auto-dismiss after 4s, click to dismiss, timer reset on new flash
+    • Fixed top-right, slide-in animation
+
+  Client-Side Data Filtering:
+    • Search, sort, paginate entirely via computed properties
+    • Zero server round-trips for list manipulation
+
+  Vite:
+    • Code splitting per page (each page is a separate chunk)
+    • Tree-shaking via ES module imports
+
+  Database:
+    • Soft deletes (ComplaintCategory) prevent expensive cascade operations
+    • Eager loading: ->with('department') prevents N+1
+
+================================================================================
+8.  CURRENT ROUTES
+================================================================================
+
+  GET|HEAD        /                              Welcome
+  GET|HEAD        /dashboard                     Dashboard (auth + verified)
+  GET|HEAD        /profile                        Profile edit (auth)
+  PATCH           /profile                        Profile update (auth)
+  DELETE          /profile                        Profile destroy (auth)
+  GET|HEAD        /departments                    Department index (auth)
+  POST            /departments                    Department store (auth)
+  PUT|PATCH       /departments/{department}       Department update (auth)
+  DELETE          /departments/{department}       Department destroy (auth)
+  GET|HEAD        /complaint-categories           Category index (auth)
+  POST            /complaint-categories           Category store (auth)
+  PUT|PATCH       /complaint-categories/{category}  Category update (auth)
+  DELETE          /complaint-categories/{category}  Category destroy (auth)
+  GET|HEAD        /complaints/create              Complaint create page (auth)
+  POST            /complaints                     Complaint store (auth)
+  PUT|PATCH       /complaints/{complaint}         Complaint update (auth)
+  DELETE          /complaints/{complaint}         Complaint destroy (auth)
+
+================================================================================
+9.  KNOWN ISSUES & RESOLUTIONS
+================================================================================
+
+   Create Page (Complaint/Create.vue):
+     • Full-page form at GET /complaints/create (route: complaints.create)
+     • Two-column layout: department + category (cascading), title, description (10k),
+       location (optional), lat/lng (optional)
+     • AI analysis info box at the bottom
+     • On submit → POST /complaints/store → redirect to index with flash
+     • No optimistic update needed (full page navigation after redirect)
+     • Index.vue "New Complaint" buttons changed from modal trigger to <a href>
+
+    ComplaintModal.vue:
+     • Now used ONLY for editing (via "Edit" action buttons in Index table)
+     • Create flow handled entirely by the dedicated Create page
+
+   Photo Uploads (complaint_attachments table):
+     • ComplaintAttachment model with SoftDeletes, url accessor appended
+     • Complaint model: $with = ['attachments'] (auto-eager-loaded)
+     • Controller store(): validates `attachments` (array, max:5), each file: image, max 5MB
+     • Files stored at storage/app/public/complaints/{id}/{uuid}.{ext}
+     • Index table: stacked avatar-style thumbnails (max 3 shown, +N overflow)
+     • Mobile cards: horizontal row of thumbnails (max 4 shown, +N overflow)
+     • Cascade on delete (DB-level); persists on soft-delete
+
+   BUG-004: PHPUnit "could not find driver" (SQLite) in this environment
+     Cause: php pdo_sqlite extension not installed on this VM.
+     Fix: Edited phpunit.xml to use MySQL + civicsense_testing database.
+     Context: phpunit.xml was changed from sqlite/:memory: to mysql/civicsense_testing.
+     The underlying cause is a missing apt package (php8.3-sqlite), no sudo access.
+     Status: WORKAROUND (keep phpunit.xml pointing to MySQL test DB).
+
+===============================================================================
+10.  TESTING
+===============================================================================
+
+  Convention:
+    • PHPUnit (not Pest)
+    • Namespace: Tests\Feature for feature tests
+    • Uses RefreshDatabase trait on each test class
+    • test_ snake_case method names, void return type
+    • $this->actingAs($user) before each HTTP request
+    • Factory states for Complaint: spam(), emergency(), high(), medium(), status(), assignedTo()
+
+  Running Tests:
+    php artisan test --testsuite=Feature
+
+  Factory Reference:
+
+    DepartmentFactory:
+      → name (unique company), description (optional sentence)
+
+    ComplaintCategoryFactory:
+      → department_id (Department::factory()), name (unique word),
+        description (optional), created_by (User::factory())
+
+    ComplaintFactory:
+      → complaint_no (auto CMP-YYYYMMD-XXXXX), citizen_id (User::factory()),
+        category_id (ComplaintCategory::factory()), title, description,
+        priority (random), current_status=submitted, is_spam=false
+      States: spam(), emergency(), high(), medium(), status(string), assignedTo(User)
+
+  Writing Tests:
+    • Follow existing pattern in ComplaintTest.php, DepartmentTest.php, ComplaintCategoryTest.php
+    • Test validation errors via assertSessionHasErrors()
+    • Test redirects via assertRedirect(route('...'))
+    • Test flash messages via assertSessionHas('success', '...')
+    • Test AI simulation endpoints for priority detection (4 levels), spam detection (10 patterns),
+      summary truncation (>200 chars → ...), HTML stripping
+
+  Coverage:
+    Departments: 7 tests (index, store, validate name, validate max:255, update, destroy, auth guard)
+    Complaint Categories: 8 tests (index, create, validate dept, validate dept exists,
+      validate name, update, delete with soft-delete check, auth guard)
+    Complaints: 31 tests (index, create page, create page auth guard, create, validate title, validate desc, validate category,
+      validate category exists, complaint_no generation, update, validate status, validate priority,
+      destroy, auth guard, 4x priority AI, 1x spam AI, 1x non-spam AI, 1x summary truncation,
+      1x summary short, 1x HTML stripping, 1x all spam patterns, 1x index relations,
+      1x default status, 1x optional null fields)
+
+   BUG-001: DELETE /departments/{id} → 404
+    Cause: Empty departments table, route model binding couldn't resolve ID.
+    Fix: Seeded 8 departments via DepartmentSeeder.
+    Status: RESOLVED.
+
+  BUG-002: Temp negative-ID items after optimistic create
+    Cause: Optimistic create adds id: -Date.now(). On redirect, Inertia reuses
+    the component (no re-mount), so items ref keeps the temp item.
+    Fix: watch() on usePage().props.{entity} syncs items after redirect.
+    Status: RESOLVED.
+
+  BUG-003: Flash messages not showing on edit/delete
+    Cause: Same — component reuse means <script setup> doesn't re-run.
+    Fix: watch() on usePage().props.flash?.success with { immediate: true }.
+    Status: RESOLVED.
+
+================================================================================
