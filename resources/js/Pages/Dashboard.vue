@@ -1,61 +1,169 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import { Head } from '@inertiajs/vue3'
+
+const stats = [
+  { label: 'Total Complaints', value: '12,480', type: 'primary' },
+  { label: 'Pending Issues', value: '1,240', type: 'danger' },
+  { label: 'Resolved Cases', value: '10,200', type: 'secondary' },
+  { label: 'Active Users', value: '8,540', type: 'dark' },
+]
+
+const recentComplaints = [
+  { title: 'Broken Street Light', ward: 'Ward 5', status: 'Pending', type: 'danger' },
+  { title: 'Water Leakage', ward: 'Ward 3', status: 'In Progress', type: 'primary' },
+  { title: 'Garbage Overflow', ward: 'Ward 7', status: 'Resolved', type: 'secondary' },
+  { title: 'Road Damage', ward: 'Ward 2', status: 'Pending', type: 'danger' },
+]
+
+// ✅ SAFE COLOR FUNCTIONS (BEST PRACTICE)
+const getStatColor = (type) => {
+  switch (type) {
+    case 'primary':
+      return 'text-[#064789]'
+    case 'secondary':
+      return 'text-[#427aa1]'
+    case 'danger':
+      return 'text-red-600'
+    default:
+      return 'text-slate-800'
+  }
+}
+
+const getBadgeColor = (type) => {
+  switch (type) {
+    case 'primary':
+      return 'bg-[#064789]/10 text-[#064789]'
+    case 'secondary':
+      return 'bg-[#427aa1]/10 text-[#427aa1]'
+    case 'danger':
+      return 'bg-red-50 text-red-600'
+    default:
+      return 'bg-slate-100 text-slate-800'
+  }
+}
 </script>
 
 <template>
-    <Head title="Dashboard" />
+<Head title="Dashboard" />
 
-    <AuthenticatedLayout>
-        <div class="space-y-6">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
-                <p class="mt-1 text-sm text-gray-500">
-                    Welcome to CiviSense. Here's an overview of the system.
-                </p>
-            </div>
+<AuthenticatedLayout>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                    <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center mb-3">
-                        <i class="fas fa-flag text-indigo-500"></i>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500">Total Complaints</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-0.5">—</p>
-                </div>
-                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                    <div class="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center mb-3">
-                        <i class="fas fa-clock text-yellow-500"></i>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500">Pending</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-0.5">—</p>
-                </div>
-                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                    <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center mb-3">
-                        <i class="fas fa-check-circle text-green-500"></i>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500">Resolved</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-0.5">—</p>
-                </div>
-                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                    <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center mb-3">
-                        <i class="fas fa-shield-alt text-red-500"></i>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500">Spam</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-0.5">—</p>
-                </div>
-            </div>
+  <template #header>
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-bold text-[#064789]">
+        Civic Dashboard
+      </h2>
 
-            <div class="bg-white rounded-xl border border-gray-200 p-8 text-center shadow-sm">
-                <div class="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-chart-bar text-indigo-400 text-2xl"></i>
-                </div>
-                <h3 class="text-base font-semibold text-gray-900 mb-1">Welcome to CiviSense</h3>
-                <p class="text-sm text-gray-500 max-w-md mx-auto">
-                    Start by exploring the Complaints section to view and manage citizen reports,
-                    or visit Departments to configure the organizational structure.
-                </p>
-            </div>
+      <span class="text-xs bg-white border border-[#427aa1] text-[#064789] px-3 py-1 rounded-full">
+        Live System
+      </span>
+    </div>
+  </template>
+
+  <div class="min-h-screen bg-[#ebf2fa] py-10">
+
+    <div class="mx-auto max-w-7xl px-6 lg:px-8 space-y-8">
+
+      <!-- STATS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <div
+          v-for="stat in stats"
+          :key="stat.label"
+          class="bg-white border border-[#427aa1]/20 rounded-2xl p-6 shadow-sm hover:shadow-md transition"
+        >
+          <p class="text-sm text-[#427aa1]">
+            {{ stat.label }}
+          </p>
+
+          <p class="text-3xl font-extrabold mt-2"
+             :class="getStatColor(stat.type)">
+            {{ stat.value }}
+          </p>
+
+          <div class="mt-3 h-1 w-full bg-[#ebf2fa] rounded-full overflow-hidden">
+            <div class="h-full bg-[#064789] w-2/3 rounded-full"></div>
+          </div>
         </div>
-    </AuthenticatedLayout>
+
+      </div>
+
+      <!-- TABLE -->
+      <div class="bg-white border border-[#427aa1]/20 rounded-2xl shadow-sm overflow-hidden">
+
+        <table class="w-full text-sm">
+
+          <thead class="bg-[#064789] text-white">
+            <tr>
+              <th class="px-6 py-4 text-left">Issue</th>
+              <th class="px-6 py-4 text-left">Ward</th>
+              <th class="px-6 py-4 text-left">Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            <tr
+              v-for="(item, index) in recentComplaints"
+              :key="index"
+              class="border-b border-[#ebf2fa] hover:bg-[#ebf2fa] transition"
+            >
+
+              <td class="px-6 py-4 font-medium text-[#064789]">
+                {{ item.title }}
+              </td>
+
+              <td class="px-6 py-4 text-[#427aa1]">
+                {{ item.ward }}
+              </td>
+
+              <td class="px-6 py-4">
+                <span
+                  class="px-3 py-1 rounded-full text-xs font-semibold"
+                  :class="getBadgeColor(item.type)"
+                >
+                  {{ item.status }}
+                </span>
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="bg-[#064789] text-white rounded-2xl p-6 shadow">
+          <h4 class="font-bold text-lg">View Complaints</h4>
+          <p class="text-sm mt-1 text-[#ebf2fa]">
+            Manage all citizen reports
+          </p>
+        </div>
+
+        <div class="bg-[#427aa1] text-white rounded-2xl p-6 shadow">
+          <h4 class="font-bold text-lg">Urgent Issues</h4>
+          <p class="text-sm mt-1 text-[#ebf2fa]">
+            High priority civic problems
+          </p>
+        </div>
+
+        <div class="bg-white border border-[#427aa1]/30 text-[#064789] rounded-2xl p-6 shadow">
+          <h4 class="font-bold text-lg">Analytics</h4>
+          <p class="text-sm mt-1 text-[#427aa1]">
+            Performance & reports
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</AuthenticatedLayout>
 </template>
