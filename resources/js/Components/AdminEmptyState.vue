@@ -14,17 +14,17 @@ defineEmits(['button-click', 'link-click'])
 
 <template>
   <div class="rounded-xl bg-white border border-gray-200 shadow-sm">
-    <div class="flex flex-col items-center justify-center py-16 px-6">
+    <div class="flex flex-col items-center justify-center py-20 px-6">
       <!-- Icon -->
-      <div v-if="icon" class="rounded-full bg-gray-100 p-6 mb-4">
-        <component :is="icon" class="h-16 w-16 text-gray-400" />
+      <div v-if="icon" class="rounded-full bg-red-50 p-8 mb-6">
+        <component :is="icon" class="h-16 w-16 text-red-500" />
       </div>
 
       <!-- Title -->
-      <h3 class="text-2xl font-semibold text-gray-900 mb-2">{{ title }}</h3>
+      <h3 class="text-3xl font-semibold text-gray-900 mb-3">{{ title }}</h3>
 
       <!-- Description -->
-      <p class="text-gray-500 text-center mb-8 max-w-md">{{ description }}</p>
+      <p class="text-gray-600 text-center mb-8 max-w-md leading-relaxed">{{ description }}</p>
 
       <!-- Button -->
       <a
