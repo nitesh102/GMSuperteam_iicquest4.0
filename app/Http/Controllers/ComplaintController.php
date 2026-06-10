@@ -37,13 +37,7 @@ class ComplaintController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Complaint/Create', [
-            'departments' => Department::orderBy('name')->get(['id', 'name']),
-            'categories' => ComplaintCategory::select('id', 'name', 'department_id')
-                ->with('department:id,name')
-                ->orderBy('name')
-                ->get(),
-        ]);
+        return Inertia::render('Complaint/Create');
     }
 
     public function index(): Response
@@ -67,14 +61,13 @@ class ComplaintController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'title'          => ['required', 'string', 'max:255'],
-            'description'    => ['required', 'string', 'max:10000'],
-            'category_id'    => ['required', 'exists:complaint_categories,id'],
-            'location'       => ['nullable', 'string', 'max:500'],
-            'latitude'       => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude'      => ['nullable', 'numeric', 'between:-180,180'],
-            'attachments'    => ['nullable', 'array', 'max:5'],
-            'attachments.*'  => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
+            'title'         => ['required', 'string', 'max:255'],
+            'description'   => ['required', 'string', 'max:10000'],
+            'location'      => ['nullable', 'string', 'max:500'],
+            'latitude'      => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude'     => ['nullable', 'numeric', 'between:-180,180'],
+            'attachments'   => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
         ]);
 
         $tempPaths = [];
@@ -104,23 +97,30 @@ class ComplaintController extends Controller
                 'summary'         => $this->simulateSummary($validated['description']),
                 'department_name' => null,
                 'category_name'   => null,
+                'is_spam'         => false,
+                'spam_reason'     => '',
             ];
         }
 
-        if (!empty($ai['department_name']) && !empty($ai['category_name'])) {
-            $department = Department::firstOrCreate(
-                ['name' => $ai['department_name']],
-                ['description' => 'Auto-created by AI'],
-            );
+        $deptName     = !empty($ai['department_name']) ? $ai['department_name'] : 'General';
+        $categoryName = !empty($ai['category_name'])  ? $ai['category_name']  : 'General Complaint';
 
-            $category = ComplaintCategory::firstOrCreate(
-                ['name' => $ai['category_name'], 'department_id' => $department->id],
-                ['description' => 'Auto-created by AI', 'created_by' => $request->user()->id],
-            );
+        $department = Department::firstOrCreate(
+            ['name' => $deptName],
+            ['description' => 'Auto-created by AI'],
+        );
 
-            $validated['category_id'] = $category->id;
+        $category = ComplaintCategory::firstOrCreate(
+            ['name' => $categoryName, 'department_id' => $department->id],
+            ['description' => 'Auto-created by AI', 'created_by' => $request->user()->id],
+        );
+
+        if (!empty($ai['is_spam'])) {
+            $reason = !empty($ai['spam_reason']) ? $ai['spam_reason'] : 'This submission was flagged as spam by CiviSense AI.';
+            throw ValidationException::withMessages(['attachments' => $reason]);
         }
 
+        $validated['category_id']    = $category->id;
         $validated['complaint_no']   = 'CMP-' . now()->format('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
         $validated['citizen_id']     = $request->user()->id;
         $validated['created_by']     = $request->user()->id;
