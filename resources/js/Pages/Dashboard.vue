@@ -1,5 +1,6 @@
 <script setup>
-import { Head } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { Head, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdminStatsCard from '@/Components/AdminStatsCard.vue'
 import { Line, Doughnut } from 'vue-chartjs'
@@ -34,32 +35,34 @@ ChartJS.register(
   Filler
 )
 
-const stats = [
+const { stats: rawStats } = usePage().props
+
+const stats = computed(() => [
   {
     title: 'Total Complaints',
-    value: '128',
-    change: '+12% from last week',
+    value: String(rawStats?.total ?? 0),
+    change: 'All time',
     icon: RectangleStackIcon,
   },
   {
-    title: 'Open Complaints',
-    value: '45',
-    change: '+8% from last week',
+    title: 'Open / Pending',
+    value: String(rawStats?.pending ?? 0),
+    change: 'Submitted & under review',
     icon: ExclamationCircleIcon,
   },
   {
-    title: 'Resolved Complaints',
-    value: '78',
-    change: '+15% from last week',
+    title: 'Resolved',
+    value: String(rawStats?.resolved ?? 0),
+    change: 'Successfully closed',
     icon: CheckCircleIcon,
   },
   {
     title: 'In Progress',
-    value: '5',
-    change: '-5% from last week',
+    value: String(rawStats?.inProgress ?? 0),
+    change: 'Assigned & in progress',
     icon: ClockIcon,
   },
-]
+])
 
 const lineChartData = {
   labels: ['Jun 4', 'Jun 5', 'Jun 6', 'Jun 7', 'Jun 8', 'Jun 9', 'Jun 10'],

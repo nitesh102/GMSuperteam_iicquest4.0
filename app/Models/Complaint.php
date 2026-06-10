@@ -28,6 +28,8 @@ class Complaint extends Model
         'current_status',
         'ai_summary',
         'is_spam',
+        'resolved_at',
+        'resolution_notes',
         'created_by',
         'updated_by',
     ];
@@ -38,6 +40,7 @@ class Complaint extends Model
             'is_spam' => 'boolean',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
+            'resolved_at' => 'datetime',
         ];
     }
 
@@ -74,5 +77,10 @@ class Complaint extends Model
     public function aiAnalysis(): HasOne
     {
         return $this->hasOne(ComplaintAiAnalysis::class, 'complaint_id');
+    }
+
+    public function tracks(): HasMany
+    {
+        return $this->hasMany(ComplaintTrack::class)->orderBy('created_at', 'desc');
     }
 }

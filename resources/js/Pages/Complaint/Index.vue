@@ -4,7 +4,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import ComplaintModal from '@/Pages/Complaint/ComplaintModal.vue'
 
-const { complaints, departments, categories } = usePage().props
+const { complaints, departments, categories, users } = usePage().props
 
 const items = ref([...(complaints ?? [])])
 const loading = ref(true)
@@ -220,15 +220,18 @@ function handleOptimisticUpdate(data) {
     if (idx !== -1) {
       items.value[idx] = {
         ...items.value[idx],
-        title: data.title,
-        description: data.description,
-        category_id: data.category_id,
-        category: categories.find(c => c.id === data.category_id) || items.value[idx].category,
-        current_status: data.current_status,
-        priority: data.priority,
-        location: data.location,
-        latitude: data.latitude,
-        longitude: data.longitude,
+        title:            data.title,
+        description:      data.description,
+        category_id:      data.category_id,
+        category:         categories.find(c => c.id === data.category_id) || items.value[idx].category,
+        current_status:   data.current_status,
+        priority:         data.priority,
+        location:         data.location,
+        latitude:         data.latitude,
+        longitude:        data.longitude,
+        assigned_to:      data.assigned_to ?? null,
+        assignee:         data.assigned_to ? (users ?? []).find(u => u.id === data.assigned_to) ?? null : null,
+        resolution_notes: data.resolution_notes ?? null,
       }
     }
   } else {
@@ -251,6 +254,24 @@ function handleOptimisticUpdate(data) {
     })
   }
 }
+
+function clearFilters() {
+  search.value = ''
+  filterDepartment.value = ''
+  filterCategory.value = ''
+  filterStatus.value = ''
+  filterPriority.value = ''
+  currentPage.value = 1
+}
+
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  if (current <= 4) return [1, 2, 3, 4, 5, '...', total]
+  if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total]
+  return [1, '...', current - 1, current, current + 1, '...', total]
+})
 
 watch(search, () => { currentPage.value = 1 })
 watch(filterDepartment, () => { filterCategory.value = ''; currentPage.value = 1 })
@@ -486,6 +507,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                   </span>
                 </th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Citizen</th>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Assignee</th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Images</th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Category</th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Dept</th>
@@ -543,6 +565,13 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                 </td>
                 <td class="px-5 py-4">
                   <span class="text-sm text-gray-600">{{ item.citizen?.name || '—' }}</span>
+                </td>
+                <td class="px-5 py-4 hidden lg:table-cell">
+                  <span v-if="item.assignee" class="inline-flex items-center gap-1.5 text-sm text-gray-600">
+                    <i class="fas fa-user-check text-indigo-400 text-xs"></i>
+                    {{ item.assignee.name }}
+                  </span>
+                  <span v-else class="text-sm text-gray-300">—</span>
                 </td>
                 <td class="px-5 py-4">
                   <div v-if="item.attachments?.length" class="flex -space-x-2">
@@ -758,6 +787,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
     :complaint="editingComplaint"
     :departments="departments"
     :categories="categories"
+    :users="users"
     @close="closeEditModal"
     @success="closeEditModal"
     @submitting="handleOptimisticUpdate"

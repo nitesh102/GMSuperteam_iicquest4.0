@@ -1,15 +1,29 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { Head, usePage } from '@inertiajs/vue3'
+import { ref, computed, watch } from 'vue'
+import { Head, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdminDataTable from '@/Components/AdminDataTable.vue'
-import ComplaintCategoryModal from '@/Complaint/ComplaintCategoryModal.vue'
+import ComplaintCategoryModal from './ComplaintCategoryModal.vue'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const page = usePage()
 
-const categories = computed(() => page.props.categories || [])
-const departments = computed(() => page.props.departments || [])
+const items = ref([...(page.props.categories ?? [])])
+const departments = computed(() => page.props.departments ?? [])
+
+watch(() => page.props.categories, (v) => {
+    items.value = [...(v ?? [])]
+})
+
+const flashMessage = ref(null)
+let flashTimer = null
+watch(() => page.props.flash?.success, (val) => {
+    if (flashTimer) clearTimeout(flashTimer)
+    flashMessage.value = val || null
+    if (flashMessage.value) {
+        flashTimer = setTimeout(() => flashMessage.value = null, 4000)
+    }
+}, { immediate: true })
 
 const showModal = ref(false)
 const selectedCategory = ref(null)
@@ -29,105 +43,136 @@ function closeModal() {
     selectedCategory.value = null
 }
 
+function deleteCategory(category) {
+    if (!confirm(`Delete category "${category.name}"? This cannot be undone.`)) return
+    items.value = items.value.filter(c => c.id !== category.id)
+    router.delete(route('complaint-categories.destroy', category.id), {
+        preserveScroll: true,
+        onError: () => router.reload(),
+    })
+}
+
+const totalCategories = computed(() => items.value.length)
+
+const tableRows = computed(() =>
+    items.value.map(cat => ({
+        ...cat,
+        department_name: cat.department?.name ?? '—',
+    }))
+)
+
 const columns = [
     { key: 'name', label: 'Category Name' },
     { key: 'department_name', label: 'Department' },
+    { key: 'description', label: 'Description' },
     { key: 'status', label: 'Status' },
     { key: 'actions', label: 'Actions', sortable: false },
 ]
-
-const tableRows = computed(() =>
-    categories.value.map(category => ({
-        ...category,
-        department_name: category.department?.name ?? '-',
-    }))
-)
 </script>
 
 <template>
-  <Head title="Complaint Categories" />
+    <Head title="Complaint Categories" />
 
-  <AdminLayout>
-    <!-- Page Header -->
-    <div class="mb-8">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-semibold text-gray-900">
-            Complaint Categories
-          </h1>
-          <p class="mt-1 text-sm text-gray-500">
-            Manage complaint categories for departments.
-          </p>
+    <AdminLayout>
+        <!-- Flash -->
+        <Teleport to="body">
+            <Transition enter-active-class="transition duration-300 ease-out" enter-from-class="translate-x-full opacity-0" enter-to-class="translate-x-0 opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="translate-x-0 opacity-100" leave-to-class="translate-x-full opacity-0">
+                <div v-if="flashMessage" class="fixed top-5 right-5 z-50 flex items-center gap-3 rounded-xl bg-white border border-green-200 shadow-lg px-5 py-3.5 cursor-pointer" @click="flashMessage = null">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600 flex-shrink-0">
+                        <i class="fas fa-check text-sm"></i>
+                    </span>
+                    <p class="text-sm font-medium text-gray-800">{{ flashMessage }}</p>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-semibold text-gray-900">Complaint Categories</h1>
+                    <p class="mt-1 text-sm text-gray-500">Manage complaint categories for departments.</p>
+                </div>
+                <button
+                    @click="openCreateModal"
+                    class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-medium text-white hover:bg-red-600 transition"
+                >
+                    <PlusIcon class="h-5 w-5" />
+                    New Category
+                </button>
+            </div>
         </div>
 
-<button
-    @click="openCreateModal"
-    class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-medium text-white transition hover:bg-red-600"
->
-    <PlusIcon class="h-5 w-5" />
-    New Category
-</button>
-
-      </div>
-    </div>
-
-    <!-- Summary Card -->
-    <div class="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-500">Total Categories</p>
-          <p class="mt-1 text-3xl font-semibold text-gray-900">
-            {{ totalCategories }}
-          </p>
+        <!-- Summary Card -->
+        <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Total Categories</p>
+                    <p class="mt-1 text-3xl font-semibold text-gray-900">{{ totalCategories }}</p>
+                </div>
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-red-50">
+                    <i class="fas fa-tags text-xl text-red-500"></i>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Data Table -->
-
-<AdminDataTable
-    :columns="columns"
-    :rows="tableRows"
-    :page-size="10"
->
-    <template #cell-status="{ value }">
-        <span
-            class="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700"
+        <!-- Data Table -->
+        <AdminDataTable
+            :columns="columns"
+            :rows="tableRows"
+            :search-fields="['name', 'department_name', 'description']"
+            :page-size="10"
         >
-            <span class="h-2 w-2 rounded-full bg-green-500" />
-            {{ value }}
-        </span>
-    </template>
+            <template #cell-description="{ value }">
+                <span class="line-clamp-1 max-w-xs text-gray-500 text-sm">{{ value || '—' }}</span>
+            </template>
 
-    <template #cell-actions="{ row }">
-        <div class="flex items-center gap-3">
-            <button
-                type="button"
-                @click="openEditModal(row)"
-                class="text-blue-500 transition hover:text-blue-600"
-            >
-                <PencilIcon class="h-4 w-4" />
-            </button>
+            <template #cell-status="{ value }">
+                <span
+                    v-if="value === 'active' || value == null"
+                    class="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700"
+                >
+                    <span class="h-2 w-2 rounded-full bg-green-500" />
+                    Active
+                </span>
+                <span
+                    v-else
+                    class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500"
+                >
+                    <span class="h-2 w-2 rounded-full bg-gray-400" />
+                    Inactive
+                </span>
+            </template>
 
-            <button
-                type="button"
-                class="text-red-500 transition hover:text-red-600"
-            >
-                <TrashIcon class="h-4 w-4" />
-            </button>
-        </div>
-    </template>
-</AdminDataTable>
+            <template #cell-actions="{ row }">
+                <div class="flex items-center gap-3">
+                    <button
+                        type="button"
+                        @click="openEditModal(row)"
+                        class="text-blue-500 hover:text-blue-600 transition"
+                        title="Edit"
+                    >
+                        <PencilIcon class="h-4 w-4" />
+                    </button>
+                    <button
+                        type="button"
+                        @click="deleteCategory(row)"
+                        class="text-red-500 hover:text-red-600 transition"
+                        title="Delete"
+                    >
+                        <TrashIcon class="h-4 w-4" />
+                    </button>
+                </div>
+            </template>
+        </AdminDataTable>
 
-<ComplaintCategoryModal
-    :show="showModal"
-    :category="selectedCategory"
-    :departments="departments"
-    @close="closeModal"
-    @success="closeModal"
-/>
-
-
-  </AdminLayout>
+        <!-- Modal -->
+        <ComplaintCategoryModal
+            :show="showModal"
+            :category="selectedCategory"
+            :departments="departments"
+            @close="closeModal"
+            @success="closeModal"
+        />
+    </AdminLayout>
 </template>
-
