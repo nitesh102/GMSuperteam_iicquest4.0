@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { Head, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import AppLogo from '@/Components/common/AppLogo.vue'
 import AdminStatsCard from '@/Components/AdminStatsCard.vue'
 import { Line, Doughnut } from 'vue-chartjs'
 import {
@@ -174,10 +173,6 @@ const doughnutChartOptions = {
   <Head :title="t('dashboard.title')" />
 
   <AdminLayout>
-    <div class="mb-8">
-      <AppLogo />
-    </div>
-
     <div class="mb-8 flex items-start justify-between">
       <div>
         <h1 class="text-3xl font-semibold text-gray-900">{{ t('dashboard.title') }}</h1>
