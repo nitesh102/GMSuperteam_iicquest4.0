@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('departments', DepartmentController::class)->except(['create', 'edit', 'show']);
     Route::resource('complaint-categories', ComplaintCategoryController::class)->except(['create', 'edit', 'show']);
     Route::resource('complaints', ComplaintController::class)->except(['edit', 'show']);
+    Route::get('complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
 
 });
 
