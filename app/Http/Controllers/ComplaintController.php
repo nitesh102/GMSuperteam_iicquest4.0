@@ -58,6 +58,64 @@ class ComplaintController extends Controller
         ]);
     }
 
+    public function getGroupedByLocation(): Response
+    {
+        $complaints = Complaint::with([
+            'citizen',
+            'category.department',
+            'assignee',
+        ])
+        ->whereNotNull('location')
+        ->where('location', '!=', '')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+        $groupedComplaints = $complaints
+            ->groupBy(function ($complaint) {
+                $location = strtolower(trim($complaint->location));
+                $parts = explode(',', $location);
+                return trim($parts[0]);
+            })
+            ->map(function ($group, $location) {
+                return [
+                    'location' => ucfirst($location),
+                    'count' => $group->count(),
+                    'complaints' => $group->take(5)->map(function ($complaint) {
+                        return [
+                            'id' => $complaint->id,
+                            'complaint_no' => $complaint->complaint_no,
+                            'title' => $complaint->title,
+                            'description' => $complaint->description,
+                            'location' => $complaint->location,
+                            'priority' => $complaint->priority,
+                            'current_status' => $complaint->current_status,
+                            'created_at' => $complaint->created_at->format('Y-m-d H:i'),
+                            'citizen' => $complaint->citizen?->name,
+                            'category' => $complaint->category?->name,
+                            'department' => $complaint->category?->department?->name,
+                        ];
+                    }),
+                ];
+            })
+            ->sortByDesc('count')
+            ->values();
+
+        $total  = Complaint::count();
+        $open   = Complaint::whereIn('current_status', ['submitted', 'under_review'])->count();
+        $inProg = Complaint::where('current_status', 'in_progress')->count();
+        $resolved = Complaint::where('current_status', 'resolved')->count();
+
+        return Inertia::render('Dashboard', [
+            'groupedComplaints' => $groupedComplaints,
+            'stats' => [
+                'total'      => $total,
+                'pending'    => $open,
+                'inProgress' => $inProg,
+                'resolved'   => $resolved,
+            ],
+        ]);
+    }
+
     public function show(Complaint $complaint): Response
     {
         $complaint->load([

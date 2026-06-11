@@ -29,8 +29,20 @@ export function useVoiceCommands() {
         },
     });
 
+    const noiseWords = new Set(['the', 'a', 'an', 'is', 'it', 'to', 'of', 'in', 'on', 'for', 'and', 'or', 'but', 'with', 'at', 'by', 'from', 'as', 'was', 'are', 'be', 'this', 'that', 'we', 'i', 'you', 'he', 'she', 'they', 'my', 'your', 'its', 'what', 'which', 'who', 'how', 'when', 'where']);
+
+    function isNoise(transcript) {
+        const trimmed = transcript.trim();
+        if (trimmed.length < 2) return true;
+        const words = trimmed.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+        if (words.length === 0) return true;
+        const meaningful = words.filter(w => !noiseWords.has(w));
+        return meaningful.length === 0;
+    }
+
     async function processCommand(transcript) {
         if (processingLock || !transcript?.trim()) return;
+        if (isNoise(transcript)) return;
 
         processingLock = true;
         isProcessing.value = true;

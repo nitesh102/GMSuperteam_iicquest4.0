@@ -2,6 +2,8 @@ import { ref, computed, reactive, onUnmounted, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { speechLocales, speechLocaleFallbacks } from '@/i18n';
 
+const MIN_CONFIDENCE = 0.3;
+
 export function useSpeechRecognition(options = {}) {
     const transcript = ref('');
     const interimTranscript = ref('');
@@ -48,11 +50,13 @@ export function useSpeechRecognition(options = {}) {
             let final = '';
 
             for (let i = event.resultIndex; i < event.results.length; i++) {
-                const text = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    final += text;
-                } else {
-                    interim += text;
+                const result = event.results[i];
+                const best = result[0];
+
+                if (result.isFinal && best.confidence >= MIN_CONFIDENCE) {
+                    final += best.transcript;
+                } else if (!result.isFinal) {
+                    interim += best.transcript;
                 }
             }
 

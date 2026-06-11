@@ -20,111 +20,127 @@ export function interpretVoiceCommandLocally(transcript, locale = 'en') {
 
     const lower = text.toLowerCase();
 
-    const createPatterns = [
-        [/(create|add|make|open)(\s+(a\s+)?)?(new\s+)?(department|departments|विभाग)/iu, 'department'],
-        [/^(new)\s+(department|departments|विभाग)/iu, 'department'],
-        [/(नयाँ|नया|सिर्जना|बनाउ|थप).*(विभाग)/u, 'department'],
-        [/(create|add|make|open)(\s+(a\s+)?)?(new\s+)?(category|categories|श्रेणी)/iu, 'category'],
-        [/^(new)\s+(category|categories|श्रेणी)/iu, 'category'],
-        [/(नयाँ|नया|सिर्जना|बनाउ|थप).*(श्रेणी)/u, 'category'],
-        [/(create|add|make|open|file|report)(\s+(a\s+)?)?(new\s+)?(complaint|complaints|गुनासो)/iu, 'complaint'],
-        [/^(new)\s+(complaint|complaints|गुनासो)/iu, 'complaint'],
-        [/(नयाँ|नया|सिर्जना|बनाउ|थप).*(गुनासो)/u, 'complaint'],
-    ];
-    for (const [pattern, target] of createPatterns) {
-        if (pattern.test(text)) {
-            return { action: 'open_create', target, message: locale === 'ne' ? 'सिर्जना फारम खोल्दै।' : 'Opening create form.' };
-        }
+    // --- Create patterns ---
+    if (/(create|add|make|open|new|file|report).*(department|departments|विभाग)/iu.test(lower)) {
+        return { action: 'open_create', target: 'department', message: locale === 'ne' ? 'सिर्जना फारम खोल्दै।' : 'Opening create form.' };
+    }
+    if (/(create|add|make|open|new).*(category|categories|श्रेणी)/iu.test(lower)) {
+        return { action: 'open_create', target: 'category', message: locale === 'ne' ? 'सिर्जना फारम खोल्दै।' : 'Opening create form.' };
+    }
+    if (/(create|add|make|open|new|file|report).*(complaint|complaints|गुनासो)/iu.test(lower)) {
+        return { action: 'open_create', target: 'complaint', message: locale === 'ne' ? 'सिर्जना फारम खोल्दै।' : 'Opening create form.' };
     }
 
-    const navigation = [
-        [/^(go\s+to|open|show|navigate\s+to|जाउ|खोल|हेर्नु)\s*(the\s+)?dashboard/iu, 'dashboard'],
-        [/^(dashboard|ड्यासबोर्ड)$/iu, 'dashboard'],
-        [/^(go\s+to|open|show|navigate\s+to|जाउ|खोल)\s*(the\s+)?(new\s+)?complaint(s?\s+create)?/iu, 'complaints.create'],
-        [/^(new complaint|submit complaint|create complaint|file complaint|report issue|नयाँ गुनासो|गुनासो पेश|गुनासो दर्ता|समस्या रिपोर्ट)/iu, 'complaints.create'],
-        [/^(go\s+to|open|show|navigate\s+to|जाउ|खोल)\s*(the\s+)?complaints?/iu, 'complaints.index'],
-        [/^(complaints? list|view complaints?|my complaints?|गुनासो सूची|गुनासोहरू)/iu, 'complaints.index'],
-        [/^(go\s+to|open|show|navigate\s+to|जाउ|खोल)\s*(the\s+)?departments?/iu, 'departments.index'],
-        [/^(departments?|manage departments?|विभाग|विभागहरू)/iu, 'departments.index'],
-        [/^(go\s+to|open|show|navigate\s+to|जाउ|खोल)\s*(the\s+)?categor(y|ies)/iu, 'complaint-categories.index'],
-        [/^(categories?|complaint categories?|श्रेणी|श्रेणीहरू)/iu, 'complaint-categories.index'],
-        [/^(go\s+to|open|show|navigate\s+to|जाउ|खोल)\s*(the\s+)?profile/iu, 'profile.edit'],
-        [/^(profile|my profile|my account|प्रोफाइल|खाता)/iu, 'profile.edit'],
-        [/^(go\s+to|open|show|navigate\s+to|जाउ|खोल)\s*(the\s+)?(login|sign in)/iu, 'login'],
-        [/^(login|sign in|log in|साइन इन|लग इन)/iu, 'login'],
-        [/^(go\s+to|open|show|navigate\s+to|जाउ|खोल)\s*(the\s+)?register/iu, 'register'],
-        [/^(register|sign up|create account|दर्ता|खाता बनाउ)/iu, 'register'],
-        [/^(home|welcome|landing|main page|गृहपृष्ठ|स्वागत)/iu, 'home'],
-    ];
-
-    for (const [pattern, route] of navigation) {
-        if (pattern.test(lower) || pattern.test(text)) {
-            return navigate(route, locale);
-        }
+    // --- Navigation (keyword-based, word-boundary) ---
+    if (/\bdashboard\b/iu.test(lower) || /\bड्यासबोर्ड\b/u.test(lower)) {
+        return navigate('dashboard', locale);
+    }
+    if (/\b(new|create|submit|file|report)\s+(complaint|गुनासो)\b/iu.test(lower)) {
+        return navigate('complaints.create', locale);
+    }
+    if (/\bcomplaint(s|\b|\s+list|\s+index)?\b/iu.test(lower) || /\bगुनासो(s|हरू)?\b/u.test(lower)) {
+        return navigate('complaints.index', locale);
+    }
+    if (/\bdepartments?\b/iu.test(lower) || /\bविभाग(हरू)?\b/u.test(lower)) {
+        return navigate('departments.index', locale);
+    }
+    if (/\bcategor(y|ies)\b/iu.test(lower) || /\bश्रेणी(हरू)?\b/u.test(lower)) {
+        return navigate('complaint-categories.index', locale);
+    }
+    if (/\bprofile\b/iu.test(lower) || /\bप्रोफाइल\b/u.test(lower) || /\bखाता\b/u.test(lower)) {
+        return navigate('profile.edit', locale);
+    }
+    if (/\blog(in| out|out)\b/iu.test(lower) || /\bsign\s+in\b/iu.test(lower) || /\bसाइन इन\b/u.test(lower) || /\bलग इन\b/u.test(lower)) {
+        return navigate('login', locale);
+    }
+    if (/\bregister\b/iu.test(lower) || /\bsign\s+up\b/iu.test(lower) || /\bcreate account\b/iu.test(lower) || /\bदर्ता\b/u.test(lower) || /\bखाता बनाउ\b/u.test(lower)) {
+        return navigate('register', locale);
+    }
+    if (/\b(home|welcome|landing|main page)\b/iu.test(lower) || /\bगृहपृष्ठ\b/u.test(lower) || /\bस्वागत\b/u.test(lower)) {
+        return navigate('home', locale);
     }
 
-    if (/^(switch\s+to\s+)?(english|अंग्रेजी)/iu.test(lower)) {
+    // --- Language ---
+    if (/\b(english|अंग्रेजी)\b/iu.test(lower)) {
         return { action: 'change_language', locale: 'en', message: msg(locale, 'en') };
     }
-    if (/^(switch\s+to\s+)?(nepali|नेपाली)/iu.test(lower)) {
+    if (/\b(nepali|नेपाली)\b/iu.test(lower)) {
         return { action: 'change_language', locale: 'ne', message: msg(locale, 'ne') };
     }
 
-    if (/^(log\s?out|sign\s?out|logout|लग आउट)/iu.test(lower)) {
+    // --- Actions ---
+    if (/\b(log\s?out|sign\s?out|logout|लग आउट)\b/iu.test(lower)) {
         return { action: 'logout', message: locale === 'ne' ? 'लग आउट गर्दै।' : 'Logging out.' };
     }
-
-    if (/^(go\s+back|back|previous page|पछाडि|अघिल्लो)/iu.test(lower)) {
+    if (/\b(go\s+back|back|previous|पछाडि|अघिल्लो)\b/iu.test(lower)) {
         return { action: 'go_back', message: locale === 'ne' ? 'पछाडि जाँदै।' : 'Going back.' };
     }
-
-    if (/^(submit|send|save)\s*(form|complaint|it)?$/iu.test(lower) ||
-        /^(पेश गर्नु|फारम पेश|पठाउ)/u.test(text)) {
+    if (/\b(submit|send|save)\s*(form|complaint|it)?\b/iu.test(lower) || /\b(पेश गर्नु|फारम पेश|पठाउ)\b/u.test(lower)) {
         return { action: 'submit_form', message: locale === 'ne' ? 'फारम पेश गर्दै।' : 'Submitting form.' };
     }
 
-    const filterPatterns = [
-        [/^(show|filter|display)\s+(pending|बाँकी)/iu, 'submitted'],
-        [/^(show|filter|display)\s+(under review|समीक्षाधीन)/iu, 'under_review'],
-        [/^(show|filter|display)\s+(in progress|progress|प्रगतिमा)/iu, 'in_progress'],
-        [/^(show|filter|display)\s+(resolved|समाधान)/iu, 'resolved'],
-        [/^(show|filter|display)\s+(all|सबै)/iu, ''],
-        [/^(clear|reset)\s+(filters?|filter|फिल्टर)/iu, 'clear'],
-    ];
-    for (const [pattern, status] of filterPatterns) {
-        if (pattern.test(lower) || pattern.test(text)) {
-            if (status === 'clear') {
-                return { action: 'clear_filters', message: locale === 'ne' ? 'फिल्टर हटाइयो।' : 'Filters cleared.' };
-            }
-            return { action: 'filter', filter: 'status', value: status, message: locale === 'ne' ? 'फिल्टर लागू गरियो।' : 'Filter applied.' };
-        }
+    // --- Filters ---
+    if (/\b(under\s*review|समीक्षाधीन)\b/iu.test(lower)) {
+        return { action: 'filter', filter: 'status', value: 'under_review', message: locale === 'ne' ? 'समीक्षाधीन फिल्टर गरियो।' : 'Filtering under review.' };
+    }
+    if (/\b(in\s*progress|progress|प्रगतिमा)\b/iu.test(lower)) {
+        return { action: 'filter', filter: 'status', value: 'in_progress', message: locale === 'ne' ? 'प्रगतिमा फिल्टर गरियो।' : 'Filtering in progress.' };
+    }
+    if (/\b(resolved|समाधान)\b/iu.test(lower)) {
+        return { action: 'filter', filter: 'status', value: 'resolved', message: locale === 'ne' ? 'समाधान फिल्टर गरियो।' : 'Filtering resolved.' };
+    }
+    if (/\b(pending|submitted|बाँकी)\b/iu.test(lower)) {
+        return { action: 'filter', filter: 'status', value: 'submitted', message: locale === 'ne' ? 'बाँकी फिल्टर गरियो।' : 'Filtering pending.' };
+    }
+    if (/\b(clear|reset)\s*filters?\b/iu.test(lower) || /\bफिल्टर हटाउ\b/u.test(lower)) {
+        return { action: 'clear_filters', message: locale === 'ne' ? 'फिल्टर हटाइयो।' : 'Filters cleared.' };
     }
 
+    // --- Search ---
     let searchMatch = text.match(/^(search|find|look for|खोज)\s+(for\s+)?(.+)$/iu);
     if (searchMatch) {
         return { action: 'search', value: searchMatch[3].trim(), message: locale === 'ne' ? 'खोजिरहेको छ।' : 'Searching.' };
     }
 
+    // --- Fill field ---
     let nameMatch = text.match(/^(name|नाम)\s*(is|:)?\s*(.+)$/iu);
     if (nameMatch) {
         return { action: 'fill_field', field: 'name', value: nameMatch[3].trim(), message: locale === 'ne' ? 'नाम सेट गरियो।' : 'Name updated.' };
     }
-
     let titleMatch = text.match(/^(title|शीर्षक)\s*(is|:)?\s*(.+)$/iu);
     if (titleMatch) {
         return { action: 'fill_field', field: 'title', value: titleMatch[3].trim(), message: locale === 'ne' ? 'शीर्षक सेट गरियो।' : 'Title updated.' };
     }
-
     let descMatch = text.match(/^(description|विवरण)\s*(is|:)?\s*(.+)$/iu);
     if (descMatch) {
         return { action: 'fill_field', field: 'description', value: descMatch[3].trim(), message: locale === 'ne' ? 'विवरण सेट गरियो।' : 'Description updated.' };
     }
-
     let locMatch = text.match(/^(location|address|स्थान|ठेगाना)\s*(is|:)?\s*(.+)$/iu);
     if (locMatch) {
         return { action: 'fill_field', field: 'location', value: locMatch[3].trim(), message: locale === 'ne' ? 'स्थान सेट गरियो।' : 'Location updated.' };
     }
 
+    // --- Keyword fallback ---
+    if (/\bhome\b/iu.test(lower) || /\bगृहपृष्ठ\b/u.test(lower)) {
+        return navigate('home', locale);
+    }
+    if (/\bdashboard\b/iu.test(lower) || /\bड्यासबोर्ड\b/u.test(lower)) {
+        return navigate('dashboard', locale);
+    }
+    if (/\bcomplaint\b/iu.test(lower) || /\bगुनासो\b/u.test(lower)) {
+        return navigate('complaints.index', locale);
+    }
+    if (/\bdepartment\b/iu.test(lower) || /\bविभाग\b/u.test(lower)) {
+        return navigate('departments.index', locale);
+    }
+    if (/\bcategor(y|ies)\b/iu.test(lower) || /\bश्रेणी\b/u.test(lower)) {
+        return navigate('complaint-categories.index', locale);
+    }
+    if (/\blog(out|out|in)\b/iu.test(lower)) {
+        return { action: 'logout', message: locale === 'ne' ? 'लग आउट गर्दै।' : 'Logging out.' };
+    }
+
+    // --- Help ---
     if (/^(help|what can i say|commands|मद्दत|आदेश)/iu.test(lower)) {
         return { action: 'show_help', message: locale === 'ne' ? 'उपलब्ध आदेशहरू देखाइयो।' : 'Showing available commands.' };
     }

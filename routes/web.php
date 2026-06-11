@@ -24,16 +24,9 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard', [
-        'stats' => [
-            'total'      => Complaint::count(),
-            'pending'    => Complaint::whereIn('current_status', ['submitted', 'under_review'])->count(),
-            'inProgress' => Complaint::whereIn('current_status', ['assigned', 'in_progress'])->count(),
-            'resolved'   => Complaint::where('current_status', 'resolved')->count(),
-        ],
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [ComplaintController::class, 'getGroupedByLocation'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::post('/voice/interpret', [VoiceCommandController::class, 'interpret'])->name('voice.interpret');

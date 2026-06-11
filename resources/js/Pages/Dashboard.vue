@@ -4,6 +4,7 @@ import { Head, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdminStatsCard from '@/Components/AdminStatsCard.vue'
+import GroupedComplaintsTable from '@/Components/GroupedComplaintsTable.vue'
 import { Line, Doughnut } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -37,7 +38,7 @@ ChartJS.register(
 )
 
 const { t } = useI18n()
-const { stats: rawStats } = usePage().props
+const { stats: rawStats, groupedComplaints } = usePage().props
 
 const stats = computed(() => [
   {
@@ -235,6 +236,10 @@ const doughnutChartOptions = {
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="mt-6">
+      <GroupedComplaintsTable :grouped-complaints="groupedComplaints" />
     </div>
   </AdminLayout>
 </template>

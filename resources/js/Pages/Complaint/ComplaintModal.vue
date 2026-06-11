@@ -7,10 +7,10 @@
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900">
-                        {{ isEditMode ? 'Edit Complaint' : 'New Complaint' }}
+                        {{ isEditMode ? t('complaint.editComplaint') : t('complaint.newComplaint') }}
                     </h3>
                     <p class="text-sm text-gray-500 mt-0.5">
-                        {{ isEditMode ? complaint.complaint_no : 'Submit a new citizen complaint.' }}
+                        {{ isEditMode ? complaint.complaint_no : t('complaint.submitDesc') }}
                     </p>
                 </div>
             </div>
@@ -19,7 +19,7 @@
                 <!-- Department -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Department <span class="text-red-400">*</span>
+                        {{ t('complaint.department') }} <span class="text-red-400">*</span>
                     </label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -36,7 +36,7 @@
                             ]"
                             required
                         >
-                            <option value="" disabled>Select a department</option>
+                            <option value="" disabled>{{ t('complaint.selectDepartment') }}</option>
                             <option v-for="dept in departments" :key="dept.id" :value="dept.id">
                                 {{ dept.name }}
                             </option>
@@ -54,7 +54,7 @@
                 <!-- Category -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Category <span class="text-red-400">*</span>
+                        {{ t('complaint.category') }} <span class="text-red-400">*</span>
                     </label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -72,7 +72,7 @@
                             required
                         >
                             <option value="" disabled>
-                                {{ form.department_id ? 'Select a category' : 'Select a department first' }}
+                                {{ form.department_id ? t('complaint.selectCategory') : t('complaint.selectDepartmentFirst') }}
                             </option>
                             <option v-for="cat in filteredCategories" :key="cat.id" :value="cat.id">
                                 {{ cat.name }}
@@ -91,7 +91,7 @@
                 <!-- Title -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Title <span class="text-red-400">*</span>
+                        {{ t('complaint.title') }} <span class="text-red-400">*</span>
                     </label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -106,7 +106,7 @@
                                     ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
                                     : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
                             ]"
-                            placeholder="e.g. Pothole on Main Street"
+                            :placeholder="t('complaint.titlePlaceholder')"
                             required
                         />
                     </div>
@@ -119,7 +119,7 @@
                 <!-- Description -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Description <span class="text-red-400">*</span>
+                        {{ t('complaint.description') }} <span class="text-red-400">*</span>
                     </label>
                     <textarea
                         v-model="form.description"
@@ -130,7 +130,7 @@
                                 ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
                                 : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
                         ]"
-                        placeholder="Describe the issue in detail..."
+                        :placeholder="t('complaint.descriptionPlaceholder')"
                         maxlength="10000"
                     ></textarea>
                     <div class="flex items-center justify-between mt-1.5">
@@ -145,7 +145,7 @@
 
                 <!-- Location -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Location</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ t('complaint.location') }}</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-map-marker-alt text-gray-400 text-sm"></i>
@@ -272,8 +272,8 @@
                     <!-- Resolution notes -->
                     <div v-if="form.current_status === 'resolved' || form.current_status === 'rejected'">
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                            Resolution Notes
-                            <span class="text-gray-400 font-normal">(optional)</span>
+                            {{ t('complaint.resolutionNotes') }}
+                            <span class="text-gray-400 font-normal">{{ t('complaint.optional') }}</span>
                         </label>
                         <textarea
                             v-model="form.resolution_notes"
@@ -284,7 +284,7 @@
                                     ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
                                     : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
                             ]"
-                            placeholder="Describe how this was resolved or why it was rejected..."
+                            :placeholder="t('complaint.resolutionPlaceholder')"
                             maxlength="5000"
                         ></textarea>
                         <p v-if="form.errors.resolution_notes" class="mt-1.5 text-sm text-red-600 flex items-center gap-1.5">
@@ -295,7 +295,7 @@
 
                     <!-- Status history timeline -->
                     <div v-if="complaint.tracks && complaint.tracks.length">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Status History</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('complaint.statusHistory') }}</label>
                         <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
                             <div
                                 v-for="track in complaint.tracks"
@@ -350,11 +350,11 @@
                     >
                         <span v-if="form.processing" class="inline-flex items-center gap-2">
                             <i class="fas fa-spinner fa-spin"></i>
-                            Saving...
+                            {{ t('complaint.saving') }}
                         </span>
                         <span v-else class="inline-flex items-center gap-2">
                             <i class="fas" :class="isEditMode ? 'fa-save' : 'fa-plus'"></i>
-                            {{ isEditMode ? 'Update Complaint' : 'Submit Complaint' }}
+                            {{ isEditMode ? t('complaint.updateComplaint') : t('complaint.submitComplaint') }}
                         </span>
                     </button>
                 </div>
@@ -366,8 +366,11 @@
 <script setup>
 import { computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import Modal from '@/Components/Modal.vue';
 import { voiceHandlers } from '@/Composables/useVoiceContext';
+
+const { t } = useI18n();
 
 const STATUS_TRANSITIONS = {
     submitted:    ['under_review', 'rejected'],
@@ -444,7 +447,16 @@ const STATUS_LABELS = {
 };
 
 function statusLabel(s) {
-    return STATUS_LABELS[s] ?? s;
+    const labels = {
+        submitted: t('complaint.statusSubmitted'),
+        under_review: t('complaint.statusUnderReview'),
+        assigned: t('complaint.statusAssigned'),
+        in_progress: t('complaint.statusInProgress'),
+        resolved: t('complaint.statusResolved'),
+        rejected: t('complaint.statusRejected'),
+        closed: t('complaint.statusClosed'),
+    }
+    return labels[s] ?? s;
 }
 
 function statusBadgeClass(s) {

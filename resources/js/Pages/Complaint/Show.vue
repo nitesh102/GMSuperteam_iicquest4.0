@@ -1,8 +1,11 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import BackButton from '@/Components/common/BackButton.vue'
+
+const { t } = useI18n();
 
 const props = defineProps({
     complaint:   Object,
@@ -72,7 +75,18 @@ function submitStatusChange() {
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
-function statusLabel(s) { return STATUS_LABELS[s] ?? s }
+function statusLabel(s) { 
+    const labels = {
+        submitted: t('complaint.statusSubmitted'),
+        under_review: t('complaint.statusUnderReview'),
+        assigned: t('complaint.statusAssigned'),
+        in_progress: t('complaint.statusInProgress'),
+        resolved: t('complaint.statusResolved'),
+        rejected: t('complaint.statusRejected'),
+        closed: t('complaint.statusClosed'),
+    }
+    return labels[s] ?? s
+}
 
 function statusColor(s) {
     return {
@@ -268,7 +282,7 @@ const lifecycleStep = computed(() => {
                         <div v-if="complaint.location || complaint.latitude" class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
                             <h2 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                                 <i class="fas fa-map-marker-alt text-gray-400 text-xs"></i>
-                                Location
+                                {{ t('complaint.locationSection') }}
                             </h2>
                             <p v-if="complaint.location" class="text-sm text-gray-700">{{ complaint.location }}</p>
                             <p v-if="complaint.latitude && complaint.longitude" class="text-xs text-gray-400 mt-1">
@@ -280,11 +294,11 @@ const lifecycleStep = computed(() => {
                         <div v-if="complaint.resolution_notes" class="bg-green-50 border border-green-200 rounded-xl p-5">
                             <h2 class="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
                                 <i class="fas fa-check-circle text-green-500 text-xs"></i>
-                                Resolution Notes
+                                {{ t('complaint.resolutionNotes') }}
                             </h2>
                             <p class="text-sm text-green-800 leading-relaxed">{{ complaint.resolution_notes }}</p>
                             <p v-if="complaint.resolved_at" class="text-xs text-green-600 mt-2">
-                                Resolved on {{ formatDateTime(complaint.resolved_at) }}
+                                {{ t('complaint.resolvedOn') }} {{ formatDateTime(complaint.resolved_at) }}
                             </p>
                         </div>
                     </div>
@@ -294,26 +308,26 @@ const lifecycleStep = computed(() => {
 
                         <!-- Meta card -->
                         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3.5">
-                            <h2 class="text-sm font-semibold text-gray-700">Details</h2>
+                            <h2 class="text-sm font-semibold text-gray-700">{{ t('complaint.details') }}</h2>
                             <div class="space-y-2.5 text-sm">
                                 <div class="flex items-start justify-between gap-3">
-                                    <span class="text-gray-400 flex-shrink-0">Citizen</span>
+                                    <span class="text-gray-400 flex-shrink-0">{{ t('complaint.citizen') }}</span>
                                     <span class="text-gray-700 text-right font-medium">{{ complaint.citizen?.name || '—' }}</span>
                                 </div>
                                 <div class="flex items-start justify-between gap-3">
-                                    <span class="text-gray-400 flex-shrink-0">Department</span>
+                                    <span class="text-gray-400 flex-shrink-0">{{ t('complaint.department') }}</span>
                                     <span class="text-gray-700 text-right">{{ complaint.category?.department?.name || '—' }}</span>
                                 </div>
                                 <div class="flex items-start justify-between gap-3">
-                                    <span class="text-gray-400 flex-shrink-0">Category</span>
+                                    <span class="text-gray-400 flex-shrink-0">{{ t('complaint.category') }}</span>
                                     <span class="text-gray-700 text-right">{{ complaint.category?.name || '—' }}</span>
                                 </div>
                                 <div class="flex items-start justify-between gap-3">
-                                    <span class="text-gray-400 flex-shrink-0">Submitted</span>
+                                    <span class="text-gray-400 flex-shrink-0">{{ t('complaint.statusSubmitted') }}</span>
                                     <span class="text-gray-700 text-right">{{ formatDate(complaint.created_at) }}</span>
                                 </div>
                                 <div v-if="complaint.resolved_at" class="flex items-start justify-between gap-3">
-                                    <span class="text-gray-400 flex-shrink-0">Resolved</span>
+                                    <span class="text-gray-400 flex-shrink-0">{{ t('complaint.statusResolved') }}</span>
                                     <span class="text-gray-700 text-right">{{ formatDate(complaint.resolved_at) }}</span>
                                 </div>
                             </div>
@@ -321,7 +335,7 @@ const lifecycleStep = computed(() => {
 
                         <!-- Lifecycle stepper -->
                         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                            <h2 class="text-sm font-semibold text-gray-700 mb-4">Lifecycle</h2>
+                            <h2 class="text-sm font-semibold text-gray-700 mb-4">{{ t('complaint.lifecycle') }}</h2>
 
                             <!-- Rejected state -->
                             <div v-if="complaint.current_status === 'rejected'" class="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-100">
@@ -329,8 +343,8 @@ const lifecycleStep = computed(() => {
                                     <i class="fas fa-times text-red-500 text-xs"></i>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-red-700">Rejected</p>
-                                    <p class="text-xs text-red-500 mt-0.5">This complaint was rejected.</p>
+                                    <p class="text-sm font-medium text-red-700">{{ t('complaint.statusRejected') }}</p>
+                                    <p class="text-xs text-red-500 mt-0.5">{{ t('complaint.rejectedMessage') }}</p>
                                 </div>
                             </div>
 
