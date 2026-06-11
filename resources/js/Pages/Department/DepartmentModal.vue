@@ -5,14 +5,7 @@
             <!-- Header -->
             <div class="flex items-center gap-4 mb-8">
                 <!-- Logo Branding -->
-                <div class="flex items-center gap-3 flex-shrink-0">
-                    <img
-                        src="/logo.png"
-                        alt="CiviSense Logo"
-                        class="h-12 object-contain"
-                    />
-                    <span class="font-bold text-gray-900">CiviSense</span>
-                </div>
+                <AppLogo class="modal-logo flex-shrink-0" />
 
                 <div class="flex-1">
                     <h3 class="text-2xl font-bold text-gray-900">
@@ -230,6 +223,7 @@
 import { computed, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import Modal from '@/Components/Modal.vue'
+import AppLogo from '@/Components/common/AppLogo.vue'
 
 const props = defineProps({
     show: Boolean,
@@ -303,3 +297,13 @@ function submitForm() {
     }
 }
 </script>
+
+<style scoped>
+.modal-logo :deep(.logo-image) {
+    height: 40px;
+}
+
+.modal-logo :deep(.brand-text) {
+    font-size: 20px;
+}
+</style>

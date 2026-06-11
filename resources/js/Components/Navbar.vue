@@ -21,12 +21,7 @@
 
             <!-- Brand -->
             <div class="hidden md:flex items-center gap-3">
-                <div class="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary">
-                    <i class="fas fa-store"></i>
-                </div>
-                <h2 class="text-lg font-bold leading-tight tracking-tight text-gray-900">
-                   CiviSense
-                </h2>
+                <AppLogo class="navbar-logo" />
             </div>
         </div>
 
@@ -197,6 +192,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
+import AppLogo from '@/Components/common/AppLogo.vue'
 
 const emit = defineEmits(['toggle-sidebar'])
 
@@ -300,4 +296,12 @@ onUnmounted(() => {
 .slide-down-leave-active { transition: all 0.2s ease-out; }
 .slide-down-enter-from,
 .slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
+
+.navbar-logo :deep(.logo-image) {
+    height: 32px;
+}
+
+.navbar-logo :deep(.brand-text) {
+    font-size: 20px;
+}
 </style>

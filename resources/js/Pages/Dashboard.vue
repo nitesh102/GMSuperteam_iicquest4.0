@@ -178,15 +178,7 @@ const doughnutChartOptions = {
   <Head title="Dashboard" />
 
   <AdminLayout>
-    <!-- Logo Branding Section -->
-    <div class="mb-8 flex items-center gap-3">
-      <img
-        src="/logo.png"
-        alt="CiviSense Logo"
-        class="h-[60px] md:h-[48px] object-contain"
-      />
-      <span class="text-2xl font-bold text-gray-900">CiviSense</span>
-    </div>
+   
 
     <!-- Page Header -->
     <div class="mb-8 flex items-start justify-between">

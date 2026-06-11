@@ -6,31 +6,14 @@
 
         <header class="w-full z-10">
           <div class="flex items-center gap-3">
-            <svg class="w-10 h-10 drop-shadow-md" viewBox="0 0 100 100">
-              <path d="M 50 10 A 40 40 0 0 0 50 90" fill="none" stroke="#2563eb" stroke-width="5" />
-              <path d="M 50 10 A 40 40 0 0 1 50 90" fill="none" stroke="#dc2626" stroke-width="5" />
-              <path d="M50,10 L50,-5 L58,-1 L50,3 L58,7 L50,11" fill="#dc2626" />
-              <path d="M35,30 L65,30 L50,18 Z" fill="#1e40af" />
-              <rect x="38" y="32" width="4" height="14" fill="#1e40af" />
-              <rect x="48" y="32" width="4" height="14" fill="#1e40af" />
-              <rect x="58" y="32" width="4" height="14" fill="#1e40af" />
-              <rect x="35" y="46" width="30" height="3" fill="#1e40af" />
-              <circle cx="40" cy="55" r="4" fill="#dc2626" />
-              <path d="M35,66 C35,60 45,60 45,66 Z" fill="#dc2626" />
-              <circle cx="50" cy="53" r="5" fill="#2563eb" />
-              <path d="M43,66 C43,58 57,58 57,66 Z" fill="#2563eb" />
-              <circle cx="60" cy="56" r="4" fill="#1d4ed8" />
-              <path d="M55,66 C55,61 65,61 65,66 Z" fill="#1d4ed8" />
-              <path d="M36,65 Q50,80 64,65 Q50,84 36,65" fill="none" stroke="#e2e8f0" stroke-width="3" />
-            </svg>
-            <span class="text-white text-2xl font-semibold tracking-tight">CiviSense</span>
+            
           </div>
         </header>
 
         <div class="my-auto max-w-lg z-10">
           <h1 class="m-0 text-white leading-tight">
             <span class="block text-4xl font-normal text-slate-200 opacity-90">Welcome to</span>
-            <span class="block text-5xl font-bold tracking-tight">Civi<span class="text-[#E63946]">Sense</span></span>
+            <AppLogo class="hero-title-logo mt-3" />
           </h1>
           <p class="mt-4 text-[15.5px] text-slate-400 font-light leading-relaxed">
             Empowering citizens through technology and transparency.
@@ -118,24 +101,7 @@
 
           <div class="text-center mb-9">
             <div class="flex flex-col items-center gap-2 mb-6">
-              <svg class="w-16 h-16 drop-shadow" viewBox="0 0 100 100">
-                <path d="M 50 10 A 40 40 0 0 0 50 90" fill="none" stroke="#1d2a42" stroke-width="5" />
-                <path d="M 50 10 A 40 40 0 0 1 50 90" fill="none" stroke="#dc2626" stroke-width="5" />
-                <path d="M50,10 L50,-5 L58,-1 L50,3 L58,7 L50,11" fill="#dc2626" />
-                <path d="M35,30 L65,30 L50,18 Z" fill="#1d2a42" />
-                <rect x="38" y="32" width="4" height="14" fill="#1d2a42" />
-                <rect x="48" y="32" width="4" height="14" fill="#1d2a42" />
-                <rect x="58" y="32" width="4" height="14" fill="#1d2a42" />
-                <rect x="35" y="46" width="30" height="3" fill="#1d2a42" />
-                <circle cx="40" cy="55" r="4" fill="#dc2626" />
-                <path d="M35,66 C35,60 45,60 45,66 Z" fill="#dc2626" />
-                <circle cx="50" cy="53" r="5" fill="#1d2a42" />
-                <path d="M43,66 C43,58 57,58 57,66 Z" fill="#1d2a42" />
-                <circle cx="60" cy="56" r="4" fill="#1d2a42" />
-                <path d="M55,66 C55,61 65,61 65,66 Z" fill="#1d2a42" />
-                <path d="M36,65 Q50,80 64,65 Q50,84 36,65" fill="none" stroke="#1d2a42" stroke-width="3" />
-              </svg>
-              <h2 class="m-0 text-3xl font-bold tracking-tight text-[#0F172A]">Civi<span class="text-[#E63946]">Sense</span></h2>
+              <AppLogo class="login-card-logo" />
 
               <div class="w-full flex flex-col items-center mt-2">
                 <div class="flex items-center w-full justify-center gap-2">
@@ -228,6 +194,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import AppLogo from '@/Components/common/AppLogo.vue';
 
 // Inertia Form for login submission
 const form = useForm({
@@ -244,3 +211,36 @@ const executeLogin = () => {
     });
 };
 </script>
+
+<style scoped>
+.hero-header-logo :deep(.logo-image) {
+  height: 40px;
+}
+
+.hero-header-logo :deep(.brand-text) {
+  font-size: 24px;
+}
+
+.hero-title-logo :deep(.logo-image) {
+  height: 56px;
+}
+
+.hero-title-logo :deep(.brand-text) {
+  font-size: 48px;
+  color: #fff;
+}
+
+.login-card-logo {
+  justify-content: center;
+}
+
+.login-card-logo :deep(.logo-image) {
+  height: 64px;
+}
+
+@media (max-width: 768px) {
+  .login-card-logo :deep(.logo-image) {
+    height: 56px;
+  }
+}
+</style>

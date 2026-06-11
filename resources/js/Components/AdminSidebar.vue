@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { Link } from '@inertiajs/vue3'
+import AppLogo from '@/Components/common/AppLogo.vue'
 import {
   HomeIcon,
   BuildingOffice2Icon,
@@ -37,7 +38,7 @@ const isActive = (href) => {
   <aside class="hidden lg:fixed lg:left-0 lg:top-0 lg:flex lg:h-screen lg:w-60 lg:flex-col lg:bg-white lg:border-r lg:border-gray-200 lg:z-40">
     <!-- Logo -->
     <div class="flex h-20 items-center justify-center border-b border-gray-200">
-      <span class="text-2xl font-bold text-red-500">CiviSense</span>
+      <AppLogo class="sidebar-logo" />
     </div>
 
     <!-- Menu Items -->
@@ -77,7 +78,7 @@ const isActive = (href) => {
   >
     <!-- Logo -->
     <div class="flex h-20 items-center justify-center border-b border-gray-200">
-      <span class="text-2xl font-bold text-red-500">CiviSense</span>
+      <AppLogo class="sidebar-logo" />
     </div>
 
     <!-- Menu Items -->
@@ -111,3 +112,13 @@ const isActive = (href) => {
     </div>
   </aside>
 </template>
+
+<style scoped>
+.sidebar-logo :deep(.logo-image) {
+  height: 36px;
+}
+
+.sidebar-logo :deep(.brand-text) {
+  font-size: 24px;
+}
+</style>

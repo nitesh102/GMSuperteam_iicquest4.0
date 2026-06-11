@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { Head, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdminDataTable from '@/Components/AdminDataTable.vue'
-import ComplaintCategoryModal from '@/Complaint/ComplaintCategoryModal.vue'
+import ComplaintCategoryModal from '@/Pages/ComplaintCategory/ComplaintCategoryModal.vue'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const page = usePage()
@@ -130,4 +130,3 @@ const tableRows = computed(() =>
 
   </AdminLayout>
 </template>
-
