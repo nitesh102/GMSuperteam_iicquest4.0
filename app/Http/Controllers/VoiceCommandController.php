@@ -16,12 +16,14 @@ class VoiceCommandController extends Controller
       'transcript' => ['required', 'string', 'max:1000'],
       'locale' => ['nullable', 'string', 'in:en,ne'],
       'current_page' => ['nullable', 'string', 'max:255'],
+      'page_context' => ['nullable', 'string', 'max:50'],
     ]);
 
     $result = $this->voiceCommandService->interpret(
       $validated['transcript'],
       $validated['locale'] ?? app()->getLocale(),
       $validated['current_page'] ?? null,
+      $validated['page_context'] ?? null,
     );
 
     return response()->json($result);

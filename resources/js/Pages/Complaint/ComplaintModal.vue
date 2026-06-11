@@ -394,6 +394,7 @@
 import { computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
+import { voiceHandlers } from '@/Composables/useVoiceContext';
 
 const STATUS_TRANSITIONS = {
     submitted:    ['under_review', 'rejected'],
@@ -538,4 +539,36 @@ function submitForm() {
         });
     }
 }
+
+function handleVoiceFillField(field, value) {
+    if (field in form) {
+        form[field] = value;
+    }
+}
+
+function registerVoiceHandlers() {
+    voiceHandlers.onFillField = handleVoiceFillField;
+    voiceHandlers.onSubmitForm = submitForm;
+    voiceHandlers.pageContext = 'complaint';
+}
+
+function unregisterVoiceHandlers() {
+    if (voiceHandlers.onFillField === handleVoiceFillField) {
+        voiceHandlers.onFillField = null;
+    }
+    if (voiceHandlers.onSubmitForm === submitForm) {
+        voiceHandlers.onSubmitForm = null;
+    }
+    if (voiceHandlers.pageContext === 'complaint') {
+        voiceHandlers.pageContext = null;
+    }
+}
+
+watch(() => props.show, (isOpen) => {
+    if (isOpen) {
+        registerVoiceHandlers();
+    } else {
+        unregisterVoiceHandlers();
+    }
+}, { immediate: true });
 </script>

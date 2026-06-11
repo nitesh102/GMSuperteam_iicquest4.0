@@ -1,8 +1,11 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useVoicePageHandlers } from '@/Composables/useVoiceContext';
+
+const { t } = useI18n();
 
 const form = useForm({
     title:       '',
@@ -64,10 +67,22 @@ function handleVoiceFillField(field, value) {
     }
 }
 
-provide('voiceFormHandlers', {
+useVoicePageHandlers({
     onFillField: handleVoiceFillField,
     onSubmitForm: submitForm,
+}, 'complaint');
+
+onMounted(() => {
+    const pending = sessionStorage.getItem('voice_fill');
+    if (!pending) return;
+    try {
+        const { field, value } = JSON.parse(pending);
+        handleVoiceFillField(field, value);
+    } finally {
+        sessionStorage.removeItem('voice_fill');
+    }
 });
+
 </script>
 
 <template>
@@ -94,7 +109,7 @@ provide('voiceFormHandlers', {
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ t('complaint.submitTitle') }}</h1>
                         <p class="mt-1 text-sm text-gray-500">
-                            Describe the issue — our AI will handle category and priority automatically.
+                            {{ t('complaint.describeIssue') }}
                         </p>
                     </div>
                     <a
@@ -112,7 +127,7 @@ provide('voiceFormHandlers', {
                         <i class="fas fa-robot text-indigo-600 text-sm"></i>
                     </div>
                     <p class="text-sm text-indigo-700">
-                        <span class="font-semibold">AI-powered routing</span> — department, category, and priority are detected automatically from your submission.
+                        <span class="font-semibold">{{ t('complaint.aiRouting') }}</span> — {{ t('complaint.aiRoutingDesc') }}
                     </p>
                 </div>
 
@@ -125,25 +140,22 @@ provide('voiceFormHandlers', {
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">
                                     {{ t('complaint.title') }} <span class="text-red-400">*</span>
                                 </label>
-                                <div class="relative flex gap-2">
-                                    <div class="relative flex-1">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i class="fas fa-heading text-gray-400 text-sm"></i>
-                                        </div>
-                                        <input
-                                            type="text"
-                                            v-model="form.title"
-                                            :class="[
-                                                'w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-150 placeholder:text-gray-400',
-                                                form.errors.title
-                                                    ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
-                                                    : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
-                                            ]"
-                                            :placeholder="t('complaint.titlePlaceholder')"
-                                            required
-                                        />
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-heading text-gray-400 text-sm"></i>
                                     </div>
-                                    <VoiceInputButton v-model="form.title" :append="false" />
+                                    <input
+                                        type="text"
+                                        v-model="form.title"
+                                        :class="[
+                                            'w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-150 placeholder:text-gray-400',
+                                            form.errors.title
+                                                ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
+                                                : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
+                                        ]"
+                                        :placeholder="t('complaint.titlePlaceholder')"
+                                        required
+                                    />
                                 </div>
                                 <p v-if="form.errors.title" class="mt-1.5 text-sm text-red-600 flex items-center gap-1.5">
                                     <i class="fas fa-exclamation-circle text-xs"></i>
@@ -152,12 +164,9 @@ provide('voiceFormHandlers', {
                             </div>
 
                             <div>
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <label class="block text-sm font-medium text-gray-700">
-                                        {{ t('complaint.description') }} <span class="text-red-400">*</span>
-                                    </label>
-                                    <VoiceInputButton v-model="form.description" />
-                                </div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    {{ t('complaint.description') }} <span class="text-red-400">*</span>
+                                </label>
                                 <textarea
                                     v-model="form.description"
                                     rows="6"

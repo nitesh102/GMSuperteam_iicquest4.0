@@ -1,7 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ChevronUpDownIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
 import AdminPagination from '@/Components/AdminPagination.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   columns: Array,
@@ -78,7 +81,7 @@ const getSortIcon = (field) => {
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search..."
+          :placeholder="t('table.search')"
           class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 px-4 text-sm placeholder-gray-400 focus:border-red-500 focus:bg-white focus:outline-none"
         />
       </div>
@@ -107,6 +110,11 @@ const getSortIcon = (field) => {
           </tr>
         </thead>
         <tbody>
+          <tr v-if="paginatedRows.length === 0">
+            <td :colspan="columns.length" class="px-6 py-10 text-center text-sm text-gray-500">
+              {{ t('table.noData') }}
+            </td>
+          </tr>
           <tr
             v-for="(row, index) in paginatedRows"
             :key="index"

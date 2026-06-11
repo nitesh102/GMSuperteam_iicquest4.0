@@ -42,6 +42,38 @@
         "returnDashboard": "Return to Dashboard"
     },
     "complaint": {
+        "listTitle": "Complaints",
+        "listSubtitle": "Track and manage citizen complaints across departments.",
+        "newComplaint": "New Complaint",
+        "noComplaints": "No complaints yet",
+        "noComplaintsDesc": "Citizen complaints will appear here once they are submitted. Submit a test complaint to get started.",
+        "submitComplaint": "Submit Complaint",
+        "searchPlaceholder": "Search complaints...",
+        "statusSubmitted": "Submitted",
+        "statusUnderReview": "Under Review",
+        "statusAssigned": "Assigned",
+        "statusInProgress": "In Progress",
+        "statusResolved": "Resolved",
+        "statusRejected": "Rejected",
+        "statusClosed": "Closed",
+        "priorityLow": "Low",
+        "priorityMedium": "Medium",
+        "priorityHigh": "High",
+        "priorityEmergency": "Emergency",
+        "filterAll": "All",
+        "clearAll": "Clear all",
+        "columnStatus": "Status",
+        "columnPriority": "Priority",
+        "columnCitizen": "Citizen",
+        "columnAssignee": "Assignee",
+        "columnImages": "Images",
+        "columnCategory": "Category",
+        "columnDept": "Dept",
+        "columnCreated": "Created",
+        "columnTitle": "Title",
+        "columnActions": "Actions",
+        "allCategories": "All Categories",
+        "allDepartments": "All Departments",
         "submitTitle": "Submit Complaint",
         "submitDesc": "Fill in the details below to submit a new citizen complaint.",
         "back": "Back",
@@ -67,7 +99,10 @@
         "submit": "Submit Complaint",
         "submitting": "Submitting...",
         "aiNote": "AI Analysis",
-        "aiNoteDesc": "Our AI will automatically analyze the complaint to determine priority, category, and generate a summary."
+        "aiNoteDesc": "Our AI will automatically analyze the complaint to determine priority, category, and generate a summary.",
+        "aiRouting": "AI-powered routing",
+        "aiRoutingDesc": "Department, category, and priority are detected automatically from your submission.",
+        "describeIssue": "Describe the issue — our AI will handle category and priority automatically."
     },
     "voice": {
         "startListening": "Start voice input",
@@ -76,11 +111,23 @@
         "notSupported": "Voice input is not supported in this browser. Try Chrome or Edge.",
         "commandAssistant": "Voice Assistant",
         "commandHint": "Say a command like \"go to dashboard\" or \"submit complaint\"",
+        "systemWideHint": "Navigate & control the app by voice",
+        "continuousHint": "Keep speaking for long descriptions - recognition continues after pauses",
         "processing": "Processing command...",
         "commandFailed": "Could not understand that command. Please try again.",
         "micPermission": "Microphone permission is required for voice commands.",
         "openAssistant": "Open voice assistant",
         "speakNow": "Speak now...",
+        "fieldNotAvailable": "Open the complaint form first to fill fields.",
+        "noFormToSubmit": "No form is open to submit on this page.",
+        "searchNotAvailable": "Search is not available on this page.",
+        "filterNotAvailable": "Filters are not available on this page.",
+        "loginRequired": "Please log in first.",
+        "groups": {
+            "navigation": "Navigation",
+            "admin": "Admin actions",
+            "general": "General"
+        },
         "commands": {
             "goDashboard": "Go to dashboard",
             "goComplaints": "Go to complaints",
@@ -89,7 +136,14 @@
             "goCategories": "Go to categories",
             "goProfile": "Go to profile",
             "switchEnglish": "Switch to English",
-            "switchNepali": "Switch to Nepali"
+            "switchNepali": "Switch to Nepali",
+            "newDepartment": "New department",
+            "newCategory": "New category",
+            "filterPending": "Show pending complaints",
+            "clearFilters": "Clear filters",
+            "logout": "Log out",
+            "goBack": "Go back",
+            "searchExample": "Search for pothole"
         }
     },
     "language": {
@@ -121,6 +175,139 @@
         "deptOthers": "Others",
         "needHelp": "Need Help?",
         "viewSupport": "View Support"
+    },
+    "department": {
+        "title": "Departments",
+        "subtitle": "Manage departments for complaint routing and organization.",
+        "newDepartment": "New Department",
+        "totalDepartments": "Total Departments",
+        "colName": "Department Name",
+        "colDescription": "Description",
+        "colCreatedOn": "Created On",
+        "colStatus": "Status",
+        "colActions": "Actions",
+        "editTitle": "Edit Department",
+        "createTitle": "Create Department",
+        "modalSubtitle": "Manage departments responsible for handling civic complaints.",
+        "nameLabel": "Department Name",
+        "namePlaceholder": "Road Maintenance Department",
+        "iconLabel": "Department Icon",
+        "colorLabel": "Department Color",
+        "statusLabel": "Department Status",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Describe department responsibilities...",
+        "previewTitle": "Department Preview",
+        "previewDesc": "Department description will appear here.",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "update": "Update Department",
+        "create": "Create Department",
+        "deleteConfirm": "Delete department \"{name}\"? This cannot be undone.",
+        "edit": "Edit",
+        "delete": "Delete",
+        "icons": {
+            "road": "Road Department",
+            "health": "Health",
+            "education": "Education",
+            "environment": "Environment",
+            "water": "Water Supply",
+            "electricity": "Electricity",
+            "waste": "Waste Management",
+            "safety": "Public Safety"
+        }
+    },
+    "category": {
+        "title": "Complaint Categories",
+        "subtitle": "Manage complaint categories for departments.",
+        "newCategory": "New Category",
+        "totalCategories": "Total Categories",
+        "colName": "Category Name",
+        "colDepartment": "Department",
+        "colDescription": "Description",
+        "colStatus": "Status",
+        "colActions": "Actions",
+        "editTitle": "Edit Category",
+        "createTitle": "Create Category",
+        "modalSubtitle": "Manage complaint categories used by citizens when filing complaints.",
+        "departmentLabel": "Department",
+        "selectDepartment": "Select a department",
+        "nameLabel": "Category Name",
+        "namePlaceholder": "e.g. Road Damage",
+        "iconLabel": "Category Icon",
+        "colorLabel": "Category Color",
+        "statusLabel": "Status",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Describe the category responsibilities...",
+        "previewTitle": "Category Preview",
+        "previewDept": "Department: {name}",
+        "selectDeptHint": "Select a department above",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "update": "Update Category",
+        "create": "Create Category",
+        "deleteConfirm": "Delete category \"{name}\"? This cannot be undone.",
+        "edit": "Edit",
+        "delete": "Delete",
+        "icons": {
+            "general": "General",
+            "road": "Road / Transport",
+            "water": "Water Supply",
+            "electricity": "Electricity",
+            "environment": "Environment",
+            "health": "Health",
+            "education": "Education",
+            "waste": "Waste Management",
+            "safety": "Public Safety",
+            "housing": "Housing"
+        }
+    },
+    "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+    },
+    "table": {
+        "search": "Search...",
+        "showing": "Showing {from} to {to} of {total} results",
+        "page": "Page {current} of {total}",
+        "previous": "Previous",
+        "next": "Next",
+        "noData": "No records found."
+    },
+    "entities": {
+        "departments": {
+            "health_department": {
+                "name": "Health Department",
+                "description": "Oversees public health services, disease control, sanitation standards, and healthcare facility management across the municipality."
+            },
+            "roads_infrastructure": {
+                "name": "Roads & Infrastructure",
+                "description": "Manages construction, maintenance, and repair of roads, bridges, drainage systems, and public infrastructure projects."
+            },
+            "water_sanitation": {
+                "name": "Water Supply & Sanitation",
+                "description": "Responsible for drinking water distribution, water quality testing, sewage systems, and public toilet maintenance."
+            },
+            "waste_management": {
+                "name": "Waste Management",
+                "description": "Handles solid waste collection, recycling programs, landfill operations, and street cleaning services."
+            },
+            "electricity_lighting": {
+                "name": "Electricity & Public Lighting",
+                "description": "Maintains public street lighting, coordinates with power utilities, and manages electrical safety inspections."
+            },
+            "public_safety": {
+                "name": "Public Safety & Security",
+                "description": "Coordinates with law enforcement, manages disaster response, fire safety, and community policing initiatives."
+            },
+            "environment_parks": {
+                "name": "Environment & Parks",
+                "description": "Protects green spaces, manages public parks, monitors pollution levels, and oversees environmental conservation programs."
+            },
+            "transportation": {
+                "name": "Transportation",
+                "description": "Regulates public transport, manages traffic flow, maintains road signage, and oversees parking infrastructure."
+            }
+        }
     },
     "common": {
         "required": "Required",

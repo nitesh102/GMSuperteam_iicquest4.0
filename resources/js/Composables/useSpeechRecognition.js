@@ -1,4 +1,4 @@
-import { ref, computed, reactive, onUnmounted } from 'vue';
+import { ref, computed, reactive, onUnmounted, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { speechLocales, speechLocaleFallbacks } from '@/i18n';
 
@@ -9,7 +9,12 @@ export function useSpeechRecognition(options = {}) {
     const error = ref(null);
 
     const page = usePage();
-    const locale = computed(() => options.locale?.value ?? page.props.locale ?? 'en');
+    const locale = computed(() => {
+        if (options.locale?.value !== undefined) {
+            return options.locale.value;
+        }
+        return page.props.locale ?? 'en';
+    });
 
     const SpeechRecognition = typeof window !== 'undefined'
         ? (window.SpeechRecognition || window.webkitSpeechRecognition)
@@ -154,6 +159,14 @@ export function useSpeechRecognition(options = {}) {
         error.value = null;
         langIndex = 0;
     }
+
+    // Watch for locale changes and restart speech recognition if listening
+    watch(locale, (newLocale, oldLocale) => {
+        if (newLocale !== oldLocale && isListening.value) {
+            langIndex = 0;
+            start();
+        }
+    });
 
     onUnmounted(() => {
         try {

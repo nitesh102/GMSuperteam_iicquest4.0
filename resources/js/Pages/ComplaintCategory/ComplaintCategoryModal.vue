@@ -2,7 +2,6 @@
     <Modal :show="show" @close="closeModal">
         <div class="bg-white rounded-2xl p-8 max-w-3xl mx-auto">
 
-            <!-- Header -->
             <div class="flex items-center gap-4 mb-8">
                 <div class="flex items-center gap-3 flex-shrink-0">
                     <svg class="h-10 w-10" viewBox="0 0 100 100">
@@ -26,28 +25,26 @@
                 </div>
                 <div class="flex-1">
                     <h3 class="text-2xl font-bold text-gray-900">
-                        {{ isEditMode ? 'Edit Category' : 'Create Category' }}
+                        {{ isEditMode ? t('category.editTitle') : t('category.createTitle') }}
                     </h3>
                     <p class="text-sm text-gray-500 mt-1">
-                        Manage complaint categories used by citizens when filing complaints.
+                        {{ t('category.modalSubtitle') }}
                     </p>
                 </div>
             </div>
 
-            <!-- Form -->
             <form @submit.prevent="submitForm">
 
-                <!-- Department (full width) -->
                 <div class="mb-6">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        Department <span class="text-red-500">*</span>
+                        {{ t('category.departmentLabel') }} <span class="text-red-500">*</span>
                     </label>
                     <select
                         v-model="form.department_id"
                         class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition"
                         required
                     >
-                        <option value="" disabled>Select a department</option>
+                        <option value="" disabled>{{ t('category.selectDepartment') }}</option>
                         <option v-for="dept in departments" :key="dept.id" :value="dept.id">
                             {{ dept.name }}
                         </option>
@@ -59,15 +56,14 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    <!-- Category Name -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Category Name
+                            {{ t('category.nameLabel') }}
                         </label>
                         <input
                             type="text"
                             v-model="form.name"
-                            placeholder="e.g. Road Damage"
+                            :placeholder="t('category.namePlaceholder')"
                             class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition"
                         />
                         <p v-if="form.errors.name" class="mt-2 text-sm text-red-600">
@@ -75,32 +71,30 @@
                         </p>
                     </div>
 
-                    <!-- Icon -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Category Icon
+                            {{ t('category.iconLabel') }}
                         </label>
                         <select
                             v-model="form.icon"
                             class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600"
                         >
-                            <option value="fa-tag">🏷 General</option>
-                            <option value="fa-road">🛣 Road / Transport</option>
-                            <option value="fa-water">💧 Water Supply</option>
-                            <option value="fa-bolt">⚡ Electricity</option>
-                            <option value="fa-tree">🌳 Environment</option>
-                            <option value="fa-hospital">🏥 Health</option>
-                            <option value="fa-school">🏫 Education</option>
-                            <option value="fa-trash">🗑 Waste Management</option>
-                            <option value="fa-shield-alt">🚓 Public Safety</option>
-                            <option value="fa-home">🏠 Housing</option>
+                            <option value="fa-tag">🏷 {{ t('category.icons.general') }}</option>
+                            <option value="fa-road">🛣 {{ t('category.icons.road') }}</option>
+                            <option value="fa-water">💧 {{ t('category.icons.water') }}</option>
+                            <option value="fa-bolt">⚡ {{ t('category.icons.electricity') }}</option>
+                            <option value="fa-tree">🌳 {{ t('category.icons.environment') }}</option>
+                            <option value="fa-hospital">🏥 {{ t('category.icons.health') }}</option>
+                            <option value="fa-school">🏫 {{ t('category.icons.education') }}</option>
+                            <option value="fa-trash">🗑 {{ t('category.icons.waste') }}</option>
+                            <option value="fa-shield-alt">🚓 {{ t('category.icons.safety') }}</option>
+                            <option value="fa-home">🏠 {{ t('category.icons.housing') }}</option>
                         </select>
                     </div>
 
-                    <!-- Color -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Category Color
+                            {{ t('category.colorLabel') }}
                         </label>
                         <div class="flex items-center gap-4">
                             <input
@@ -112,32 +106,27 @@
                         </div>
                     </div>
 
-                    <!-- Status -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Status
+                            {{ t('category.statusLabel') }}
                         </label>
-                        <select
-                            v-model="form.status"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3"
-                        >
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                        <select v-model="form.status" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                            <option value="active">{{ t('status.active') }}</option>
+                            <option value="inactive">{{ t('status.inactive') }}</option>
                         </select>
                     </div>
 
                 </div>
 
-                <!-- Description -->
                 <div class="mt-6">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        Description
+                        {{ t('category.descriptionLabel') }}
                     </label>
                     <textarea
                         v-model="form.description"
                         rows="5"
                         maxlength="1000"
-                        placeholder="Describe the category responsibilities..."
+                        :placeholder="t('category.descriptionPlaceholder')"
                         class="w-full rounded-xl border border-slate-300 px-4 py-3 resize-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600"
                     ></textarea>
                     <div class="mt-3">
@@ -156,7 +145,6 @@
                     </div>
                 </div>
 
-                <!-- Preview Card -->
                 <div class="mt-8 p-5 rounded-2xl border border-slate-200 bg-slate-50">
                     <div class="flex items-center gap-4">
                         <div
@@ -167,23 +155,24 @@
                         </div>
                         <div class="min-w-0">
                             <h4 class="font-semibold text-gray-900 truncate">
-                                {{ form.name || 'Category Preview' }}
+                                {{ form.name || t('category.previewTitle') }}
                             </h4>
                             <p class="text-sm text-gray-500 truncate">
-                                {{ selectedDepartmentName ? `Department: ${selectedDepartmentName}` : 'Select a department above' }}
+                                {{ selectedDepartmentName
+                                    ? t('category.previewDept', { name: selectedDepartmentName })
+                                    : t('category.selectDeptHint') }}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Footer -->
                 <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200">
                     <button
                         type="button"
                         @click="closeModal"
                         class="px-5 py-3 rounded-xl border border-slate-300 text-gray-700 font-medium hover:bg-slate-50 transition"
                     >
-                        Cancel
+                        {{ t('category.cancel') }}
                     </button>
                     <button
                         type="submit"
@@ -192,11 +181,11 @@
                     >
                         <template v-if="form.processing">
                             <i class="fas fa-spinner fa-spin"></i>
-                            Saving...
+                            {{ t('category.saving') }}
                         </template>
                         <template v-else>
                             <i class="fas" :class="isEditMode ? 'fa-save' : 'fa-plus'"></i>
-                            {{ isEditMode ? 'Update Category' : 'Create Category' }}
+                            {{ isEditMode ? t('category.update') : t('category.create') }}
                         </template>
                     </button>
                 </div>
@@ -207,9 +196,14 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
+import { useVoicePageHandlers } from '@/Composables/useVoiceContext'
+import { voiceHandlers } from '@/Composables/useVoiceContext'
+
+const { t } = useI18n()
 
 const props = defineProps({
     show: Boolean,
@@ -281,4 +275,36 @@ function submitForm() {
         })
     }
 }
+
+function handleVoiceFillField(field, value) {
+    if (field in form) {
+        form[field] = value;
+    }
+}
+
+function registerVoiceHandlers() {
+    voiceHandlers.onFillField = handleVoiceFillField;
+    voiceHandlers.onSubmitForm = submitForm;
+    voiceHandlers.pageContext = 'category';
+}
+
+function unregisterVoiceHandlers() {
+    if (voiceHandlers.onFillField === handleVoiceFillField) {
+        voiceHandlers.onFillField = null;
+    }
+    if (voiceHandlers.onSubmitForm === submitForm) {
+        voiceHandlers.onSubmitForm = null;
+    }
+    if (voiceHandlers.pageContext === 'category') {
+        voiceHandlers.pageContext = null;
+    }
+}
+
+watch(() => props.show, (isOpen) => {
+    if (isOpen) {
+        registerVoiceHandlers();
+    } else {
+        unregisterVoiceHandlers();
+    }
+}, { immediate: true });
 </script>

@@ -1,9 +1,12 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import ComplaintModal from '@/Pages/Complaint/ComplaintModal.vue'
+import { useVoicePageHandlers } from '@/Composables/useVoiceContext'
 
+const { t } = useI18n();
 const { complaints, departments, categories, users } = usePage().props
 
 const items = ref([...(complaints ?? [])])
@@ -166,13 +169,13 @@ function statusBadge(status) {
 
 function statusLabel(status) {
   const map = {
-    submitted: 'Submitted',
-    under_review: 'Under Review',
-    assigned: 'Assigned',
-    in_progress: 'In Progress',
-    resolved: 'Resolved',
-    rejected: 'Rejected',
-    closed: 'Closed',
+    submitted: t('complaint.statusSubmitted'),
+    under_review: t('complaint.statusUnderReview'),
+    assigned: t('complaint.statusAssigned'),
+    in_progress: t('complaint.statusInProgress'),
+    resolved: t('complaint.statusResolved'),
+    rejected: t('complaint.statusRejected'),
+    closed: t('complaint.statusClosed'),
   }
   return map[status] || status
 }
@@ -185,6 +188,16 @@ function priorityBadge(priority) {
     emergency: 'bg-red-50 text-red-700 ring-red-600/20',
   }
   return map[priority] || 'bg-gray-50 text-gray-600 ring-gray-500/20'
+}
+
+function priorityLabel(priority) {
+  const map = {
+    low: t('complaint.priorityLow'),
+    medium: t('complaint.priorityMedium'),
+    high: t('complaint.priorityHigh'),
+    emergency: t('complaint.priorityEmergency'),
+  }
+  return map[priority] || priority
 }
 
 function openEditModal(item) {
@@ -276,10 +289,29 @@ const visiblePages = computed(() => {
 watch(search, () => { currentPage.value = 1 })
 watch(filterDepartment, () => { filterCategory.value = ''; currentPage.value = 1 })
 watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value = 1 })
+
+useVoicePageHandlers({
+    onSearch: (query) => {
+        search.value = query
+        currentPage.value = 1
+    },
+    onFilter: (key, value) => {
+        if (key === 'status') {
+            filterStatus.value = value === 'pending' ? 'submitted' : value
+            currentPage.value = 1
+        }
+    },
+    onClearFilters: clearFilters,
+    onOpenCreate: (target) => {
+        if (!target || target === 'complaint' || target === 'auto') {
+            router.visit(route('complaints.create'))
+        }
+    },
+}, 'complaint')
 </script>
 
 <template>
-  <Head title="Complaints" />
+  <Head :title="t('complaint.listTitle')" />
 
   <teleport to="body">
     <div
@@ -302,9 +334,9 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
       <!-- HEADER -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Complaints</h1>
+          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ t('complaint.listTitle') }}</h1>
           <p class="mt-1 text-sm text-gray-500">
-            Track and manage citizen complaints across departments.
+            {{ t('complaint.listSubtitle') }}
           </p>
         </div>
         <Link
@@ -312,7 +344,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
           class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 hover:shadow-md transition-all duration-150 flex-shrink-0"
         >
           <i class="fas fa-plus text-xs"></i>
-          New Complaint
+          {{ t('complaint.newComplaint') }}
         </Link>
       </div>
 
@@ -352,7 +384,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
               <i class="fas fa-clock text-yellow-600 text-sm"></i>
             </div>
             <div>
-              <p class="text-xs font-medium text-gray-500">Pending</p>
+              <p class="text-xs font-medium text-gray-500">{{ t('dashboard.openPending') }}</p>
               <p class="text-xl font-bold text-gray-900 mt-0.5">{{ stats.pending }}</p>
             </div>
           </div>
@@ -374,7 +406,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
               <i class="fas fa-check-circle text-green-600 text-sm"></i>
             </div>
             <div>
-              <p class="text-xs font-medium text-gray-500">Resolved</p>
+              <p class="text-xs font-medium text-gray-500">{{ t('dashboard.resolved') }}</p>
               <p class="text-xl font-bold text-gray-900 mt-0.5">{{ stats.resolved }}</p>
             </div>
           </div>
@@ -397,16 +429,16 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
         <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5">
           <i class="fas fa-flag text-indigo-400 text-3xl"></i>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 mb-1">No complaints yet</h3>
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ t('complaint.noComplaints') }}</h3>
         <p class="text-sm text-gray-500 max-w-sm mx-auto mb-6">
-          Citizen complaints will appear here once they are submitted. Submit a test complaint to get started.
+          {{ t('complaint.noComplaintsDesc') }}
         </p>
         <Link
           :href="route('complaints.create')"
           class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 hover:shadow-md transition-all duration-150"
         >
           <i class="fas fa-plus text-xs"></i>
-          Submit Complaint
+          {{ t('complaint.submitComplaint') }}
         </Link>
       </div>
 
@@ -420,7 +452,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
               <input
                 v-model="search"
                 type="text"
-                placeholder="Search complaints..."
+                placeholder="{{ t('complaint.searchPlaceholder') }}"
                 class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-150 placeholder:text-gray-400"
               />
               <button
@@ -448,45 +480,45 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
               v-model="filterDepartment"
               class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-gray-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
             >
-              <option value="">All Departments</option>
+              <option value="">{{ t('complaint.allDepartments') }}</option>
               <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
             </select>
             <select
               v-model="filterCategory"
               class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-gray-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
             >
-              <option value="">All Categories</option>
+              <option value="">{{ t('complaint.allCategories') }}</option>
               <option v-for="c in filteredCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
             </select>
             <select
               v-model="filterStatus"
               class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-gray-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
             >
-              <option value="">All Statuses</option>
-              <option value="submitted">Submitted</option>
-              <option value="under_review">Under Review</option>
-              <option value="assigned">Assigned</option>
-              <option value="in_progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="rejected">Rejected</option>
-              <option value="closed">Closed</option>
+              <option value="">{{ t('complaint.filterAll') }}</option>
+              <option value="submitted">{{ t('complaint.statusSubmitted') }}</option>
+              <option value="under_review">{{ t('complaint.statusUnderReview') }}</option>
+              <option value="assigned">{{ t('complaint.statusAssigned') }}</option>
+              <option value="in_progress">{{ t('complaint.statusInProgress') }}</option>
+              <option value="resolved">{{ t('complaint.statusResolved') }}</option>
+              <option value="rejected">{{ t('complaint.statusRejected') }}</option>
+              <option value="closed">{{ t('complaint.statusClosed') }}</option>
             </select>
             <select
               v-model="filterPriority"
               class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-gray-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
             >
-              <option value="">All Priorities</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="emergency">Emergency</option>
+              <option value="">{{ t('dashboard.allTime') }}</option>
+              <option value="low">{{ t('complaint.priorityLow') }}</option>
+              <option value="medium">{{ t('complaint.priorityMedium') }}</option>
+              <option value="high">{{ t('complaint.priorityHigh') }}</option>
+              <option value="emergency">{{ t('complaint.priorityEmergency') }}</option>
             </select>
             <button
               v-if="filterDepartment || filterCategory || filterStatus || filterPriority || search"
               @click="clearFilters"
               class="text-xs text-indigo-600 hover:text-indigo-700 font-medium px-2 py-1.5 transition-colors"
             >
-              Clear all
+              {{ t('complaint.clearAll') }}
             </button>
           </div>
         </div>
@@ -502,21 +534,21 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                   class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 transition-colors"
                 >
                   <span class="inline-flex items-center gap-1.5">
-                    Title
+                    {{ t('complaint.columnTitle') }}
                     <i :class="sortIcon('title') + ' text-xs'"></i>
                   </span>
                 </th>
-                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Citizen</th>
-                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Assignee</th>
-                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Images</th>
-                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Category</th>
-                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Dept</th>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ t('complaint.columnCitizen') }}</th>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{{ t('complaint.columnAssignee') }}</th>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ t('complaint.columnImages') }}</th>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{{ t('complaint.columnCategory') }}</th>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{{ t('complaint.columnDept') }}</th>
                 <th
                   @click="toggleSort('priority')"
                   class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 transition-colors"
                 >
                   <span class="inline-flex items-center gap-1.5">
-                    Priority
+                    {{ t('complaint.columnPriority') }}
                     <i :class="sortIcon('priority') + ' text-xs'"></i>
                   </span>
                 </th>
@@ -525,7 +557,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                   class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 transition-colors"
                 >
                   <span class="inline-flex items-center gap-1.5">
-                    Status
+                    {{ t('complaint.columnStatus') }}
                     <i :class="sortIcon('status') + ' text-xs'"></i>
                   </span>
                 </th>
@@ -534,11 +566,11 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                   class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 transition-colors"
                 >
                   <span class="inline-flex items-center gap-1.5">
-                    Created
+                    {{ t('complaint.columnCreated') }}
                     <i :class="sortIcon('created_at') + ' text-xs'"></i>
                   </span>
                 </th>
-                <th class="px-5 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Actions</th>
+                <th class="px-5 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">{{ t('complaint.columnActions') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -607,7 +639,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                     <i v-else-if="item.priority === 'high'" class="fas fa-arrow-up"></i>
                     <i v-else-if="item.priority === 'medium'" class="fas fa-minus"></i>
                     <i v-else class="fas fa-arrow-down"></i>
-                    {{ item.priority }}
+                    {{ priorityLabel(item.priority) }}
                   </span>
                 </td>
                 <td class="px-5 py-4">
@@ -681,7 +713,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                 class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
                 :class="priorityBadge(item.priority)"
               >
-                {{ item.priority }}
+                {{ priorityLabel(item.priority) }}
               </span>
               <span class="text-xs text-gray-400">{{ item.citizen?.name || '—' }}</span>
             </div>
