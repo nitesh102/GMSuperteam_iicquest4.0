@@ -344,7 +344,6 @@ EXECUTIVE SUMMARY
 
   File: .env (committed to repository — confirmed present)
   Exposed secrets:
-    GEMINI_API_KEY=GEMINI_API_KEY_PLACEHOLDER
     DB_PASSWORD=Dbuser@123
     APP_DEBUG=true
 
