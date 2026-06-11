@@ -1,6 +1,4 @@
 <script setup>
-import { computed } from 'vue'
-import { usePage } from '@inertiajs/vue3'
 import { Link } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import {
@@ -30,7 +28,8 @@ const menuItems = computed(() => [
 ])
 
 const isActive = (href) => {
-  return window.location.pathname === new URL(href).pathname
+  const target = new URL(href, window.location.origin).pathname
+  return window.location.pathname === target || window.location.pathname.startsWith(`${target}/`)
 }
 </script>
 
@@ -107,3 +106,24 @@ const isActive = (href) => {
     </div>
   </aside>
 </template>
+
+<style scoped>
+.sidebar-logo :deep(.logo-image) {
+  height: 34px;
+}
+
+.sidebar-logo :deep(.brand-text) {
+  font-size: 22px;
+}
+
+.sidebar-slide-enter-active,
+.sidebar-slide-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.sidebar-slide-enter-from,
+.sidebar-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+</style>

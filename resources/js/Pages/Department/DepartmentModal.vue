@@ -276,3 +276,13 @@ watch(() => props.show, (isOpen) => {
     }
 }, { immediate: true });
 </script>
+
+<style scoped>
+.modal-logo :deep(.logo-image) {
+    height: 40px;
+}
+
+.modal-logo :deep(.brand-text) {
+    font-size: 20px;
+}
+</style>

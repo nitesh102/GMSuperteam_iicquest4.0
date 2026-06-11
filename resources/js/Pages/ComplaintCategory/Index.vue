@@ -113,13 +113,13 @@ useVoicePageHandlers({
                 </div>
                 <button
                     @click="openCreateModal"
-                    class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-medium text-white hover:bg-red-600 transition"
+                    class="inline-flex items-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md"
                 >
                     <PlusIcon class="h-5 w-5" />
                     {{ t('category.newCategory') }}
                 </button>
-            </div>
-        </div>
+            </template>
+        </PageHeader>
 
         <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
             <div class="flex items-center justify-between">

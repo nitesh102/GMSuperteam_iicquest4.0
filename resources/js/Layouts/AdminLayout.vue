@@ -1,13 +1,16 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import Sidebar from '@/Components/AdminSidebar.vue'
 import TopNavbar from '@/Components/AdminTopNavbar.vue'
 import VoiceGlobalAssistant from '@/Components/VoiceGlobalAssistant.vue'
 
 const mobileSidebarOpen = ref(false)
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+const page = usePage()
 
 const isMobile = computed(() => windowWidth.value < 1024)
+const pageKey = computed(() => page.url)
 
 const toggleMobileSidebar = () => {
   mobileSidebarOpen.value = !mobileSidebarOpen.value
@@ -49,7 +52,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50">
     <!-- Sidebar -->
     <Sidebar
       :mobile-open="mobileSidebarOpen"
@@ -57,23 +60,27 @@ onUnmounted(() => {
     />
 
     <!-- Mobile Sidebar Overlay -->
-    <div
-      v-if="mobileSidebarOpen && isMobile"
-      class="fixed inset-0 bg-black/50 z-30 lg:hidden"
-      @click="closeMobileSidebar"
-    />
+    <Transition name="overlay-fade">
+      <div
+        v-if="mobileSidebarOpen && isMobile"
+        class="fixed inset-0 bg-gray-950/40 backdrop-blur-sm z-40 lg:hidden"
+        @click="closeMobileSidebar"
+      />
+    </Transition>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col lg:ml-60">
+    <div class="min-h-screen flex-1 flex flex-col transition-all duration-300 lg:ml-72">
       <!-- Top Navbar -->
       <TopNavbar @toggle-sidebar="toggleMobileSidebar" />
 
       <!-- Content Area -->
-      <main class="flex-1 overflow-auto">
-        <div class="pt-8 px-4 sm:px-6 lg:px-8 pb-12">
-          <slot />
-        </div>
-      </main>
+      <Transition name="page-fade" mode="out-in">
+        <main :key="pageKey" class="flex-1">
+          <div class="px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
+            <slot />
+          </div>
+        </main>
+      </Transition>
     </div>
 
     <VoiceGlobalAssistant />
@@ -81,4 +88,21 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.overlay-fade-enter-active,
+.overlay-fade-leave-active,
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+  opacity: 0;
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
 </style>
