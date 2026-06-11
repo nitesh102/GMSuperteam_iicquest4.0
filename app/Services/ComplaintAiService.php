@@ -43,17 +43,30 @@ class ComplaintAiService
                     type: DataType::STRING,
                     description: 'A clean, technical summary under 200 characters. Absolutely no HTML tags.',
                 ),
+                'is_spam' => new Schema(
+                    type: DataType::BOOLEAN,
+                    description: 'true if this complaint is spam, fake, irrelevant, or if any attached image does not match the described civic issue (e.g. screenshot, meme, unrelated photo). false if the complaint and images appear genuine.',
+                ),
+                'spam_reason' => new Schema(
+                    type: DataType::STRING,
+                    description: 'If is_spam is true, a short explanation of why (e.g. "Attached image is a software screenshot unrelated to the reported civic issue"). Empty string if not spam.',
+                ),
             ],
-            required: ['department_name', 'category_name', 'priority', 'summary'],
+            required: ['department_name', 'category_name', 'priority', 'summary', 'is_spam', 'spam_reason'],
         );
 
         $prompt = "You are the CiviSense AI municipal triage engine.\n";
         $prompt .= "Analyze this citizen complaint data and assign it to the correct department and category.\n\n";
+        $prompt .= "SPAM DETECTION — set is_spam=true if ANY of the following apply:\n";
+        $prompt .= "  - The title or description is clearly fake, nonsensical, or a test submission.\n";
+        $prompt .= "  - An attached image does not match the described civic issue (e.g. a dashboard screenshot, meme, selfie, or any image unrelated to roads, infrastructure, sanitation, utilities, or public property).\n";
+        $prompt .= "  - The complaint is abusive, promotional, or entirely off-topic for a municipal grievance system.\n";
+        $prompt .= "If is_spam=true, still fill in department_name, category_name, priority (use 'low'), and summary, but set spam_reason.\n\n";
         $prompt .= "Available departments: " . implode(', ', $deptList) . "\n";
         $prompt .= "Available categories: " . implode(', ', $catList) . "\n\n";
         $prompt .= "Title: {$title}\n";
         $prompt .= "Description: {$description}\n\n";
-        $prompt .= "Assess any attached image proof to judge emergency severity.";
+        $prompt .= "Carefully examine any attached images. Verify they actually show a real civic problem matching the title/description.";
 
         $arguments = [$prompt];
 
@@ -72,7 +85,7 @@ class ComplaintAiService
             }
         }
 
-        $response = Gemini::generativeModel(model: 'gemini-2.5-flash')
+        $response = Gemini::generativeModel(model: 'gemini-2.5-pro')
             ->withGenerationConfig(
                 new GenerationConfig(
                     responseMimeType: ResponseMimeType::APPLICATION_JSON,

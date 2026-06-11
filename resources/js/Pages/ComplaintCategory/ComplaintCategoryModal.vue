@@ -1,4 +1,211 @@
-```vue
+<template>
+    <Modal :show="show" @close="closeModal">
+        <div class="bg-white rounded-2xl p-8 max-w-3xl mx-auto">
+
+            <!-- Header -->
+            <div class="flex items-center gap-4 mb-8">
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <svg class="h-10 w-10" viewBox="0 0 100 100">
+                        <path d="M 50 10 A 40 40 0 0 0 50 90" fill="none" stroke="#1d2a42" stroke-width="5" />
+                        <path d="M 50 10 A 40 40 0 0 1 50 90" fill="none" stroke="#dc2626" stroke-width="5" />
+                        <path d="M50,10 L50,-5 L58,-1 L50,3 L58,7 L50,11" fill="#dc2626" />
+                        <path d="M35,30 L65,30 L50,18 Z" fill="#1d2a42" />
+                        <rect x="38" y="32" width="4" height="14" fill="#1d2a42" />
+                        <rect x="48" y="32" width="4" height="14" fill="#1d2a42" />
+                        <rect x="58" y="32" width="4" height="14" fill="#1d2a42" />
+                        <rect x="35" y="46" width="30" height="3" fill="#1d2a42" />
+                        <circle cx="40" cy="55" r="4" fill="#dc2626" />
+                        <path d="M35,66 C35,60 45,60 45,66 Z" fill="#dc2626" />
+                        <circle cx="50" cy="53" r="5" fill="#1d2a42" />
+                        <path d="M43,66 C43,58 57,58 57,66 Z" fill="#1d2a42" />
+                        <circle cx="60" cy="56" r="4" fill="#1d2a42" />
+                        <path d="M55,66 C55,61 65,61 65,66 Z" fill="#1d2a42" />
+                        <path d="M36,65 Q50,80 64,65 Q50,84 36,65" fill="none" stroke="#1d2a42" stroke-width="3" />
+                    </svg>
+                    <span class="font-bold text-gray-900">CiviSense</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900">
+                        {{ isEditMode ? 'Edit Category' : 'Create Category' }}
+                    </h3>
+                    <p class="text-sm text-gray-500 mt-1">
+                        Manage complaint categories used by citizens when filing complaints.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form @submit.prevent="submitForm">
+
+                <!-- Department (full width) -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Department <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                        v-model="form.department_id"
+                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition"
+                        required
+                    >
+                        <option value="" disabled>Select a department</option>
+                        <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+                            {{ dept.name }}
+                        </option>
+                    </select>
+                    <p v-if="form.errors.department_id" class="mt-2 text-sm text-red-600">
+                        {{ form.errors.department_id }}
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Category Name -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Category Name
+                        </label>
+                        <input
+                            type="text"
+                            v-model="form.name"
+                            placeholder="e.g. Road Damage"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition"
+                        />
+                        <p v-if="form.errors.name" class="mt-2 text-sm text-red-600">
+                            {{ form.errors.name }}
+                        </p>
+                    </div>
+
+                    <!-- Icon -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Category Icon
+                        </label>
+                        <select
+                            v-model="form.icon"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-600"
+                        >
+                            <option value="fa-tag">🏷 General</option>
+                            <option value="fa-road">🛣 Road / Transport</option>
+                            <option value="fa-water">💧 Water Supply</option>
+                            <option value="fa-bolt">⚡ Electricity</option>
+                            <option value="fa-tree">🌳 Environment</option>
+                            <option value="fa-hospital">🏥 Health</option>
+                            <option value="fa-school">🏫 Education</option>
+                            <option value="fa-trash">🗑 Waste Management</option>
+                            <option value="fa-shield-alt">🚓 Public Safety</option>
+                            <option value="fa-home">🏠 Housing</option>
+                        </select>
+                    </div>
+
+                    <!-- Color -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Category Color
+                        </label>
+                        <div class="flex items-center gap-4">
+                            <input
+                                type="color"
+                                v-model="form.color"
+                                class="w-16 h-12 border rounded-lg cursor-pointer"
+                            />
+                            <span class="text-sm font-medium text-gray-500">{{ form.color }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Status
+                        </label>
+                        <select
+                            v-model="form.status"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3"
+                        >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Description -->
+                <div class="mt-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Description
+                    </label>
+                    <textarea
+                        v-model="form.description"
+                        rows="5"
+                        maxlength="1000"
+                        placeholder="Describe the category responsibilities..."
+                        class="w-full rounded-xl border border-slate-300 px-4 py-3 resize-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600"
+                    ></textarea>
+                    <div class="mt-3">
+                        <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                                class="h-full bg-blue-600 transition-all"
+                                :style="{ 'inline-size': `${(form.description.length / 1000) * 100}%` }"
+                            ></div>
+                        </div>
+                        <div class="flex justify-between mt-2">
+                            <span v-if="form.errors.description" class="text-red-600 text-sm">
+                                {{ form.errors.description }}
+                            </span>
+                            <span class="ml-auto text-xs text-gray-500">{{ form.description.length }}/1000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Card -->
+                <div class="mt-8 p-5 rounded-2xl border border-slate-200 bg-slate-50">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+                            :style="{ backgroundColor: form.color }"
+                        >
+                            <i class="fas" :class="form.icon"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-semibold text-gray-900 truncate">
+                                {{ form.name || 'Category Preview' }}
+                            </h4>
+                            <p class="text-sm text-gray-500 truncate">
+                                {{ selectedDepartmentName ? `Department: ${selectedDepartmentName}` : 'Select a department above' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200">
+                    <button
+                        type="button"
+                        @click="closeModal"
+                        class="px-5 py-3 rounded-xl border border-slate-300 text-gray-700 font-medium hover:bg-slate-50 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        :disabled="form.processing"
+                        class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md transition flex items-center gap-2 disabled:opacity-50"
+                    >
+                        <template v-if="form.processing">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            Saving...
+                        </template>
+                        <template v-else>
+                            <i class="fas" :class="isEditMode ? 'fa-save' : 'fa-plus'"></i>
+                            {{ isEditMode ? 'Update Category' : 'Create Category' }}
+                        </template>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </Modal>
+</template>
+
 <script setup>
 import { computed, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
@@ -13,7 +220,7 @@ const props = defineProps({
     },
 })
 
-const emit = defineEmits(['close', 'success'])
+const emit = defineEmits(['close', 'success', 'submitting'])
 
 const isEditMode = computed(() => !!props.category)
 
@@ -22,20 +229,25 @@ const form = useForm({
     name: '',
     description: '',
     icon: 'fa-tag',
-    priority: 'Medium',
-    status: 'Active',
+    color: '#2563EB',
+    status: 'active',
+})
+
+const selectedDepartmentName = computed(() => {
+    if (!form.department_id) return ''
+    return props.departments.find(d => d.id == form.department_id)?.name ?? ''
 })
 
 watch(
     () => props.category,
-    (category) => {
-        if (category) {
-            form.department_id = category.department_id || ''
-            form.name = category.name || ''
-            form.description = category.description || ''
-            form.icon = category.icon || 'fa-tag'
-            form.priority = category.priority || 'Medium'
-            form.status = category.status || 'Active'
+    (cat) => {
+        if (cat) {
+            form.department_id = cat.department_id || ''
+            form.name = cat.name || ''
+            form.description = cat.description || ''
+            form.icon = cat.icon || 'fa-tag'
+            form.color = cat.color || '#2563EB'
+            form.status = cat.status || 'active'
         } else {
             form.reset()
         }
@@ -50,18 +262,19 @@ function closeModal() {
 
 function submitForm() {
     if (isEditMode.value) {
-        form.put(
-            route('complaint-categories.update', props.category.id),
-            {
-                onSuccess: () => {
-                    emit('success')
-                    closeModal()
-                },
-            }
-        )
+        form.put(route('complaint-categories.update', props.category.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                emit('submitting', { ...form.data(), id: props.category.id })
+                emit('success')
+                closeModal()
+            },
+        })
     } else {
         form.post(route('complaint-categories.store'), {
+            preserveScroll: true,
             onSuccess: () => {
+                emit('submitting', { ...form.data() })
                 emit('success')
                 closeModal()
             },
@@ -69,145 +282,3 @@ function submitForm() {
     }
 }
 </script>
-
-<template>
-    <Modal :show="show" @close="closeModal">
-        <div class="mx-auto max-w-3xl rounded-2xl bg-white p-8 shadow-xl">
-            <div class="border-b border-gray-200 pb-5">
-                <h3 class="text-2xl font-semibold text-gray-900">
-                    {{ isEditMode ? 'Edit Category' : 'Create Category' }}
-                </h3>
-
-                <p class="mt-1 text-sm text-gray-500">
-                    Manage complaint categories used by citizens when filing complaints.
-                </p>
-            </div>
-
-            <form @submit.prevent="submitForm" class="mt-6">
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Department
-                        </label>
-
-                        <select
-                            v-model="form.department_id"
-                            class="h-12 w-full rounded-xl border border-gray-300 px-4"
-                        >
-                            <option value="">Select Department</option>
-
-                            <option
-                                v-for="department in departments"
-                                :key="department.id"
-                                :value="department.id"
-                            >
-                                {{ department.name }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Category Name
-                        </label>
-
-                        <input
-                            v-model="form.name"
-                            type="text"
-                            placeholder="Road Damage"
-                            class="h-12 w-full rounded-xl border border-gray-300 px-4"
-                        />
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Icon
-                        </label>
-
-                        <select
-                            v-model="form.icon"
-                            class="h-12 w-full rounded-xl border border-gray-300 px-4"
-                        >
-                            <option value="fa-road">Road</option>
-                            <option value="fa-water">Water</option>
-                            <option value="fa-school">Education</option>
-                            <option value="fa-tree">Environment</option>
-                            <option value="fa-hospital">Health</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Priority
-                        </label>
-
-                        <select
-                            v-model="form.priority"
-                            class="h-12 w-full rounded-xl border border-gray-300 px-4"
-                        >
-                            <option>Low</option>
-                            <option>Medium</option>
-                            <option>High</option>
-                            <option>Critical</option>
-                        </select>
-                    </div>
-
-                </div>
-
-                <div class="mt-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Description
-                    </label>
-
-                    <textarea
-                        v-model="form.description"
-                        rows="4"
-                        class="w-full rounded-xl border border-gray-300 px-4 py-3"
-                    />
-                </div>
-
-                <div class="mt-6 flex gap-3">
-                    <button
-                        type="button"
-                        @click="form.status='Active'"
-                        :class="form.status === 'Active'
-                            ? 'bg-green-500 text-white'
-                            : 'border border-gray-300'"
-                        class="rounded-lg px-4 py-2"
-                    >
-                        Active
-                    </button>
-
-                    <button
-                        type="button"
-                        @click="form.status='Inactive'"
-                        :class="form.status === 'Inactive'
-                            ? 'bg-red-500 text-white'
-                            : 'border border-gray-300'"
-                        class="rounded-lg px-4 py-2"
-                    >
-                        Inactive
-                    </button>
-                </div>
-
-                <div class="mt-8 flex justify-end gap-3 border-t pt-6">
-                    <button
-                        type="button"
-                        @click="closeModal"
-                        class="rounded-xl border border-gray-300 px-5 py-3"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="rounded-xl bg-red-500 px-6 py-3 text-white"
-                    >
-                        {{ isEditMode ? 'Update Category' : 'Create Category' }}
-                    </button>
-                </div>
-            </form>
-        </div>
-    </Modal>
-</template>

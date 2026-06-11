@@ -187,6 +187,7 @@
         </div>
       </div>
 
+      
     </div>
   </div>
 </template>
@@ -205,7 +206,7 @@ const form = useForm({
 
 const showPassword = ref(false);
 
-const executeLogin = () => {
+const handleLogin = () => {
     form.post(route('login'), {
         onFinish: () => form.reset('password'),
     });

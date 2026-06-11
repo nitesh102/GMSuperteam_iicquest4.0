@@ -16,6 +16,9 @@ class ComplaintCategory extends Model
         'department_id',
         'name',
         'description',
+        'icon',
+        'color',
+        'status',
         'created_by',
         'updated_by',
     ];

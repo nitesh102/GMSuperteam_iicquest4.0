@@ -25,6 +25,9 @@ class ComplaintCategoryController extends Controller
             'department_id' => ['required', 'exists:departments,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'icon' => ['nullable', 'string', 'max:50'],
+            'color' => ['nullable', 'string', 'max:20'],
+            'status' => ['nullable', 'string', 'in:active,inactive'],
         ]);
 
         $validated['created_by'] = $request->user()->id;
@@ -41,6 +44,9 @@ class ComplaintCategoryController extends Controller
             'department_id' => ['required', 'exists:departments,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'icon' => ['nullable', 'string', 'max:50'],
+            'color' => ['nullable', 'string', 'max:20'],
+            'status' => ['nullable', 'string', 'in:active,inactive'],
         ]);
 
         $validated['updated_by'] = $request->user()->id;
