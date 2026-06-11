@@ -10,10 +10,10 @@
 
 | Name | Role |
 |------|------|
-| Nitesh Chaudhary | Full Stack / Lead |
+| Nitesh Chaudhary | Full Stack  |
 | Subodh Dhungel | Backend / AI Integration |
-| Deepak Khanal | Backend / Database |
-| Yunik Shrestha | Frontend / UI |
+| Deepak Khanal | Frontend  |
+| Yunik Shrestha |  UI |
 
 ---
 
