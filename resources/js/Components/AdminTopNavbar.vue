@@ -17,7 +17,7 @@ defineEmits(['toggleSidebar'])
 const page = usePage()
 const searchQuery = ref('')
 
-const user = computed(() => page.props.auth?.user || {})
+const user = computed(() => page.props?.auth?.user || {})
 
 const handleSearch = () => {
   // Search functionality can be added here

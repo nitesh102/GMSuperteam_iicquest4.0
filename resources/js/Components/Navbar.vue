@@ -228,7 +228,7 @@ const safeRoute = (name, params) => {
 }
 
 // User data
-const user = computed(() => page.props.auth?.user || {})
+const user = computed(() => page.props?.auth?.user || {})
 const userName = computed(() => user.value?.name || 'User')
 const userEmail = computed(() => user.value?.email || 'user@example.com')
 const userRole = computed(() => user.value?.role || 'User')
