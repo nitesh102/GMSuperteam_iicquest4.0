@@ -11,13 +11,13 @@ EXECUTIVE SUMMARY
 ──────────────────
   CiviSense is a civic complaint management platform built on Laravel 12 with
   Inertia.js SPA frontend and Google Gemini AI for complaint triage. The system
-  is functionally complete with 71 passing tests (169 assertions). However, this
+  is functionally complete with 79 passing tests (204 assertions). However, this
   analysis identifies 30+ issues across security, performance, database, frontend
   responsiveness, and code quality domains. Key concerns include zero authorization
   controls, critical API key exposure, missing pagination, synchronous AI blocking,
   and multiple frontend memory leaks.
 
-  Test Status: ALL 71 TESTS PASSING (6 previously failing bugs fixed during analysis)
+  Test Status: ALL 79 TESTS PASSING (6 previously failing bugs fixed during analysis)
   Overall Readiness: FUNCTIONAL — NOT PRODUCTION-READY (security gaps)
 
 ================================================================================
@@ -41,8 +41,8 @@ EXECUTIVE SUMMARY
          └── Composables/ (usePermissions, useSearch)
 
   Data Flow Summary:
-    Complaint Create  → Validate → Spam Filter → Gemini AI → Map Category → Store → Redirect
-    Complaint Update  → Validate → Status Machine Check → Store Track → Redirect
+    Complaint Create  → Validate → Spam Filter → Gemini AI → Map Category & Dept → Store → Redirect
+    Complaint Update  → Validate → Status Machine Check → Derive Dept → Validate Remarks → Create Track → Redirect
     List Views        → Load All Records → Client-side filter/sort/paginate
 
 1.2  Module Inventory
@@ -68,7 +68,15 @@ EXECUTIVE SUMMARY
   • Soft deletes on all complaint-related tables.
   • AI auto-detects department + category (constrained to valid names).
   • User-selected category_id preserved when provided; AI determines when absent.
+  • Department ID auto-assigned to complaint (derived from category's department_id or AI).
+  • Create form has optional category selector; selected department shown via badge.
   • Status transitions enforced via state machine in update (7 statuses, strict transitions).
+  • Every status change requires remarks (validated inline when status differs).
+  • ComplaintTrack audit log stores remarks, old/new status, changer, and timestamp.
+  • Timeline rendered as vertical timeline on Show page with status badges and remarks.
+  • GPS Location Capture on Create page: "Use Current Location" button with loading indicator, permission error handling, auto-fill lat/lng, Google Maps preview link.
+  • AI Analysis Card on Show page: shows department, category, priority, summary, confidence score — prominently visible for judges.
+  • Resolution Workflow: resolution notes + before/after photo uploads on status change to "resolved", displayed in Resolution card on Show page.
 
 ================================================================================
 2.  PERFORMANCE ANALYSIS
@@ -445,9 +453,11 @@ EXECUTIVE SUMMARY
 
   complaint_tracks:
     - Recreated as audit log via migration 2026_06_11_100000_recreate_complaint_tracks_as_audit_log.php
+    - Renamed notes→remarks, remarks required on status change (migration 2026_06_11_300000)
     - Model: ComplaintTrack exists
-    - Wired: ComplaintController::update() creates track records on status change
-    - Status: FUNCTIONAL (was orphaned, now wired)
+    - Wired: ComplaintController::update() creates track records on status change (with required remarks validation)
+    - Timeline UI on Show page: vertical timeline with status badges, remarks, changer, date/time
+    - Status: FULLY FUNCTIONAL
 
   complaint_feedback:
     - Migration exists (2026_06_10_112603_create_complaint_feedback_table.php)
@@ -459,16 +469,17 @@ EXECUTIVE SUMMARY
 6.  TEST INFRASTRUCTURE ASSESSMENT
 ================================================================================
 
-6.1  Test Results: 71 PASSING / 169 ASSERTIONS (100% pass rate)
+6.1  Test Results: 79 PASSING / 204 ASSERTIONS (100% pass rate)
 
   Before analysis: 71 tests, 65 passing, 6 failing
-  After fixes:     71 tests, 71 passing, 0 failing
-  Defects fixed:   4 (category override, spam filter sequencing, status transition, test data)
 
-  Test Distribution:
-    ComplaintTest:          31 tests (43.7%) — 67 assertions
+  After fixes:     71 tests, 71 passing, 0 failing
+  After dept-assign: 75 tests, 75 passing, 0 failing (4 new tests for Department Assignment)
+  After remarks-timeline: 79 tests, 79 passing, 0 failing (4 new tests for Status Remarks + Timeline)
+
+    ComplaintTest:          39 tests (49.4%) — 102 assertions
     ComplaintCategoryTest:   8 tests (11.3%)
-    DepartmentTest:          7 tests (9.9%)
+    DepartmentTest:          7 tests (9.3%)
     Auth (6 files):         19 tests (26.8%)
     ProfileTest:             5 tests (7.0%)
     ExampleTest:             1 test  (1.4%)
@@ -610,7 +621,7 @@ EXECUTIVE SUMMARY
   │ Input Validation                   │ ✓ GOOD   │ Inline + exists checks + file   │
   │ File Upload Security               │ ⚠ PARTIAL│ Missing filename sanitization   │
   │ Soft Deletes                       │ ✓ GOOD   │ All complaint models            │
-  │ Testing                            │ ✓ GOOD   │ 71 tests, 169 assertions, 100%  │
+  │ Testing                            │ ✓ GOOD   │ 79 tests, 204 assertions, 100%  │
   │ AI Prompting                       │ ✓ GOOD   │ Constrained enum + clear steps  │
   │ Console Commands                   │ ✓ GOOD   │ Escalation + auto-close         │
   │ Frontend Build                     │ ✓ GOOD   │ Vite + code splitting           │
@@ -663,6 +674,9 @@ EXECUTIVE SUMMARY
   2026-06-10 — v1.13 Controller: aiAnalysis() create fixed to match schema
   2026-06-10 — v1.13 forceSimulationFallback() mock added
   2026-06-10 — v1.13 Tests expanded to 71 total (169 assertions)
+  2026-06-11 — v1.16 Department Assignment workflow: added department_id migration & model, auto-derive from AI or category, Create form category selector, department badges in Index/Show, 4 new tests (75 total, 186 assertions)
+  2026-06-11 — v1.17 Status Remarks + Timeline: renamed notes→remarks in complaint_tracks, required remarks validation on status change, polished vertical timeline on Show page (status badges, remarks, changer, date/time), 4 new tests (79 total, 204 assertions)
+  2026-06-11 — v1.18 GPS Location Capture + AI Analysis Card + Resolution Workflow: "Use Current Location" button on Create page with geolocation API, AI Analysis card with dept/category/priority/summary/confidence on Show page, resolution before/after photo uploads on status change, Google Maps link on Location card
   2026-06-10 — v1.14 AI workflow upgrade: returns dept + category + priority + summary
   2026-06-10 — v1.14 is_spam removed from AI pipeline → defaults to false
   2026-06-10 — v1.14 AI constrained to valid dept/category via enum schema
@@ -683,7 +697,7 @@ EXECUTIVE SUMMARY
 11. APPENDIX: PERFORMANCE METRICS
 ================================================================================
 
-  Current Test Suite Execution Time: ~10.2 seconds (71 tests)
+  Current Test Suite Execution Time: ~14.6 seconds (79 tests)
   AI API Call Timeout: 60 seconds (GEMINI_REQUEST_TIMEOUT)
   Image Upload Limit: 5 per complaint, 5MB each
   Average PHP Memory per Request: ~15-25MB (estimated, no profiling installed)

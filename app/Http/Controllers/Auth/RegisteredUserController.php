@@ -34,18 +34,38 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'citizenship_number' => 'required|string|max:50|unique:'.User::class,
+            'phone_number' => 'required|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'citizenship_front' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'citizenship_back' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+
+        $citizenshipFrontPath = $request->hasFile('citizenship_front')
+            ? $request->file('citizenship_front')->store('citizenship', 'public')
+            : null;
+
+        $citizenshipBackPath = $request->hasFile('citizenship_back')
+            ? $request->file('citizenship_back')->store('citizenship', 'public')
+            : null;
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'citizenship_number' => $request->citizenship_number,
+            'phone_number' => $request->phone_number,
+            'address' => $request->address,
+            'citizenship_front' => $citizenshipFrontPath,
+            'citizenship_back' => $citizenshipBackPath,
         ]);
+
+        $user->assignRole('Citizen');
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('citizen.dashboard'));
     }
 }

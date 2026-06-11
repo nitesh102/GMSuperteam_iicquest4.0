@@ -25,7 +25,7 @@ class AutoCloseComplaints extends Command
                 'old_status'   => 'resolved',
                 'new_status'   => 'closed',
                 'changed_by'   => null,
-                'notes'        => 'Auto-closed after 7 days in resolved state.',
+                'remarks'      => 'Auto-closed after 7 days in resolved state.',
             ]);
         }
 

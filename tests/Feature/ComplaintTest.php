@@ -16,6 +16,12 @@ class ComplaintTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Superadmin']);
+    }
+
     protected function forceSimulationFallback(): void
     {
         $mock = $this->createMock(\App\Services\ComplaintAiService::class);
@@ -26,7 +32,7 @@ class ComplaintTest extends TestCase
 
     public function test_index_page_can_be_rendered(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         Complaint::factory()->count(3)->create();
 
         $response = $this->actingAs($user)->get('/complaints');
@@ -36,7 +42,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_can_be_created(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $response = $this->actingAs($user)->post('/complaints', [
@@ -63,7 +69,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_creation_requires_title(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $response = $this->actingAs($user)->post('/complaints', [
@@ -76,7 +82,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_creation_requires_description(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $response = $this->actingAs($user)->post('/complaints', [
@@ -89,7 +95,7 @@ class ComplaintTest extends TestCase
 
     public function test_spam_filter_rejects_non_civic_submissions(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
 
         $response = $this->actingAs($user)->post('/complaints', [
             'title' => 'Test',
@@ -101,7 +107,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_creation_requires_valid_category(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
 
         $response = $this->actingAs($user)->post('/complaints', [
             'title' => 'Test',
@@ -114,7 +120,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_generates_complaint_no(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -130,7 +136,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
         $complaint = Complaint::factory()->status('under_review')->create();
 
@@ -141,6 +147,7 @@ class ComplaintTest extends TestCase
             'current_status' => 'assigned',
             'priority' => 'high',
             'location' => 'Updated Location',
+            'remarks' => 'Reviewed citizen report, assigning to field team.',
         ]);
 
         $response->assertRedirect(route('complaints.index'));
@@ -155,11 +162,19 @@ class ComplaintTest extends TestCase
             'location' => 'Updated Location',
             'updated_by' => $user->id,
         ]);
+
+        $this->assertDatabaseHas('complaint_tracks', [
+            'complaint_id' => $complaint->id,
+            'old_status' => 'under_review',
+            'new_status' => 'assigned',
+            'changed_by' => $user->id,
+            'remarks' => 'Reviewed citizen report, assigning to field team.',
+        ]);
     }
 
     public function test_complaint_update_requires_valid_status(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
         $complaint = Complaint::factory()->create();
 
@@ -176,7 +191,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_update_requires_valid_priority(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
         $complaint = Complaint::factory()->create();
 
@@ -193,7 +208,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_can_be_deleted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $complaint = Complaint::factory()->create();
 
         $response = $this->actingAs($user)->delete("/complaints/{$complaint->id}");
@@ -216,7 +231,7 @@ class ComplaintTest extends TestCase
     public function test_ai_simulates_emergency_priority_for_fire_keywords(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -233,7 +248,7 @@ class ComplaintTest extends TestCase
     public function test_ai_simulates_high_priority_for_urgent_keywords(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -250,7 +265,7 @@ class ComplaintTest extends TestCase
     public function test_ai_simulates_medium_priority_for_repair_keywords(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -267,7 +282,7 @@ class ComplaintTest extends TestCase
     public function test_ai_simulates_low_priority_for_generic_description(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -284,7 +299,7 @@ class ComplaintTest extends TestCase
     public function test_ai_marks_non_spam_as_false_when_no_spam_detected(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -301,7 +316,7 @@ class ComplaintTest extends TestCase
     public function test_ai_fallback_preserves_user_selected_category(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $department = Department::factory()->create();
         $category = ComplaintCategory::factory()->create([
             'department_id' => $department->id,
@@ -321,7 +336,7 @@ class ComplaintTest extends TestCase
     public function test_ai_generates_summary_truncated_to_200_chars(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
         $longText = 'There is a large pothole on Main Street near the junction. ' . str_repeat('This is causing major traffic issues for commuters every single day. ', 10);
 
@@ -340,7 +355,7 @@ class ComplaintTest extends TestCase
     public function test_ai_generates_summary_without_truncation_for_short_text(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
         $shortText = 'Short complaint description.';
 
@@ -358,7 +373,7 @@ class ComplaintTest extends TestCase
     public function test_ai_handles_html_tags_in_description(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -376,7 +391,7 @@ class ComplaintTest extends TestCase
     public function test_ai_simulates_low_priority_when_no_keywords_match(): void
     {
         $this->forceSimulationFallback();
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -392,7 +407,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_index_returns_complaints_with_relations(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         Complaint::factory()->count(5)->create();
 
         $response = $this->actingAs($user)->get('/complaints');
@@ -402,7 +417,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_creation_sets_default_status_to_submitted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -418,7 +433,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_creation_with_optional_fields_null(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $this->actingAs($user)->post('/complaints', [
@@ -435,7 +450,7 @@ class ComplaintTest extends TestCase
 
     public function test_create_page_can_be_rendered(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
 
         $response = $this->actingAs($user)->get('/complaints/create');
 
@@ -452,7 +467,7 @@ class ComplaintTest extends TestCase
     public function test_complaint_can_be_created_with_image_attachments(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $file = UploadedFile::fake()->image('pothole.jpg', 200, 200);
@@ -478,7 +493,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_attachments_limited_to_5_images(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $files = [];
@@ -498,7 +513,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_attachment_must_be_an_image(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $file = UploadedFile::fake()->create('document.pdf', 100);
@@ -513,10 +528,186 @@ class ComplaintTest extends TestCase
         $response->assertSessionHasErrors('attachments.0');
     }
 
+    // --- Status Remarks + Timeline Tests ---
+
+    public function test_update_requires_remarks_when_status_changes(): void
+    {
+        $user = User::factory()->superadmin()->create();
+        $category = ComplaintCategory::factory()->create();
+        $complaint = Complaint::factory()->status('under_review')->create();
+
+        $response = $this->actingAs($user)->put("/complaints/{$complaint->id}", [
+            'title' => 'Updated',
+            'description' => 'Updated description.',
+            'category_id' => $category->id,
+            'current_status' => 'assigned',
+            'priority' => 'high',
+        ]);
+
+        $response->assertSessionHasErrors('remarks');
+    }
+
+    public function test_update_allows_empty_remarks_when_status_unchanged(): void
+    {
+        $user = User::factory()->superadmin()->create();
+        $category = ComplaintCategory::factory()->create();
+        $complaint = Complaint::factory()->status('under_review')->create();
+
+        $response = $this->actingAs($user)->put("/complaints/{$complaint->id}", [
+            'title' => 'Updated',
+            'description' => 'Updated description.',
+            'category_id' => $category->id,
+            'current_status' => 'under_review',
+            'priority' => 'high',
+            'remarks' => '',
+        ]);
+
+        $response->assertRedirect(route('complaints.index'));
+    }
+
+    public function test_update_creates_track_record_with_correct_remarks(): void
+    {
+        $user = User::factory()->superadmin()->create();
+        $category = ComplaintCategory::factory()->create();
+        $complaint = Complaint::factory()->status('submitted')->create();
+
+        $this->actingAs($user)->put("/complaints/{$complaint->id}", [
+            'title' => $complaint->title,
+            'description' => $complaint->description,
+            'category_id' => $category->id,
+            'current_status' => 'under_review',
+            'priority' => $complaint->priority,
+            'remarks' => 'Initial review started.',
+        ]);
+
+        $this->assertDatabaseHas('complaint_tracks', [
+            'complaint_id' => $complaint->id,
+            'old_status' => 'submitted',
+            'new_status' => 'under_review',
+            'changed_by' => $user->id,
+            'remarks' => 'Initial review started.',
+        ]);
+    }
+
+    public function test_show_page_displays_tracks_with_remarks(): void
+    {
+        $user = User::factory()->superadmin()->create();
+        $category = ComplaintCategory::factory()->create();
+        $complaint = Complaint::factory()->status('assigned')->create();
+
+        $track = \App\Models\ComplaintTrack::create([
+            'complaint_id' => $complaint->id,
+            'old_status' => 'submitted',
+            'new_status' => 'assigned',
+            'changed_by' => $user->id,
+            'remarks' => 'Direct assignment by admin.',
+        ]);
+
+        $response = $this->actingAs($user)->get("/complaints/{$complaint->id}");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Complaint/Show')
+            ->has('complaint.tracks', 1)
+        );
+    }
+
+    // --- Department Assignment Tests ---
+
+    public function test_complaint_creation_sets_department_id_from_user_selected_category(): void
+    {
+        $user = User::factory()->superadmin()->create();
+        $department = Department::factory()->create();
+        $category = ComplaintCategory::factory()->create([
+            'department_id' => $department->id,
+        ]);
+
+        $this->actingAs($user)->post('/complaints', [
+            'title' => 'Pothole on Main Street',
+            'description' => 'A large pothole causing traffic issues on Main Street near the junction.',
+            'category_id' => $category->id,
+        ]);
+
+        $this->assertDatabaseHas('complaints', [
+            'title' => 'Pothole on Main Street',
+            'category_id' => $category->id,
+            'department_id' => $department->id,
+        ]);
+    }
+
+    public function test_complaint_creation_sets_department_id_from_ai_fallback(): void
+    {
+        $this->forceSimulationFallback();
+        $user = User::factory()->superadmin()->create();
+
+        $this->actingAs($user)->post('/complaints', [
+            'title' => 'Road Repair Needed',
+            'description' => 'There is a large pothole on Main Street near the junction causing traffic issues for commuters every single day.',
+        ]);
+
+        $complaint = Complaint::first();
+        $this->assertNotNull($complaint);
+        $this->assertNotNull($complaint->department_id, 'Department ID should be set by AI fallback');
+        $this->assertNotNull($complaint->department, 'Department relation should be available');
+    }
+
+    public function test_complaint_update_derives_department_id_from_category(): void
+    {
+        $user = User::factory()->superadmin()->create();
+
+        $dept1 = Department::factory()->create(['name' => 'Water']);
+        $dept2 = Department::factory()->create(['name' => 'Roads']);
+
+        $cat1 = ComplaintCategory::factory()->create([
+            'department_id' => $dept1->id,
+            'name' => 'Water Leak',
+        ]);
+        $cat2 = ComplaintCategory::factory()->create([
+            'department_id' => $dept2->id,
+            'name' => 'Pothole',
+        ]);
+
+        $complaint = Complaint::factory()->create([
+            'category_id' => $cat1->id,
+            'department_id' => $dept1->id,
+        ]);
+
+        $this->actingAs($user)->put("/complaints/{$complaint->id}", [
+            'title' => 'Updated Title',
+            'description' => 'Updated description.',
+            'category_id' => $cat2->id,
+            'current_status' => 'under_review',
+            'priority' => 'high',
+            'remarks' => 'Reassigning to roads department.',
+        ]);
+
+        $this->assertDatabaseHas('complaints', [
+            'id' => $complaint->id,
+            'category_id' => $cat2->id,
+            'department_id' => $dept2->id,
+        ]);
+    }
+
+    public function test_create_page_passes_categories_and_departments(): void
+    {
+        $user = User::factory()->superadmin()->create();
+        Department::factory()->count(3)->create();
+        ComplaintCategory::factory()->count(5)->create();
+
+        $response = $this->actingAs($user)->get('/complaints/create');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Complaint/Create')
+            ->has('categories')
+            ->has('departments')
+        );
+    }
+
     public function test_complaint_attachments_persist_after_soft_delete(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $file = UploadedFile::fake()->image('soft-delete-test.jpg');

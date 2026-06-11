@@ -29,7 +29,24 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'citizenship_number' => fake()->unique()->numerify('##-####-########'),
+            'phone_number' => fake()->phoneNumber(),
+            'address' => fake()->address(),
         ];
+    }
+
+    public function superadmin(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $user->assignRole('Superadmin');
+        });
+    }
+
+    public function citizen(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $user->assignRole('Citizen');
+        });
     }
 
     /**

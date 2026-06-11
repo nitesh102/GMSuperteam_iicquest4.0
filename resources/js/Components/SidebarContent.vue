@@ -12,6 +12,8 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle', 'close'])
 const page  = usePage()
+const roles = computed(() => page.props.auth?.roles ?? [])
+const isCitizen = computed(() => roles.value.includes('Citizen'))
 
 /* ── Active path helper ── */
 const currentPath = computed(() =>
@@ -45,51 +47,63 @@ const linkClass = (path) => [
     </div>
 
     <nav class="flex-1 overflow-y-auto overflow-x-hidden py-2 px-3">
-
-        <!-- ── Static links ── -->
         <ul class="space-y-0.5">
-            <!-- Section label -->
             <li v-if="!collapsed" class="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                 {{ t('nav.main') }}
             </li>
 
-            <!-- Dashboard -->
-            <li>
+            <!-- Citizen Dashboard -->
+            <li v-if="isCitizen">
+                <a :href="route('citizen.dashboard')" :class="linkClass('/citizen/dashboard')" @click="onLink">
+                    <i class="fas fa-home icon" :class="isActive('/citizen/dashboard') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                    <span v-if="!collapsed">Dashboard</span>
+                </a>
+            </li>
+
+            <!-- Admin Dashboard -->
+            <li v-else>
                 <a :href="route('dashboard')" :class="linkClass('/dashboard')" @click="onLink">
                     <i class="fas fa-home icon" :class="isActive('/dashboard') ? 'text-indigo-600' : 'text-gray-400'"></i>
                     <span v-if="!collapsed">{{ t('nav.dashboard') }}</span>
                 </a>
             </li>
 
-            <!-- Management -->
-            <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                {{ t('nav.management') }}
-            </li>
-            <li v-else class="my-2 border-t border-gray-100 mx-1" />
-
-            <!-- Departments -->
-            <li>
-                <a :href="route('departments.index')" :class="linkClass('/departments')" @click="onLink">
-                    <i class="fas fa-building icon" :class="isActive('/departments') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">{{ t('nav.departments') }}</span>
+            <!-- Citizen Complaints -->
+            <li v-if="isCitizen">
+                <a :href="route('citizen.complaints.index')" :class="linkClass('/citizen/complaints')" @click="onLink">
+                    <i class="fas fa-flag icon" :class="isActive('/citizen/complaints') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                    <span v-if="!collapsed">My Complaints</span>
                 </a>
             </li>
 
-            <!-- Complaint Categories -->
-            <li>
-                <a :href="route('complaint-categories.index')" :class="linkClass('/complaint-categories')" @click="onLink">
-                    <i class="fas fa-tags icon" :class="isActive('/complaint-categories') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">{{ t('nav.categories') }}</span>
-                </a>
-            </li>
+            <!-- Admin Management section -->
+            <template v-if="!isCitizen">
+                <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                    {{ t('nav.management') }}
+                </li>
+                <li v-else class="my-2 border-t border-gray-100 mx-1" />
 
-            <!-- Complaints -->
-            <li>
-                <a :href="route('complaints.index')" :class="linkClass('/complaints')" @click="onLink">
-                    <i class="fas fa-flag icon" :class="isActive('/complaints') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">{{ t('nav.complaints') }}</span>
-                </a>
-            </li>
+                <li>
+                    <a :href="route('departments.index')" :class="linkClass('/departments')" @click="onLink">
+                        <i class="fas fa-building icon" :class="isActive('/departments') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                        <span v-if="!collapsed">{{ t('nav.departments') }}</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a :href="route('complaint-categories.index')" :class="linkClass('/complaint-categories')" @click="onLink">
+                        <i class="fas fa-tags icon" :class="isActive('/complaint-categories') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                        <span v-if="!collapsed">{{ t('nav.categories') }}</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a :href="route('complaints.index')" :class="linkClass('/complaints')" @click="onLink">
+                        <i class="fas fa-flag icon" :class="isActive('/complaints') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                        <span v-if="!collapsed">{{ t('nav.complaints') }}</span>
+                    </a>
+                </li>
+            </template>
 
             <!-- Profile -->
             <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">

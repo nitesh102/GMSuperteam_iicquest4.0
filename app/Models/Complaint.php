@@ -18,6 +18,7 @@ class Complaint extends Model
         'complaint_no',
         'citizen_id',
         'category_id',
+        'department_id',
         'assigned_to',
         'title',
         'description',
@@ -30,6 +31,8 @@ class Complaint extends Model
         'is_spam',
         'resolved_at',
         'resolution_notes',
+        'before_photo',
+        'after_photo',
         'due_at',
         'escalation_level',
         'created_by',
@@ -56,6 +59,11 @@ class Complaint extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ComplaintCategory::class, 'category_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function assignee(): BelongsTo
