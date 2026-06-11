@@ -1,569 +1,705 @@
 ================================================================================
-  CIVISENSE – BACKEND DEVELOPER MANUAL
+  CIVISENSE – COMPREHENSIVE DEVELOPER MANUAL
 ================================================================================
 
 Project   : CiviSense ("Smart Civic. Stronger Communities.")
-Stack     : Laravel 11 + Inertia.js v2 + Vue 3 (Composition API) + Tailwind CSS 3
+Stack     : Laravel 12 + Inertia.js v2 + Vue 3 (Composition API) + Tailwind CSS 3
 Auth      : Laravel Breeze scaffold + Spatie Laravel Permission
-Build     : Vite
+Build     : Vite 7
 JS Routes : Ziggy (tightenco/ziggy)
-AI        : Google Gemini 2.5 Flash via google-gemini-php/laravel v2.0.4
+AI        : Google Gemini 2.5 Flash via google-gemini-php/laravel v2.0
+Charts    : Chart.js 4 + vue-chartjs 5
+Database  : MySQL (production) / SQLite (default config)
+Status    : 71 TESTS PASSING, 169 ASSERTIONS — All green
 
 ================================================================================
 1.  DIRECTORY STRUCTURE
 ================================================================================
 
 app/
+├── Console/Commands/
+│   ├── EscalateComplaints.php          # Hourly escalation of overdue complaints
+│   └── AutoCloseComplaints.php         # Daily auto-close of resolved complaints
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Auth/                          # Auth controllers (Breeze)
-│   │   ├── Controller.php                 # Base controller
-│   │   ├── ComplaintController.php        # Gemini AI + photo uploads
+│   │   ├── Auth/                       # 9 controllers (Breeze scaffold)
+│   │   ├── Controller.php              # Base controller
+│   │   ├── ComplaintController.php     # Main CRUD + Gemini AI + photo uploads
 │   │   ├── ComplaintCategoryController.php
 │   │   ├── DepartmentController.php
 │   │   └── ProfileController.php
-│   └── Middleware/
-│       └── HandleInertiaRequests.php      # Shares auth + flash to Inertia
+│   ├── Middleware/
+│   │   └── HandleInertiaRequests.php   # Shares auth + flash + roles/permissions
+│   └── Requests/                       # (empty — validation inline in controllers)
 ├── Models/
-│   ├── Complaint.php                      # SoftDeletes, citizen/category/assignee/attachments/aiAnalysis
-│   ├── ComplaintAiAnalysis.php            # SoftDeletes, complaint_id (unique), detected_priority, ai_summary
-│   ├── ComplaintAttachment.php            # SoftDeletes, url accessor ($appends), complaint FK
-│   ├── ComplaintCategory.php              # SoftDeletes, FK to department + users
-│   ├── Department.php                     # HasFactory, fillable name/description
-│   └── User.php                           # Spatie HasRoles trait
-├── Services/
-│   └── ComplaintAiService.php             # Gemini 2.5 Flash with structured JSON output + image analysis
-└── Providers/
+│   ├── Complaint.php                   # SoftDeletes, citizen/category/assignee/attachments/aiAnalysis/tracks
+│   ├── ComplaintAiAnalysis.php         # SoftDeletes, complaint_id (unique), detected_priority, ai_summary
+│   ├── ComplaintAttachment.php         # SoftDeletes, url accessor ($appends), complaint FK
+│   ├── ComplaintCategory.php           # SoftDeletes, FK to department + users
+│   ├── ComplaintTrack.php              # Audit log model (complaint_id, old_status, new_status, changed_by)
+│   ├── Department.php                  # HasFactory, fillable name/description
+│   └── User.php                        # Spatie HasRoles trait
+├── Providers/
+│   └── AppServiceProvider.php
+└── Services/
+    └── ComplaintAiService.php          # Gemini 2.5 Flash with structured JSON output + image analysis
 
 database/
 ├── factories/
-│   ├── ComplaintAttachmentFactory.php     # file_path, file_name, mime types
-│   ├── ComplaintCategoryFactory.php       # department_id, name, description, created_by
-│   ├── ComplaintFactory.php               # full complaint with states: spam(), emergency(), ...
-│   └── DepartmentFactory.php              # name, description
-├── migrations/
-│   ├── 0001_01_01_000000_create_users_table.php
-│   ├── 0001_01_01_000001_create_cache_table.php
-│   ├── 0001_01_01_000002_create_jobs_table.php
-│   ├── 2026_06_10_100044_create_permission_tables.php
-│   ├── 2026_06_10_102104_create_departments_table.php
-│   ├── 2026_06_10_103400_create_complaint_categories_table.php
-│   ├── 2026_06_10_105541_create_complaints_table.php        # Main complaints table
-│   ├── 2026_06_10_110908_create_complaint_tracks_table.php  # ORPHANED — no model/controller
-│   ├── 2026_06_10_111459_create_complaint_attachments_table.php
-│   ├── 2026_06_10_112010_create_complaint_ai_analyses_table.php
-│   └── 2026_06_10_112603_create_complaint_feedback_table.php # ORPHANED — no model/controller
-└── seeders/
-    ├── DatabaseSeeder.php                 # Calls RolePermissionSeeder + DepartmentSeeder
-    ├── DepartmentSeeder.php               # 8 realistic departments (firstOrCreate)
-    └── RolePermissionSeeder.php           # Spatie roles/permissions
+│   ├── ComplaintFactory.php            # Full complaint with states: spam(), emergency(), high(), medium(), status(), assignedTo()
+│   ├── ComplaintAttachmentFactory.php  # file_path, file_name, mime types
+│   ├── ComplaintCategoryFactory.php    # department_id, name, description, created_by
+│   └── DepartmentFactory.php           # name, description
+├── migrations/                         # 17 migration files (users → permissions → departments → categories → complaints → tracks → attachments → ai_analysis → feedback → schema updates)
+├── seeders/
+│   ├── DatabaseSeeder.php              # Calls RolePermissionSeeder + DepartmentSeeder
+│   ├── DepartmentSeeder.php            # 8 realistic departments (firstOrCreate)
+│   └── RolePermissionSeeder.php        # Spatie roles/permissions
+
+resources/
+├── css/app.css                         # Tailwind base styles (directives + fonts)
+├── js/
+│   ├── app.js                          # Inertia + Vue + Ziggy bootstrap
+│   ├── bootstrap.js                    # Axios global setup
+│   ├── Components/                     # 25 shared Vue components
+│   │   ├── Modal.vue                   # Generic modal wrapper (teleport, overlay)
+│   │   ├── DataTable.vue              # Generic data table (search/sort/paginate)
+│   │   ├── AdminDataTable.vue         # Admin-specific table variant
+│   │   ├── AdminSidebar.vue           # Admin layout sidebar
+│   │   ├── AdminTopNavbar.vue         # Admin top navigation bar
+│   │   ├── AdminStatsCard.vue         # Stats card component
+│   │   ├── AdminPagination.vue        # Pagination component
+│   │   ├── AdminEmptyState.vue        # Empty state component
+│   │   ├── SidebarContent.vue         # Navigation sidebar items
+│   │   ├── SearchFilter.vue           # Debounced search filter (350ms)
+│   │   ├── TablePagination.vue        # Table pagination bar
+│   │   ├── Breadcrumb.vue             # Breadcrumb navigation
+│   │   ├── PerPageSelect.vue          # Rows-per-page selector
+│   │   ├── Footer.vue                 # Footer with uptime indicator
+│   │   ├── Navbar.vue                 # Main navbar with search
+│   │   ├── AddressSelect.vue          # Address selection component
+│   │   ├── TextInput.vue, Checkbox.vue, InputLabel.vue, InputError.vue
+│   │   ├── PrimaryButton.vue, SecondaryButton.vue, DangerButton.vue
+│   │   ├── ApplicationLogo.vue
+│   │   └── UserModal.vue
+│   ├── Composables/
+│   │   ├── usePermissions.js          # Permission checks composable
+│   │   └── useSearch.js               # Search/debounce composable
+│   ├── Layouts/
+│   │   ├── AdminLayout.vue            # Admin layout (sidebar + topbar)
+│   │   ├── AuthenticatedLayout.vue    # Standard app layout (sidebar + navbar)
+│   │   ├── GuestLayout.vue           # Guest layout
+│   │   └── Guest.vue                  # Minimal guest layout
+│   └── Pages/
+│       ├── Auth/                       # 6 auth pages (Login, Register, etc.)
+│       ├── Complaint/
+│       │   ├── Index.vue              # List page with table/mobile cards
+│       │   ├── Create.vue             # Dedicated full-page create form
+│       │   ├── Show.vue               # Detail view with timeline
+│       │   └── ComplaintModal.vue     # Edit-only modal
+│       ├── ComplaintCategory/
+│       │   ├── Index.vue              # Categories list
+│       │   └── ComplaintCategoryModal.vue
+│       ├── Department/
+│       │   ├── Index.vue              # Departments list
+│       │   └── DepartmentModal.vue
+│       ├── Profile/Edit.vue           # Profile edit page
+│       ├── Dashboard.vue              # Stat cards + Chart.js charts
+│       └── Welcome.vue                # Standalone landing page
+└── views/
+    └── app.blade.php                  # Root Blade template
+
+routes/
+├── web.php                            # All web routes (auth, CRUD resources, dashboard)
+├── auth.php                           # Auth routes (Breeze scaffold)
+└── console.php                        # Scheduler definitions (escalation, auto-close)
 
 tests/
 ├── TestCase.php
 ├── Feature/
-│   ├── ComplaintCategoryTest.php          # 8 tests
-│   ├── ComplaintTest.php                  # 31 tests: CRUD + AI simulation + file uploads
-│   ├── DepartmentTest.php                 # 7 tests
-│   ├── ProfileTest.php                    # 5 tests (Breeze)
-│   ├── ExampleTest.php                    # 1 test
-│   └── Auth/                              # 19 tests (Breeze)
+│   ├── ComplaintTest.php              # 31 tests: CRUD + AI simulation + file uploads
+│   ├── ComplaintCategoryTest.php      # 8 tests
+│   ├── DepartmentTest.php             # 7 tests
+│   ├── ProfileTest.php                # 5 tests
+│   ├── ExampleTest.php                # 1 test
+│   └── Auth/                          # 19 tests (Breeze)
 └── Unit/
-    └── ExampleTest.php                    # 1 test
-
-resources/
-├── css/app.css                            # Tailwind base styles
-├── js/
-│   ├── app.js                             # Inertia + Vue + Ziggy bootstrap
-│   ├── bootstrap.js                       # Axios global setup
-│   ├── Components/                        # Shared Vue components
-│   │   ├── Modal.vue                      # Generic modal wrapper (teleport, overlay)
-│   │   ├── DataTable.vue                  # Generic data table (search/sort/paginate)
-│   │   └── SidebarContent.vue             # Navigation sidebar items
-│   ├── Layouts/
-│   │   ├── AuthenticatedLayout.vue        # Main app layout (sidebar + navbar)
-│   │   ├── GuestLayout.vue
-│   │   └── Guest.vue
-│   └── Pages/                             # Per-route page components + modals
-│       ├── Complaint/
-│       │   ├── Index.vue                  # List page (status badges, stacked thumbnails)
-│       │   ├── Create.vue                 # Dedicated full-page create form
-│       │   └── ComplaintModal.vue         # Edit-only modal
-│       ├── ComplaintCategory/
-│       │   ├── Index.vue
-│       │   └── ComplaintCategoryModal.vue
-│       ├── Department/
-│       │   ├── Index.vue
-│       │   └── DepartmentModal.vue
-│       ├── Auth/
-│       ├── Profile/
-│       ├── Dashboard.vue                  # Stat cards (Total/Pending/Resolved/Spam)
-│       └── Welcome.vue                    # Standalone landing page (no AuthenticatedLayout)
+    └── ExampleTest.php                # 1 test
 
 ================================================================================
-2.  CONVENTIONS & PATTERNS
+2.  ARCHITECTURE & DATA FLOW
 ================================================================================
 
-2.1  Naming Conventions
+2.1  High-Level Architecture
+
+  Browser ──Inertia.js──▶ Laravel 12 (REST/JSON) ──Eloquent──▶ MySQL
+     │                        │
+     │                        ├── Controllers (CRUD)
+     │                        ├── Middleware (Auth, Session, HandleInertia)
+     │                        ├── Spatie Permissions (RBAC)
+     │                        ├── Validation (inline)
+     │                        └── Gemini AI Service (ComplaintAiService)
+     │
+     └── Vue 3 SPA (Composition API)
+         ├── Pages/       (per-route page components)
+         ├── Components/  (shared — Modal, Sidebar, DataTable)
+         ├── Layouts/     (AuthenticatedLayout, AdminLayout)
+         └── Inertia App  (app.js + Ziggy routes)
+
+2.2  Data Flow Patterns
+
+  Page visit:          GET /{route} → Controller::index() → Inertia::render()
+  Form create:         POST /{route} → Controller::store() → AI analysis → redirect + flash
+  Form update:         PUT /{route}/{id} → Controller::update() → redirect + flash
+  Delete:              DELETE /{route}/{id} → Controller::destroy() → redirect + flash
+
+2.3  AI Flow (store only)
+
+  POST /complaints
+    → validate (title, description, category_id nullable, location, lat/lng, attachments)
+    → spam filter (isObviousSpam — deterministic regex, runs BEFORE AI)
+    → load departments + categories
+    → Gemini API call (constrained to valid dept/category enum, structured JSON)
+    → catch Exception → simulation fallback (keyword priority + summary truncation)
+    → if user provided category_id: preserve it (skip AI department/category determination)
+    → if no category_id: firstOrCreate Department + ComplaintCategory from AI result
+    → create complaint record
+    → create complaint_ai_analyses row
+    → store attachments to public disk
+    → redirect with success flash
+
+================================================================================
+3.  CONVENTIONS & PATTERNS
+================================================================================
+
+3.1  Naming Conventions
 ─────────────────────
-  - Models             : Singular, PascalCase (e.g., ComplaintCategory)
-  - Controllers        : Singular, PascalCase + "Controller" suffix
-  - Migrations         : snake_case (e.g., create_complaint_categories_table)
-  - Routes             : kebab-case (e.g., complaint-categories.index)
-  - Vue Pages          : Singular, PascalCase, nested under folder matching route prefix
-                         (e.g., Pages/ComplaintCategory/Index.vue)
-  - Vue Modals         : PascalCase, co-located with page in Pages/{Module}/
-                         (e.g., Pages/ComplaintCategory/ComplaintCategoryModal.vue)
+  Models             : Singular, PascalCase (e.g., ComplaintCategory)
+  Controllers        : Singular, PascalCase + "Controller" suffix
+  Migrations         : snake_case (e.g., create_complaint_categories_table)
+  Routes             : kebab-case (e.g., complaint-categories.index)
+  Vue Pages          : Singular, PascalCase, nested under folder matching route prefix
+  Vue Modals         : PascalCase, co-located with page in Pages/{Module}/
 
-2.2  Model Convention
+3.2  Model Convention
 ─────────────────────
   - Extends Illuminate\Database\Eloquent\Model
   - Uses HasFactory trait
   - $fillable array for mass-assignment protection
-  - casts() method for attribute casting (datetime, etc.)
-  - Add SoftDeletes trait if table has deleted_at column
+  - casts() method for attribute casting
+  - SoftDeletes trait if table has deleted_at column
   - Define relationships as BelongsTo/HasMany/HasOne methods
 
-2.3  Controller Convention
+3.3  Controller Convention
 ──────────────────────────
   - Extends App\Http\Controllers\Controller
-  - Use Inertia\Response / RedirectResponse return types
-  - Inline $request->validate() for simplicity (extract to FormRequest when complex)
+  - Inertia\Response / RedirectResponse return types
+  - Inline $request->validate() (extract to FormRequest when complex)
   - CRUD methods: index (Inertia::render), store (redirect), update (redirect), destroy (redirect)
   - Flash messages via ->with('success', '...') on redirect
-  - ComplaintController uses dedicated Create page (not modal) for create
+  - ComplaintController: dedicated Create page (not modal) for create; modal for edit
 
-2.4  Inertia Page Convention
+3.4  Inertia Page Convention
 ─────────────────────────────
   - <script setup> Composition API
-  - Import AuthenticatedLayout for authenticated pages
-  - <Head> component from @inertiajs/vue3 for page title
+  - Import layout for authenticated pages
+  - <Head> component for page title
   - Local reactive `items` ref initialized from usePage().props.{entity}
-  - Props sync watch: watch(() => usePage().props.{entity}, ...) to sync after redirect
+  - Props sync watch: watch(() => usePage().props.{entity}, ...) after redirect
   - Flash toast watch: watch(() => usePage().props.flash?.success, ...) for reactive messages
   - Computed properties for filter/sort/paginate on local `items`
+  - Optimistic CRUD with router.delete()/router.post() and error fallback router.reload()
 
-2.5  Modal Convention
-─────────────────────
-  - Generic Modal.vue (Components/) handles teleport/overlay/animation
-  - Feature-specific modal co-located in Pages/{Module}/{Module}Modal.vue
-  - ComplaintModal.vue is EDIT-ONLY (create uses dedicated Create.vue page)
-  - defineProps: show, {entity}, departments (or other FK lists)
-  - defineEmits: 'close', 'success', 'submitting'
-  - Uses useForm() from @inertiajs/vue3
-  - Computed isEditMode from presence of entity prop
-  - Emits 'submitting' with form data + isEdit flag in onSuccess
-  - Emits 'success' + calls closeModal() in onSuccess
-
-2.6  Route Convention
+3.5  Route Convention
 ─────────────────────
   - Named routes using ->name() for Ziggy JS access (route() helper)
-  - Resource routes with except(['edit', 'show'])
+  - Resource routes with except(['create', 'edit', 'show']) — exceptions for complaints.create/show
   - Grouped under 'auth' middleware
-  - Route parameter follows kebab-case convention (e.g., complaint-categories)
-  - complaints.create enabled (GET /complaints/create) for dedicated create page
+  - Kebab-case route parameters
 
-2.7  Optimistic CRUD Data Flow
-───────────────────────────────
-  DELETE:
-    1. User confirms delete → local items ref filtered (item disappears instantly)
-    2. router.delete() fires in background
-    3. Server returns 302 redirect → Inertia follows → GET request
-    4. Server props update → watch re-syncs items ref
-    5. onError: router.reload() restores server state
-
-  CREATE:
-    1. User submits form → server processing
-    2. onSuccess fires → modal emits 'submitting' with form data
-    3. Items ref receives new item with temp negative ID
-    4. Redirect follows → props update → watch re-syncs (temp ID replaced by real data)
-
-  UPDATE:
-    1. User submits form → server processing
-    2. onSuccess fires → modal emits 'submitting' with form data + id
-    3. Items ref updated in-place
-    4. Redirect follows → props update → watch re-syncs
-
-2.8  Flash Message Convention
-───────────────────────────────
-  - Server sets flash via ->with('success', '...') on redirect
-  - HandleInertiaRequests middleware reads session('success') and shares as flash.success
-  - Vue watch: watch(() => usePage().props.flash?.success, ...) with { immediate: true }
-  - Auto-dismiss after 4000ms (timer reset on each new flash)
-  - Dismissible on click
-  - Fixed position top-right, slide-in animation, green success styling
-
-2.9  Modern List Page Convention
-─────────────────────────────────
-  - Stats card row at top showing summary metrics
-  - Integrated search bar (icon + clear button)
-  - Rows-per-page selector (10/25/50)
-  - Pure Tailwind table with sortable column headers + sort icons
-  - Row-level edit/delete icon buttons with hover tooltips
-  - Responsive: hidden md:table for desktop, md:hidden card list for mobile
-  - Client-side search, sort, pagination via Vue computed properties
-  - Empty state: hero icon + message + CTA button
-  - No-results state: icon + message + clear-search button
-  - Delete confirmation: teleported modal with backdrop blur
-  - Pagination bar: first/prev/page-numbers/next/last
-
-2.10 Enhanced Form Modal Convention
+3.6  Status Transition State Machine
 ────────────────────────────────────
-  - Icon + title header with subtitle description
-  - Select dropdown with leading icon for FK fields (department_id)
-  - Inputs with leading icon indicators (fa-tag, fa-building, etc.)
-  - Error state: red border + red-50 background + exclamation icon + message
-  - Normal state: subtle gray-200 border, indigo focus ring
-  - Character counter on textarea fields (e.g., "245/1000")
-  - Cancel (secondary outline) + Submit (primary filled with hover shadow)
-  - Processing state: spinner icon + "Saving..." + disabled button
-  - Submit button icon changes based on context (fa-plus for create, fa-save for update)
+  Valid transitions (ComplaintController::STATUS_TRANSITIONS):
+
+    submitted    → under_review, rejected
+    under_review → assigned, rejected, submitted
+    assigned     → in_progress, under_review, rejected
+    in_progress  → resolved, rejected, assigned
+    resolved     → closed, in_progress
+    rejected     → submitted
+    closed       → []
+
+  Enforcement added in update(): throws ValidationException on invalid transition.
 
 ================================================================================
-3.  AI SERVICE ARCHITECTURE
+4.  TESTING INFRASTRUCTURE
 ================================================================================
 
-ComplaintAiService (app/Services/ComplaintAiService.php)
-─────────────────────────────────────────────────────────
-  - Uses google-gemini-php/laravel v2.0.4 (Gemini 2.5 Flash model)
-  - Injected into ComplaintController via constructor
-  - Sends structured JSON prompt + up to 3 images as Blob attachments
-  - Returns array: ['department_name', 'category_name', 'priority', 'summary']
-  - Uses constrained JSON schema (ResponseMimeType + Schema) for typed output
-  - Accepts departments + categories as parameters to constrain enum values
-    (AI picks from valid existing names, preventing hallucination)
-  - Input: title, description, optional real paths, departments array, categories array
+  Framework : PHPUnit (not Pest)
+  Database  : MySQL (civicsense_testing) — no pdo_sqlite in environment
+  Status    : 71 TESTS PASSING, 169 ASSERTIONS
 
-  Fallback chain:
-    try { → Gemini API } catch (\Exception) { → simulation methods }
-
-  Simulation methods (private, on ComplaintController):
-    - simulatePriority($description): regex keyword matching → emergency/high/medium/low
-    - simulateSummary($description): strip_tags + truncate at 200 chars
-    - Fallback returns null for department_name/category_name → user's form selection preserved
-
-  MIME type mapping for image uploads:
-    image/png  → MimeType::IMAGE_PNG
-    image/webp → MimeType::IMAGE_WEBP
-    image/gif  → MimeType::IMAGE_PNG  (GIF not supported by Gemini → sent as PNG)
-    default    → MimeType::IMAGE_JPEG
-
-  AI analysis results stored in two places:
-    1. complaints table: priority, ai_summary columns (is_spam defaults to false)
-    2. complaint_ai_analyses table: detected_category, detected_priority,
-       confidence_score (hardcoded 0.85), ai_summary
-
-  Auto-creation flow in Controller::store():
-    if AI returns valid department_name + category_name:
-      → Department::firstOrCreate() by name
-      → ComplaintCategory::firstOrCreate() by name + department_id
-      → Override $validated['category_id'] with AI-detected category
-    else (fallback):
-      → User's form-selected category_id is preserved
-
-================================================================================
-4.  COMPLAINT TRACKING (CURRENT STATE)
-================================================================================
-
-4.1  Statuses
-─────────────────────
-  7 statuses in the current_status enum:
-    submitted    → blue    (default on creation)
-    under_review → yellow
-    assigned     → purple
-    in_progress  → indigo
-    resolved     → green
-    rejected     → red
-    closed       → gray
-
-4.2  How status changes happen
-────────────────────────────────
-  - ONLY via ComplaintController::update() (PUT /complaints/{id})
-  - Called from ComplaintModal.vue edit form
-  - Validation allows ANY status → ANY other status (no state machine)
-  - No audit trail: complaint_tracks table is NEVER written to
-  - No resolved_at timestamp or resolution notes
-
-4.3  Missing pieces
+4.1  Test Convention
 ────────────────────
-  - assigned_to exists in DB schema + model but is NEVER set by controller or UI
-  - No complaint_tracks model or controller logic (dead migration)
-  - No complaint_feedback model or controller logic (dead migration)
-  - No status transition validation (e.g., submitted → resolved directly is allowed)
-  - No "assign to staff" workflow
-  - No completion metrics or SLA tracking
+  - Namespace: Tests\Feature
+  - Uses RefreshDatabase trait on each test class
+  - test_ snake_case method names, void return type
+  - $this->actingAs($user) before each HTTP request
+  - Factory states: spam(), emergency(), high(), medium(), status(string), assignedTo(User)
+
+4.2  Mocking AI Service
+────────────────────────
+  - Simulation tests use forceSimulationFallback() helper:
+    Creates a mock of ComplaintAiService that throws \Exception,
+    triggering the controller's catch block → simulation fallback.
+  - Keeps tests deterministic and independent of live Gemini API.
+  - Non-simulation tests call the real Gemini API (for integration coverage).
+
+4.3  Test Coverage Breakdown (71 tests)
+
+  ComplaintTest:          31 tests
+    CRUD:                 12 (index, create page, create auth guard, create, title required,
+                              description required, spam filter, valid category, complaint_no,
+                              update, valid status, valid priority, delete, auth guard)
+    AI Priority Sim:       5 (emergency, high, medium, low, low-no-keywords)
+    AI Summary:            2 (truncation 200 chars, short text)
+    HTML Stripping:        1
+    Category Fallback:     1 (user-selected category preserved when AI fails)
+    Non-Spam Default:      1
+    Relations Preload:     1
+    Default Status:        1
+    Optional Fields:       1
+    Attachments:           3 (image upload, max 5 limit, PDF rejection)
+    Attachment Persist:    1 (after soft delete)
+
+  DepartmentTest:          7 tests (index, create, name required, name max 255, update, delete, auth)
+  ComplaintCategoryTest:   8 tests (index, create, dept required, valid dept, name required, update, delete, auth)
+  Auth (Breeze):          19 tests (login, register, password reset, email verify, confirm)
+  ProfileTest:             5 tests (edit, update, email unchanged, delete, password required)
+  ExampleTest:             2 tests (1 Feature, 1 Unit)
+
+4.4  Running Tests
+──────────────────
+  php artisan test                    # All tests
+  php artisan test --testsuite=Feature  # Feature tests only
+  php artisan test --filter=ComplaintTest  # Single test class
 
 ================================================================================
-5.  CREATING A NEW FEATURE (STEP-BY-STEP)
+5.  KNOWN BUGS & RESOLUTIONS (COMPLETE LOG)
 ================================================================================
 
-  1. Create migration        : php artisan make:migration create_xxx_table
-  2. Run migration           : php artisan migrate
-  3. Create Model            : app/Models/Xxx.php
-                               - $fillable, casts, relationships
-                               - SoftDeletes if needed
-  4. Create Controller       : app/Http/Controllers/XxxController.php
-                               - Follow DepartmentController pattern
-                               - index: Inertia::render with ->with() for FK lists
-                               - store/update: redirect()->route()->with('success',...)
-                               - destroy: redirect with soft/hard delete
-  5. Create Vue Page         : resources/js/Pages/Xxx/Index.vue
-                               - items ref + props sync watch + flash watch
-                               - computed filter/sort/paginate
-                               - optimistic CRUD handlers
-                               - modal + delete confirmation
-  6. Create Vue Modal        : resources/js/Pages/Xxx/XxxModal.vue
-                               - Co-located with page in Pages/{Module}/
-                               - useForm(), emit 'submitting'/'success'/'close'
-  7. Add routes              : routes/web.php
-                               - Route::resource('xxx', XxxController::class)->except([...])
-  8. Add sidebar link        : resources/js/Components/SidebarContent.vue
-                               - <li> with <a href="route('xxx.index')">
-  9. Build                   : npm run build
-  10. Hard refresh           : Ctrl+Shift+R (browser cache)
+  BUG-001: DELETE /departments/{id} → 404
+    Root cause: Empty departments table; route model binding couldn't resolve ID.
+    Fix: Created DepartmentSeeder with 8 realistic departments, called from DatabaseSeeder.
+    Status: RESOLVED.
 
-================================================================================
-6.  COMMANDS
-================================================================================
+  BUG-002: Temp negative-ID items in list after optimistic create
+    Root cause: Optimistic create adds item with `id: -Date.now()`. On redirect, Inertia
+    reuses component (no re-mount), so `items` ref retains temp item.
+    Fix: watch() on usePage().props.{entity} syncs items after redirect.
+    Status: RESOLVED.
 
-  Development
-    php artisan serve              Start Laravel dev server
-    npm run dev                    Start Vite dev server
-    npm run build                  Build for production
+  BUG-003: Flash messages not showing on edit/delete
+    Root cause: Component reuse means <script setup> doesn't re-run.
+    Fix: watch() on usePage().props.flash?.success with { immediate: true }.
+    Status: RESOLVED.
 
-  Database
-    php artisan migrate            Run pending migrations
-    php artisan migrate:fresh      Drop all tables and re-run migrations
-    php artisan db:seed            Run database seeders
-    php artisan migrate:fresh --seed  Fresh + seed
-
-  Cache / Routes
-    php artisan optimize           Cache routes, config, events
-    php artisan route:list         List all registered routes
-    php artisan route:cache        Cache routes (production)
-
-  Gemini
-    php artisan gemini:install     Publish config/gemini.php + set GEMINI_API_KEY
-
-================================================================================
-7.  AUTHENTICATION & AUTHORIZATION
-================================================================================
-
-  - Laravel Breeze scaffold (login, register, password reset, email verify)
-  - All CRUD routes behind 'auth' middleware
-  - Spatie Laravel Permission installed with RolePermissionSeeder
-  - No authorization gates yet on CRUD controllers (TODO: add middleware/policies)
-  - Check roles/permissions in Blade/Vue via Spatie helpers or can() method
-
-================================================================================
-8.  FRONTEND STACK NOTES
-================================================================================
-
-  - Ziggy: route() helper globally available in Vue templates
-  - Axios: window.axios available globally (configured in bootstrap.js)
-  - Font Awesome Free via CDN (fas, far classes)
-  - Tailwind CSS utility classes throughout
-  - Scoped <style scoped> for component-specific CSS
-  - Vue 3 Composition API with <script setup>
-  - Vite for dev server and production builds
-
-================================================================================
-9.  PERFORMANCE OPTIMIZATIONS
-================================================================================
-
-  Optimistic CRUD:
-    • Local reactive `items` ref initialized from Inertia props
-    • Mutations applied instantly (filter/push/update on items.value)
-    • HTTP requests fire in background; redirect re-syncs via props watch
-    • onError fallback: router.reload() restores server state
-
-  Props Sync Watch:
-    • watch(() => usePage().props.{entity}, v => items.value = [...(v ?? [])])
-    • Critical: prevents temp negative-ID items from persisting after redirect
-    • Applied in both Department and ComplaintCategory Index pages
-
-  Flash Toast:
-    • watch(() => usePage().props.flash?.success, ...) with { immediate: true }
-    • Auto-dismiss after 4s, click to dismiss, timer reset on new flash
-    • Fixed top-right, slide-in animation
-
-  Client-Side Data Filtering:
-    • Search, sort, paginate entirely via computed properties
-    • Zero server round-trips for list manipulation
-
-  Vite:
-    • Code splitting per page (each page is a separate chunk)
-    • Tree-shaking via ES module imports
-
-  Database:
-    • Soft deletes prevent expensive cascade operations
-    • Eager loading: ->with('department') prevents N+1
-
-================================================================================
-10.  CURRENT ROUTES
-================================================================================
-
-  GET|HEAD        /                              Welcome (standalone landing page)
-  GET|HEAD        /dashboard                     Dashboard (auth + verified, stat cards)
-  GET|HEAD        /profile                        Profile edit (auth)
-  PATCH           /profile                        Profile update (auth)
-  DELETE          /profile                        Profile destroy (auth)
-  GET|HEAD        /departments                    Department index (auth)
-  POST            /departments                    Department store (auth)
-  PUT|PATCH       /departments/{department}       Department update (auth)
-  DELETE          /departments/{department}       Department destroy (auth)
-  GET|HEAD        /complaint-categories           Category index (auth)
-  POST            /complaint-categories           Category store (auth)
-  PUT|PATCH       /complaint-categories/{category}  Category update (auth)
-  DELETE          /complaint-categories/{category}  Category destroy (auth)
-  GET|HEAD        /complaints                     Complaint index (auth)
-  GET|HEAD        /complaints/create              Complaint create page (auth)
-  POST            /complaints                     Complaint store (auth)
-  PUT|PATCH       /complaints/{complaint}         Complaint update (auth)
-  DELETE          /complaints/{complaint}         Complaint destroy (auth)
-
-================================================================================
-11.  KNOWN ISSUES & RESOLUTIONS
-================================================================================
-
-  Create Page (Complaint/Create.vue):
-    • Full-page form at GET /complaints/create (route: complaints.create)
-    • Two-column layout: department + category (cascading), title, description (10k),
-      location (optional), lat/lng (optional), file upload zone (drag/click, max 5 images)
-    • AI analysis info box at the bottom
-    • On submit → POST /complaints/store → redirect to index with flash
-    • Index.vue "New Complaint" buttons changed from modal trigger to <a href>
-
-  ComplaintModal.vue:
-    • Now used ONLY for editing (via "Edit" action buttons in Index table)
-    • Create flow handled entirely by the dedicated Create page
-
-  Photo Uploads (complaint_attachments table):
-    • ComplaintAttachment model with SoftDeletes, url accessor ($appends)
-    • Controller store(): validates `attachments` (array, max:5), each file: image, max 5MB
-    • Files stored at storage/app/public/complaints/{id}/{filename}
-    • Index table: stacked avatar-style thumbnails (max 3 shown, +N overflow badge)
-    • Mobile cards: horizontal row of thumbnails (max 4 shown, +N overflow badge)
-    • Cascade on delete (DB-level); persists on soft-delete
-    • Temp file paths gathered before storage for Gemini image analysis
-
-  ComplaintAiAnalysis:
-    • Created model + wired aiAnalysis() hasOne relationship on Complaint model
-    • Table columns: complaint_id (unique), detected_category, detected_priority,
-      confidence_score (decimal 5,2), ai_summary, created_by, updated_by, timestamps
-    • Populated during store() with 0.85 default confidence
-
-  ComplaintAiService (Gemini v2.0 API):
-    • Uses withGenerationConfig(GenerationConfig) instead of withConfig(array)
-    • Uses ResponseMimeType::APPLICATION_JSON enum + Schema objects (not plain arrays)
-    • MIME types: IMAGE_PNG, IMAGE_WEBP, IMAGE_JPEG; GIF sent as PNG
-    • Guard added: $path && file_exists($path) before processing
-
-  AI Workflow Upgrade (Phase 1):
-    • AI now returns: department_name, category_name, priority, summary
-    • is_spam removed from AI schema → defaults to false on all complaints
-    • AI constrained to existing departments/categories via enum in JSON schema
-    • Service accepts departments + categories arrays as parameters
-    • Controller find-or-creates Department + ComplaintCategory from AI result
-    • Form-selected category_id preserved as fallback when AI fails
-    • simulateSpamCheck() removed (no longer needed)
-    • Test updated: spam tests → category-preservation + extra low-priority test
-
-  Welcome.vue:
-    • Was importing AuthenticatedLayout (broken for guests)
-    • Rewritten as standalone landing page with feature cards
-    • Shows sign-in/register buttons for guests, "Go to Dashboard" when authenticated
-
-  Dashboard.vue:
-    • Was empty (0 bytes)
-    • Rewritten with AuthenticatedLayout + stat cards (Total/Pending/Resolved/Spam)
-
-  BUG-004: PHPUnit "could not find driver" (SQLite) in this environment
-    Cause: php pdo_sqlite extension not installed on this VM.
+  BUG-004: PHPUnit "could not find driver" (SQLite)
+    Root cause: php pdo_sqlite extension not installed on this VM.
     Fix: Edited phpunit.xml to use MySQL + civicsense_testing database.
-    Status: WORKAROUND (keep phpunit.xml pointing to MySQL test DB).
+    Status: WORKAROUND.
 
   BUG-005: Gemini package not installed
-    Cause: ComplaintAiService imported Gemini\Laravel\Facades\Gemini but google-gemini-php/laravel
-    was not in composer.json. Controller would crash at instantiation.
+    Root cause: ComplaintAiService imported Gemini namespace but package missing from composer.json.
     Fix: composer require google-gemini-php/laravel
     Status: RESOLVED.
 
   BUG-006: aiAnalysis() relationship missing on Complaint model
-    Cause: Controller called $complaint->aiAnalysis()->create() but relationship was not defined.
-    Fix: Added protected $table, HasOne relationship, $fillable, casts to ComplaintAiAnalysis model.
+    Root cause: Controller called $complaint->aiAnalysis()->create() but relationship not defined.
+    Fix: Created ComplaintAiAnalysis model with HasOne relationship.
     Status: RESOLVED.
 
   BUG-007: ai_analyses table schema mismatch
-    Cause: Controller passed ['summary', 'raw_response'] but table has detected_category,
-    detected_priority, confidence_score, ai_summary columns.
-    Fix: Updated create() call to match migration columns.
+    Root cause: Controller passed ['summary', 'raw_response'] but table has different columns.
+    Fix: Updated controller to match migration columns.
     Status: RESOLVED.
 
+  BUG-008: Service used deprecated withConfig() array API
+    Root cause: google-gemini-php/laravel v2.0 requires withGenerationConfig() + Schema objects.
+    Fix: Rewrote service to use v2.0 API with proper types.
+    Status: RESOLVED.
+
+  BUG-009: category_id overridden by AI on complaint creation
+    Root cause: Controller always overrode user's category_id with AI-detected category.
+    Fix: Now preserves user-selected category_id when provided; AI only determines
+    category when no category_id is sent. Added 'category_id' => ['nullable', 'exists']
+    to store validation.
+    Status: RESOLVED (2026-06-11).
+
+  BUG-010: Spam filter blocked validation tests
+    Root cause: isObviousSpam() ran before category_id validation; test descriptions
+    like "Test description." triggered the filter before validation errors could surface.
+    Fix: Validation now runs first (includes category_id nullable|exists); spam filter
+    runs after. Test updated to assert spam error for non-civic submissions.
+    Status: RESOLVED (2026-06-11).
+
+  BUG-011: Invalid status transition in test
+    Root cause: test_complaint_can_be_updated tried 'submitted' → 'in_progress' which
+    is not a valid transition (must go through under_review → assigned).
+    Fix: Factory now creates complaint with 'under_review' status, test transitions to 'assigned'.
+    Status: RESOLVED (2026-06-11).
+
+  BUG-012: Long text triggered spam filter in AI summary test
+    Root cause: "Lorem ipsum" text matched meta commentary regex pattern in spam filter.
+    Fix: Changed test data to use genuine civic description with repeated civic context.
+    Status: RESOLVED (2026-06-11).
+
 ================================================================================
-12.  TESTING
+6.  PERFORMANCE OPTIMIZATIONS APPLIED
 ================================================================================
 
-  Framework: PHPUnit (not Pest)
-  Database:  MySQL (civicsense_testing) — no pdo_sqlite in environment
+  6.1  Client-Side (Frontend)
+  ─────────────────────────────
+    • Optimistic CRUD: Local mutations instantly applied; HTTP fires in background.
+    • Props Sync Watch: Prevents temp-ID persistence after redirect.
+    • Flash Toast: Reactive watch with 4s auto-dismiss, click-to-dismiss.
+    • Client-side filter/sort/paginate: Zero server round-trips.
+    • Vite code splitting: Each page is a separate chunk (lazy-loaded).
+    • Tree-shaking via ES module imports.
 
-  Convention:
-    • Namespace: Tests\Feature for feature tests
-    • Uses RefreshDatabase trait on each test class
-    • test_ snake_case method names, void return type
-    • $this->actingAs($user) before each HTTP request
-    • Factory states for Complaint: spam(), emergency(), high(), medium(), status(), assignedTo()
+  6.2  Server-Side (Backend)
+  ─────────────────────────────
+    • Soft deletes prevent expensive cascade operations.
+    • Eager loading: ->with('department'), ->with('attachments'), etc. prevent N+1.
+    • Spatie permission caching (built-in).
+    • Simulated AI fallback avoids retry on API failure.
 
-  Mocking AI Service in Tests:
-    • Simulation tests use forceSimulationFallback() helper that mocks ComplaintAiService
-      to throw \Exception, triggering the controller's catch block → simulation fallback.
-    • This keeps tests deterministic and independent of live Gemini API.
+  6.3  Database
+  ────────────────
+    • MySQL InnoDB with foreign key constraints.
+    • Soft deletes on all complaint-related tables.
+    • Indexed primary/foreign keys (indexes pending on status, priority, created_at, due_at).
 
-  Running Tests:
-    php artisan test --testsuite=Feature
+================================================================================
+7.  PERFORMANCE & UI RESPONSIVENESS ANALYSIS (2026-06-11)
+================================================================================
 
-  Factory Reference:
+7.1  Critical Issues Found
 
-    DepartmentFactory:
-      → name (unique company), description (optional sentence)
+  CONTROLLER - No Pagination (HIGH)
+    File: app/Http/Controllers/ComplaintController.php:51
+    Issue: Complaint::with(...)->get() loads ALL complaints into memory.
+    As dataset grows, this will exhaust PHP memory. All records sent to Inertia.
+    Fix: Add ->paginate(25) and handle Inertia pagination in Vue.
 
-    ComplaintCategoryFactory:
-      → department_id (Department::factory()), name (unique word),
-        description (optional), created_by (User::factory())
+  CONTROLLER - Synchronous AI Call Blocks HTTP (HIGH)
+    File: app/Http/Controllers/ComplaintController.php:107
+    Issue: Gemini API call is synchronous with 60s timeout. Blocks PHP-FPM process.
+    Fix: Dispatch AI analysis to a queue job (ProcessComplaintAi::dispatch()).
 
-    ComplaintFactory:
-      → complaint_no (auto CMP-YYYYMMDD-XXXXX), citizen_id (User::factory()),
-        category_id (ComplaintCategory::factory()), title, description,
-        priority (random), current_status=submitted, is_spam=false
-      States: spam(), emergency(), high(), medium(), status(string), assignedTo(User)
+  CONTROLLER - No Caching of Reference Data (HIGH)
+    File: app/Http/Controllers/ComplaintController.php:55-56, 73-74, 103-104
+    Issue: Departments and categories fetched from DB on every request.
+    Fix: Use Cache::remember('departments.list', 86400, ...).
 
-    ComplaintAttachmentFactory:
-      → complaint_id (Complaint::factory()), file_path, file_name, mime types
+  FRONTEND - Blob URL Memory Leak (HIGH)
+    File: resources/js/Pages/Complaint/Create.vue:23,29,54
+    Issue: URL.createObjectURL() creates blob URLs that are NEVER revoked.
+    Fix: Call URL.revokeObjectURL() in removeFile(), on success, and onUnmounted.
 
-  Coverage (71 tests, 169 assertions):
-    Departments:       7 tests
-    Categories:        8 tests
-    Complaints:       31 tests (CRUD 12, AI priority simulation 5,
-                       AI summary 2, HTML stripping 1, category fallback 1,
-                       non-spam default 1, misc 6, file upload 3)
-    Auth (Breeze):    19 tests
-    Profile:           5 tests
-    Example:           1 test
+  FRONTEND - No Debounce on Search (HIGH)
+    Files: Complaint/Index.vue:421, AdminDataTable.vue:79
+    Issue: Search input filters entire dataset synchronously on every keystroke.
+    Fix: Add debounce (already done in SearchFilter.vue — need to port pattern).
 
-  Known Bugs (Testing):
-    BUG-001: DELETE /departments/{id} → 404
-      Cause: Empty departments table, route model binding couldn't resolve ID.
-      Fix: Seeded 8 departments via DepartmentSeeder.
-      Status: RESOLVED.
+  FRONTEND - Missing :disabled on Auth Submit Buttons (HIGH)
+    Files: Register.vue, VerifyEmail.vue, ConfirmPassword.vue, ForgotPassword.vue, ResetPassword.vue
+    Issue: Buttons show opacity-25 but disable attribute not set — double-submit possible.
+    Fix: Add :disabled="form.processing" to all PrimaryButton instances.
 
-    BUG-002: Temp negative-ID items after optimistic create
-      Cause: Optimistic create adds id: -Date.now(). On redirect, Inertia reuses
-      the component (no re-mount), so items ref keeps the temp item.
-      Fix: watch() on usePage().props.{entity} syncs items after redirect.
-      Status: RESOLVED.
+  FRONTEND - Empty handleSearch in Navbar (HIGH)
+    File: resources/js/Components/Navbar.vue:254
+    Issue: Search function is empty — UI shows search but it does nothing.
 
-    BUG-003: Flash messages not showing on edit/delete
-      Cause: Component reuse means <script setup> doesn't re-run.
-      Fix: watch() on usePage().props.flash?.success with { immediate: true }.
-      Status: RESOLVED.
+  FRONTEND - Unsafe document.body.style.overflow (HIGH)
+    File: resources/js/Layouts/AdminLayout.vue:14,22,46
+    Issue: Direct DOM mutation without SSR guard (typeof document check).
+    Fix: Wrap in typeof document !== 'undefined' guard.
+
+  FRONTEND - Chart.js Bundled in Main Chunk (HIGH)
+    Issue: chart.js + vue-chartjs imported statically in Dashboard, bundled into main
+    app chunk despite being used on ONE page. Adds ~65KB+ to every page load.
+    Fix: Lazy-load chart components or use manual code-splitting in vite.config.js.
+
+7.2  Medium Issues Found
+
+  DB - Missing Database Indexes (HIGH)
+    Tables: complaints (citizen_id, category_id, assigned_to, current_status, priority, created_at, due_at)
+    Impact: Full table scans on dashboard COUNT queries, escalation queries, sort operations.
+    Fix: Add migration with indexes on all foreign keys + frequently filtered columns.
+
+  DB - Database Cache/Session/Queue Drivers (MEDIUM)
+    File: .env — CACHE_STORE=database, SESSION_DRIVER=database, QUEUE_CONNECTION=database
+    Issue: All three use database tables, adding overhead for every operation.
+    Fix: Use file/redis cache, file/redis sessions, redis queue in production.
+
+  DB - Dashboard 4x COUNT Queries (MEDIUM)
+    File: routes/web.php:25-30
+    Issue: Each stat counter executes a separate SQL COUNT query.
+    Fix: Combine into a single SELECT with SUM(CASE ...) for all four counters.
+
+  FRONTEND - Flash Timer Memory Leaks (MEDIUM)
+    Files: Complaint/Index.vue, Complaint/Create.vue, Complaint/Show.vue, ComplaintCategory/Index.vue
+    Issue: setTimeout in flash watchers has no onUnmounted cleanup.
+    Fix: Add onUnmounted(() => clearTimeout(flashTimer)) to all components.
+
+  FRONTEND - Un-debounced Resize Handlers (MEDIUM)
+    Files: AdminLayout.vue:39, AuthenticatedLayout.vue:60
+    Issue: window resize fires on every pixel change, triggering reactive recomputation.
+    Fix: Add debounce (e.g., 150ms) to resize handlers.
+
+  FRONTEND - Missing Transition Animations (MEDIUM)
+    Files: AdminLayout.vue (mobile sidebar), Modal.vue (backdrop), AdminSidebar.vue (mobile drawer)
+    Issue: Elements appear/disappear instantly with v-if — no fade/slide transitions.
+    Fix: Wrap in <Transition> component.
+
+  FRONTEND - Hardcoded Admin Credentials in Login.vue (HIGH - Security)
+    File: resources/js/Pages/Auth/Login.vue:234-238
+    Issue: email: 'admin@gmail.com', password: 'admin@123' exposed in frontend source.
+    Fix: Remove hardcoded credentials — use placeholder text only.
+
+  FRONTEND - Missing loading="lazy" on Complaint Images (HIGH)
+    File: resources/js/Pages/Complaint/Show.vue:259-262
+    Issue: All attachment images load immediately regardless of viewport position.
+    Fix: Add loading="lazy" attribute to <img> tags.
+
+  FRONTEND - Duplicated Flash Message Markup (LOW)
+    Issue: Flash toast HTML duplicated across 4+ components.
+    Fix: Extract to reusable FlashMessage component.
+
+7.3  Security Issues Found
+
+  CRITICAL - Zero Authorization Checks
+    Files: All CRUD controllers — no $this->authorize(), ->can(), or permission middleware.
+    Any authenticated user can create/update/delete any complaint, department, or category.
+    Fix: Add Laravel Policies + Spatie permission middleware to all controllers.
+
+  CRITICAL - Gemini API Key Exposed
+    File: .env contains GEMINI_API_KEY committed to repository.
+    Fix: Revoke key in Google AI Studio. Add .env to .gitignore.
+    NEVER commit API keys.
+
+  CRITICAL - Database Password Exposed
+    File: .env contains DB_PASSWORD=Dbuser@123 committed to repository.
+    Fix: Rotate password. Never commit credentials.
+
+  HIGH - LLM Prompt Injection
+    File: app/Services/ComplaintAiService.php:77-78
+    Issue: User input injected directly into AI prompt without sanitization.
+    Fix: Sanitize user input (strip newlines/tags), add prompt boundary markers.
+
+  HIGH - No Rate Limiting on Complaint Submission
+    File: routes/web.php:41
+    Issue: No throttle middleware — attacker can submit unlimited complaints.
+    Fix: Add ->middleware('throttle:5,1') to complaint store route.
+
+  MEDIUM - Missing Filename Sanitization
+    File: app/Http/Controllers/ComplaintController.php:181
+    Issue: getClientOriginalName() stored directly — potential path traversal.
+    Fix: Use Str::of($filename)->basename() before storage.
+
+================================================================================
+8.  ARCHITECTURAL DEBT & MISSING FEATURES
+================================================================================
+
+  8.1  Orphaned Tables
+  ──────────────────────
+    complaint_tracks:     Migration exists (recreated as audit log), model exists,
+                          wired in ComplaintController::update() for status change logging.
+    complaint_feedback:   Migration exists but NO model, NO controller, NO UI.
+                          Needs ComplaintFeedback model + rating/comment UI post-resolution.
+
+  8.2  Missing Features
+  ──────────────────────
+    • Assignment workflow: assigned_to exists in DB but no UI to select/display assignee.
+    • SLA tracking: due_at and escalation_level exist but no SLA breach notifications.
+    • Completion metrics: resolved_at timestamp, resolution_notes exist but no UI.
+    • Notification system: No email/push/SMS notifications for status changes.
+    • Audit trail: complaint_tracks table wired but no UI to display history.
+    • Feedback system: complaint_feedback table entirely orphaned.
+
+  8.3  Technical Debt
+  ──────────────────────
+    • Two layout systems: AuthenticatedLayout vs AdminLayout — inconsistent sidebar/navbar.
+    • Inline validation in controllers — should extract to FormRequest classes.
+    • DataTable.vue uses 150+ lines of custom CSS with !important instead of Tailwind utilities.
+    • Hardcoded hex colors in Welcome.vue and Login.vue instead of Tailwind theme extension.
+    • No exception handler customization in bootstrap/app.php.
+    • Console commands run without ->withoutOverlapping() guard.
+    • MIME type bug: image/gif mapped to IMAGE_PNG instead of IMAGE_GIF.
+    • No error handling on json_decode() in ComplaintAiService.
+
+================================================================================
+9.  COMMANDS REFERENCE
+================================================================================
+
+  Development:
+    php artisan serve              Start Laravel dev server
+    npm run dev                    Start Vite dev server (HMR)
+    npm run build                  Build frontend for production
+    composer run dev               Start all services (serve + queue + pail + vite)
+
+  Database:
+    php artisan migrate            Run pending migrations
+    php artisan migrate:fresh      Drop all and re-run migrations
+    php artisan db:seed            Run seeders
+    php artisan migrate:fresh --seed  Fresh + seed in one command
+
+  Cache / Optimization:
+    php artisan optimize           Cache routes, config, events
+    php artisan route:list         List all routes
+    php artisan route:cache        Cache routes (production)
+    php artisan config:cache       Cache config (production)
+
+  Testing:
+    php artisan test                          Full test suite
+    php artisan test --testsuite=Feature      Feature tests only
+    php artisan test --filter=ComplaintTest   Single class
+
+  Gemini:
+    php artisan gemini:install     Publish config + set GEMINI_API_KEY
+
+  Maintenance:
+    php artisan complaints:escalate      Escalate overdue complaints
+    php artisan complaints:auto-close    Auto-close resolved complaints
+
+================================================================================
+10. ENVIRONMENT CONFIGURATION
+================================================================================
+
+  .env Configuration (Development):
+    APP_ENV=local
+    APP_DEBUG=true
+    DB_CONNECTION=mysql
+    DB_DATABASE=civicsense_db
+    DB_USERNAME=root
+    DB_PASSWORD=Dbuser@123          ⚠ ROTATE AND NEVER COMMIT
+    SESSION_DRIVER=database          → Use file/redis in production
+    CACHE_STORE=database             → Use file/redis in production
+    QUEUE_CONNECTION=database        → Use redis in production
+    GEMINI_API_KEY=...               ⚠ ROTATE AND NEVER COMMIT
+    GEMINI_REQUEST_TIMEOUT=60
+
+  phpunit.xml (Testing):
+    APP_ENV=testing
+    DB_CONNECTION=mysql
+    DB_DATABASE=civicsense_testing
+    QUEUE_CONNECTION=sync
+    SESSION_DRIVER=array
+    MAIL_MAILER=array
+
+================================================================================
+11. FRONTEND STACK NOTES
+================================================================================
+
+  • Ziggy:       route() helper globally available in Vue templates
+  • Axios:       window.axios globally available (configured in bootstrap.js)
+  • Font Awesome: Loaded via CDN (fas, far classes — not in package.json)
+  • Tailwind:    Utility classes throughout, @tailwindcss/forms plugin
+  • Vue 3:       Composition API with <script setup> in all pages/components
+  • Vite:        HMR dev server + tree-shaken production builds
+  • Chart.js:    Loaded in Dashboard.vue only (consider lazy-loading)
+
+================================================================================
+12. CURRENT ROUTES
+================================================================================
+
+  GET|HEAD    /                              Welcome (landing page)
+  GET|HEAD    /dashboard                     Dashboard (auth + verified)
+  GET|HEAD    /profile                       Profile edit (auth)
+  PATCH       /profile                       Profile update (auth)
+  DELETE      /profile                       Profile destroy (auth)
+  GET|HEAD    /departments                   Department index (auth)
+  POST        /departments                   Department store (auth)
+  PUT|PATCH   /departments/{department}      Department update (auth)
+  DELETE      /departments/{department}      Department destroy (auth)
+  GET|HEAD    /complaint-categories          Category index (auth)
+  POST        /complaint-categories          Category store (auth)
+  PUT|PATCH   /complaint-categories/{category}  Category update (auth)
+  DELETE      /complaint-categories/{category}  Category destroy (auth)
+  GET|HEAD    /complaints                    Complaint index (auth)
+  GET|HEAD    /complaints/create             Complaint create page (auth)
+  POST        /complaints                    Complaint store (auth)
+  GET|HEAD    /complaints/{complaint}        Complaint show (auth)
+  PUT|PATCH   /complaints/{complaint}        Complaint update (auth)
+  DELETE      /complaints/{complaint}        Complaint destroy (auth)
+
+================================================================================
+13. AI SERVICE ARCHITECTURE (DETAILED)
+================================================================================
+
+  ComplaintAiService (app/Services/ComplaintAiService.php):
+    • Model: gemini-2.0-flash
+    • Library: google-gemini-php/laravel v2.0
+    • Structured JSON output via ResponseMimeType::APPLICATION_JSON + Schema objects
+    • Constrained to valid departments/categories via enum in JSON schema (prevents hallucination)
+    • Accepts up to 3 images as Blob attachments (first 3 of max 5)
+    • Returns: is_spam, spam_reason, department_name, category_name, priority, summary
+
+  Fallback Chain:
+    try { Gemini API } → catch (\Exception) { simulation methods }
+
+  Simulation Methods (ComplaintController private):
+    simulatePriority($lower): regex keyword matching → emergency/high/medium/low
+    simulateSummary($description): strip_tags + truncate at 200 chars
+    Fallback returns null for department_name/category_name → controller skips AI category
+
+  Category Resolution:
+    User provided category_id → preserved (skip AI department/category)
+    No category_id provided → AI result → firstOrCreate Department + ComplaintCategory
+
+  MIME Mapping:
+    image/png  → MimeType::IMAGE_PNG
+    image/webp → MimeType::IMAGE_WEBP
+    image/gif  → MimeType::IMAGE_PNG  (GIF sent as PNG — known limitation)
+    default    → MimeType::IMAGE_JPEG
+
+================================================================================
+14. SPAM FILTER (isObviousSpam)
+================================================================================
+
+  Location: app/Http/Controllers/ComplaintController.php:269-402
+  Phase: Runs BEFORE AI call but AFTER input validation
+  Rules:
+    1. Title made entirely of filler/greeting/test/stop words → spam
+    2. No genuine civic keywords in title or description AND desc < 120 chars → spam
+    3. Long desc without civic keywords checked for meta/test commentary → spam
+    4. Has civic keywords but description is meta-commentary (e.g., "this is a test") → spam
+
+  This prevents obvious spam without consuming Gemini API quota. Complex regex with
+  ~300 keywords across roads, water, electricity, waste, lighting, parks, buildings,
+  trees, animals, emergency, and general civic services.
+
+================================================================================
+15. RECOMMENDED ACTIONS (PRIORITY ORDER)
+================================================================================
+
+  P1  Add authorization (Policies + Spatie middleware) to all CRUD controllers
+  P2  Revoke and rotate exposed API keys + database passwords
+  P3  Add server-side pagination to complaint listing (->paginate(25))
+  P4  Implement queue job for async AI analysis (prevent 60s HTTP block)
+  P5  Add caching for department/category reference data (Cache::remember)
+  P6  Add database indexes on status, priority, created_at, due_at, citizen_id
+  P7  Switch to redis for cache/session/queue in production
+  P8  Add rate limiting on complaint submission (throttle:5,1)
+  P9  Fix blob URL memory leak in Create.vue (revokeObjectURL)
+  P10 Add onUnmounted cleanup for all flash timers
+  P11 Add :disabled="form.processing" to all auth submit buttons
+  P12 Sanitize user input before AI prompt injection
+  P13 Lazy-load Chart.js or split vendor chunks in Vite config
+  P14 Combine dashboard COUNT queries into single SELECT
+  P15 Implement complaint feedback UI (complaint_feedback table)
+  P16 Fix MIME type mapping for GIF images
+  P17 Add ->withoutOverlapping() to console scheduler commands
 
 ================================================================================

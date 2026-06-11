@@ -119,6 +119,24 @@ function submitForm() {
                     </p>
                 </div>
 
+                <!-- Spam detected banner -->
+                <div
+                    v-if="form.errors.spam"
+                    class="bg-red-50 border border-red-300 rounded-xl px-4 py-4 flex items-start gap-3"
+                >
+                    <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-shield-alt text-red-600 text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-red-800">Spam Detected by CiviSense AI</p>
+                        <p class="text-sm text-red-700 mt-0.5">{{ form.errors.spam }}</p>
+                        <p class="text-xs text-red-500 mt-1.5">
+                            Please review your title and description to ensure it describes a real civic issue.
+                            <template v-if="attachments.length"> Make sure the attached photos match the problem you described.</template>
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Form Card -->
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-lg">
                     <div class="px-6 py-6 sm:px-8">

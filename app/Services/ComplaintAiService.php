@@ -20,11 +20,19 @@ class ComplaintAiService
         array $categories = [],
     ): array {
         $deptList = collect($departments)->pluck('name')->values()->toArray();
-        $catList = collect($categories)->pluck('name')->values()->toArray();
+        $catList  = collect($categories)->pluck('name')->values()->toArray();
 
         $schema = new Schema(
             type: DataType::OBJECT,
             properties: [
+                'is_spam' => new Schema(
+                    type: DataType::BOOLEAN,
+                    description: 'true if this is spam or not a genuine civic complaint.',
+                ),
+                'spam_reason' => new Schema(
+                    type: DataType::STRING,
+                    description: 'Short reason why it is spam. Empty string if not spam.',
+                ),
                 'department_name' => new Schema(
                     type: DataType::STRING,
                     enum: $deptList,
@@ -43,40 +51,41 @@ class ComplaintAiService
                     type: DataType::STRING,
                     description: 'A clean, technical summary under 200 characters. Absolutely no HTML tags.',
                 ),
-                'is_spam' => new Schema(
-                    type: DataType::BOOLEAN,
-                    description: 'true if this complaint is spam, fake, irrelevant, or if any attached image does not match the described civic issue (e.g. screenshot, meme, unrelated photo). false if the complaint and images appear genuine.',
-                ),
-                'spam_reason' => new Schema(
-                    type: DataType::STRING,
-                    description: 'If is_spam is true, a short explanation of why (e.g. "Attached image is a software screenshot unrelated to the reported civic issue"). Empty string if not spam.',
-                ),
             ],
-            required: ['department_name', 'category_name', 'priority', 'summary', 'is_spam', 'spam_reason'],
+            required: ['is_spam', 'spam_reason', 'department_name', 'category_name', 'priority', 'summary'],
         );
 
-        $prompt = "You are the CiviSense AI municipal triage engine.\n";
-        $prompt .= "Analyze this citizen complaint data and assign it to the correct department and category.\n\n";
-        $prompt .= "SPAM DETECTION — set is_spam=true if ANY of the following apply:\n";
-        $prompt .= "  - The title or description is clearly fake, nonsensical, or a test submission.\n";
-        $prompt .= "  - An attached image does not match the described civic issue (e.g. a dashboard screenshot, meme, selfie, or any image unrelated to roads, infrastructure, sanitation, utilities, or public property).\n";
-        $prompt .= "  - The complaint is abusive, promotional, or entirely off-topic for a municipal grievance system.\n";
-        $prompt .= "If is_spam=true, still fill in department_name, category_name, priority (use 'low'), and summary, but set spam_reason.\n\n";
+        $hasImages = collect($attachmentPaths)->filter(fn($p) => $p && file_exists($p))->isNotEmpty();
+
+        $prompt  = "You are the CiviSense AI municipal triage engine.\n\n";
+
+        $prompt .= "STEP 1 — SPAM CHECK: Set is_spam=true if ANY apply:\n";
+        $prompt .= "  • Title is greetings, filler, or test words only (hello, hi, test, check, asdf, abc, etc.)\n";
+        $prompt .= "  • Title and description together do NOT describe a real civic/municipal problem\n";
+        $prompt .= "  • Description is meta-commentary (e.g. 'this is a test', 'checking if this works', 'why did this pass spam')\n";
+        $prompt .= "  • Description is gibberish, random text, personal message, or promotional content\n";
+        if ($hasImages) {
+            $prompt .= "  • Attached image does NOT show a real civic problem, or does not match what is described\n";
+        }
+        $prompt .= "Real civic problems: roads, potholes, water supply, electricity, garbage, sewage, streetlights, flooding, public property damage, etc.\n";
+        $prompt .= "If is_spam=true, set spam_reason to a short explanation. Still fill the other fields (use 'low' for priority).\n\n";
+
+        $prompt .= "STEP 2 — TRIAGE (only if not spam): Assign to the correct department and category.\n";
         $prompt .= "Available departments: " . implode(', ', $deptList) . "\n";
         $prompt .= "Available categories: " . implode(', ', $catList) . "\n\n";
+
         $prompt .= "Title: {$title}\n";
-        $prompt .= "Description: {$description}\n\n";
-        $prompt .= "Carefully examine any attached images. Verify they actually show a real civic problem matching the title/description.";
+        $prompt .= "Description: {$description}";
 
         $arguments = [$prompt];
 
         foreach (array_slice($attachmentPaths, 0, 3) as $path) {
             if ($path && file_exists($path)) {
                 $mime = match (mime_content_type($path)) {
-                    'image/png' => MimeType::IMAGE_PNG,
+                    'image/png'  => MimeType::IMAGE_PNG,
                     'image/webp' => MimeType::IMAGE_WEBP,
-                    'image/gif' => MimeType::IMAGE_PNG,
-                    default => MimeType::IMAGE_JPEG,
+                    'image/gif'  => MimeType::IMAGE_PNG,
+                    default      => MimeType::IMAGE_JPEG,
                 };
                 $arguments[] = new Blob(
                     mimeType: $mime,
@@ -85,13 +94,11 @@ class ComplaintAiService
             }
         }
 
-        $response = Gemini::generativeModel(model: 'gemini-2.5-pro')
-            ->withGenerationConfig(
-                new GenerationConfig(
-                    responseMimeType: ResponseMimeType::APPLICATION_JSON,
-                    responseSchema: $schema,
-                ),
-            )
+        $response = Gemini::generativeModel(model: 'gemini-2.0-flash')
+            ->withGenerationConfig(new GenerationConfig(
+                responseMimeType: ResponseMimeType::APPLICATION_JSON,
+                responseSchema: $schema,
+            ))
             ->generateContent(...$arguments);
 
         return json_decode($response->text(), true);

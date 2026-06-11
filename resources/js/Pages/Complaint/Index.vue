@@ -506,8 +506,6 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                   </span>
                 </th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Citizen</th>
-                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Assignee</th>
-                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Images</th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Category</th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Dept</th>
                 <th
@@ -566,32 +564,6 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                   <span class="text-sm text-gray-600">{{ item.citizen?.name || '—' }}</span>
                 </td>
                 <td class="px-5 py-4 hidden lg:table-cell">
-                  <span v-if="item.assignee" class="inline-flex items-center gap-1.5 text-sm text-gray-600">
-                    <i class="fas fa-user-check text-indigo-400 text-xs"></i>
-                    {{ item.assignee.name }}
-                  </span>
-                  <span v-else class="text-sm text-gray-300">—</span>
-                </td>
-                <td class="px-5 py-4">
-                  <div v-if="item.attachments?.length" class="flex -space-x-2">
-                    <img
-                      v-for="(att, idx) in item.attachments.slice(0, 3)"
-                      :key="idx"
-                      :src="att.url ?? '/storage/' + att.file_path"
-                      :alt="att.file_name"
-                      class="w-8 h-8 rounded-lg border-2 border-white object-cover shadow-sm"
-                      :title="att.file_name"
-                    />
-                    <span
-                      v-if="item.attachments.length > 3"
-                      class="w-8 h-8 rounded-lg border-2 border-white bg-gray-100 text-xs text-gray-500 flex items-center justify-center font-medium shadow-sm"
-                    >
-                      +{{ item.attachments.length - 3 }}
-                    </span>
-                  </div>
-                  <span v-else class="text-sm text-gray-300">—</span>
-                </td>
-                <td class="px-5 py-4 hidden lg:table-cell">
                   <span class="text-sm text-gray-500">{{ item.category?.name || '—' }}</span>
                 </td>
                 <td class="px-5 py-4 hidden lg:table-cell">
@@ -622,6 +594,13 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                 </td>
                 <td class="px-5 py-4 text-right">
                   <div class="flex items-center justify-end gap-1">
+                    <Link
+                      :href="route('complaints.show', item.id)"
+                      class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-150"
+                      title="View complaint"
+                    >
+                      <i class="fas fa-eye text-sm"></i>
+                    </Link>
                     <button
                       @click="openEditModal(item)"
                       class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-150"
@@ -661,6 +640,9 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                 </div>
               </div>
               <div class="flex items-center gap-1 flex-shrink-0">
+                <Link :href="route('complaints.show', item.id)" class="p-2 text-gray-400 hover:text-indigo-600 rounded-lg transition-colors" title="View">
+                  <i class="fas fa-eye text-sm"></i>
+                </Link>
                 <button @click="openEditModal(item)" class="p-2 text-gray-400 hover:text-indigo-600 rounded-lg transition-colors" title="Edit">
                   <i class="fas fa-edit text-sm"></i>
                 </button>
@@ -683,21 +665,6 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
                 {{ item.priority }}
               </span>
               <span class="text-xs text-gray-400">{{ item.citizen?.name || '—' }}</span>
-            </div>
-            <div v-if="item.attachments?.length" class="mt-2 ml-11 flex gap-1.5">
-              <img
-                v-for="(att, idx) in item.attachments.slice(0, 4)"
-                :key="idx"
-                :src="att.url ?? '/storage/' + att.file_path"
-                :alt="att.file_name"
-                class="w-10 h-10 rounded-lg border border-gray-200 object-cover"
-              />
-              <span
-                v-if="item.attachments.length > 4"
-                class="w-10 h-10 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-400 flex items-center justify-center font-medium"
-              >
-                +{{ item.attachments.length - 4 }}
-              </span>
             </div>
             <p class="text-xs text-gray-400 mt-1.5 ml-11 truncate">{{ item.category?.name || 'No category' }}</p>
           </div>

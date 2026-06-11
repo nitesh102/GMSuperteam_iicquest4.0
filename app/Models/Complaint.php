@@ -30,6 +30,8 @@ class Complaint extends Model
         'is_spam',
         'resolved_at',
         'resolution_notes',
+        'due_at',
+        'escalation_level',
         'created_by',
         'updated_by',
     ];
@@ -37,10 +39,12 @@ class Complaint extends Model
     protected function casts(): array
     {
         return [
-            'is_spam' => 'boolean',
-            'latitude' => 'decimal:7',
-            'longitude' => 'decimal:7',
-            'resolved_at' => 'datetime',
+            'is_spam'          => 'boolean',
+            'latitude'         => 'decimal:7',
+            'longitude'        => 'decimal:7',
+            'resolved_at'      => 'datetime',
+            'due_at'           => 'datetime',
+            'escalation_level' => 'integer',
         ];
     }
 
