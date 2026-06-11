@@ -342,10 +342,6 @@ EXECUTIVE SUMMARY
 
 4.2  CRITICAL: API Keys and Credentials Exposed in Committed .env
 
-  File: .env (committed to repository — confirmed present)
-  Exposed secrets:
-    DB_PASSWORD=Dbuser@123
-    APP_DEBUG=true
 
   Severity: CRITICAL
   Recommended Actions:
