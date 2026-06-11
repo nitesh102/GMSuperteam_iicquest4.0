@@ -79,9 +79,9 @@ const { t } = useI18n();
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <section class="relative flex h-full w-[45%] flex-col justify-center overflow-hidden bg-white px-8 py-8 lg:px-12">
+            <div class="relative flex h-full w-[45%] flex-col justify-center overflow-hidden bg-white px-8 py-8 lg:px-12">
                 <div class="flex h-full items-center justify-center">
                 <div class="mx-auto flex w-full max-w-md flex-col justify-center">
                     <div class="text-center">
@@ -158,7 +158,9 @@ const { t } = useI18n();
                     </footer>
                 </div>
                 </div>
-            </section>
+                </div>
+            </div>
+            </div>
         </div>
-    </main>
+    </div>
 </template>

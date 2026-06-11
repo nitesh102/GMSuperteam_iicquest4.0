@@ -106,20 +106,20 @@ useVoicePageHandlers({
         </Teleport>
 
         <div class="mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-semibold text-gray-900">{{ t('category.title') }}</h1>
-                    <p class="mt-1 text-sm text-gray-500">{{ t('category.subtitle') }}</p>
-                </div>
-                <button
-                    @click="openCreateModal"
-                    class="inline-flex items-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md"
-                >
-                    <PlusIcon class="h-5 w-5" />
-                    {{ t('category.newCategory') }}
-                </button>
-            </template>
-        </PageHeader>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-semibold text-gray-900">{{ t('category.title') }}</h1>
+                <p class="mt-1 text-sm text-gray-500">{{ t('category.subtitle') }}</p>
+            </div>
+            <button
+                @click="openCreateModal"
+                class="inline-flex items-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md"
+            >
+                <PlusIcon class="h-5 w-5" />
+                {{ t('category.newCategory') }}
+            </button>
+        </div>
+        </div>
 
         <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
             <div class="flex items-center justify-between">

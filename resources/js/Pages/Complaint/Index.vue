@@ -346,8 +346,7 @@ useVoicePageHandlers({
           <i class="fas fa-plus text-xs"></i>
           {{ t('complaint.newComplaint') }}
         </Link>
-        </template>
-      </PageHeader>
+      </div>
 
       <!-- SKELETON LOADING -->
       <div v-if="loading" class="space-y-4">
@@ -779,7 +778,7 @@ useVoicePageHandlers({
         </div>
       </div>
     </div>
-  </AdminLayout>
+  </AuthenticatedLayout>
 
   <!-- EDIT MODAL -->
   <ComplaintModal
