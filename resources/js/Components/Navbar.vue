@@ -1,5 +1,6 @@
 <template>
-    <nav class="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white text-gray-900 px-6 fixed top-0 left-0 right-0 z-50">
+    <nav class="flex h-20 shrink-0 items-center justify-between border-b border-gray-200 bg-white text-gray-900 px-8 fixed top-0 right-0 z-50 transition-all duration-300 ease-in-out"
+        :style="{ left: sidebarWidth + 'px' }"
         <!-- Left side -->
         <div class="flex items-center gap-4">
             <!-- Mobile Menu Toggle -->
@@ -10,24 +11,6 @@
                 <i :class="mobileSidebarOpen ? 'fas fa-times' : 'fas fa-bars'"></i>
             </button>
 
-            <!-- Desktop Sidebar Toggle -->
-            <button
-                @click="toggleDesktopSidebar"
-                class="hidden lg:flex size-10 items-center justify-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-            >
-                <i :class="sidebarCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
-            </button>
-
-            <!-- Brand -->
-            <div class="hidden md:flex items-center gap-3">
-                <div class="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary">
-                    <i class="fas fa-store"></i>
-                </div>
-                <h2 class="text-lg font-bold leading-tight tracking-tight text-gray-900">
-                   CiviSense
-                </h2>
-            </div>
         </div>
 
         <!-- Search (Desktop only) -->
@@ -207,6 +190,7 @@ const { t } = useI18n()
 const emit = defineEmits(['toggle-sidebar'])
 
 const props = defineProps({
+    sidebarWidth: { type: Number, default: 0 },
     sidebarCollapsed: Boolean,
     mobileSidebarOpen: Boolean
 })
@@ -243,7 +227,6 @@ const notifications = ref([])
 const unreadNotifications = computed(() => notifications.value.filter(n => !n.read).length)
 
 const toggleMobileSidebar = () => emit('toggle-sidebar')
-const toggleDesktopSidebar = () => emit('toggle-sidebar')
 
 const toggleUserMenu = () => {
     userMenuOpen.value = !userMenuOpen.value

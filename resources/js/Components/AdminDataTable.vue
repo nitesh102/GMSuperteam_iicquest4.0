@@ -37,7 +37,6 @@ const filteredRows = computed(() => {
     filtered.sort((a, b) => {
       const aVal = a[sortField.value]
       const bVal = b[sortField.value]
-
       if (aVal === bVal) return 0
       const comparison = aVal < bVal ? -1 : 1
       return sortOrder.value === 'asc' ? comparison : -comparison
@@ -49,13 +48,12 @@ const filteredRows = computed(() => {
 
 const paginatedRows = computed(() => {
   const start = (currentPage.value - 1) * props.pageSize
-  const end = start + props.pageSize
-  return filteredRows.value.slice(start, end)
+  return filteredRows.value.slice(start, start + props.pageSize)
 })
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredRows.value.length / props.pageSize)
-})
+const totalPages = computed(() =>
+  Math.ceil(filteredRows.value.length / props.pageSize)
+)
 
 const toggleSort = (field) => {
   if (sortField.value === field) {
@@ -74,59 +72,70 @@ const getSortIcon = (field) => {
 </script>
 
 <template>
-  <div class="rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden">
-    <!-- Search -->
+  <div class="card overflow-hidden">
     <slot name="header">
-      <div class="p-6 border-b border-gray-200">
-        <input
-          v-model="searchQuery"
-          type="text"
-          :placeholder="t('table.search')"
-          class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 px-4 text-sm placeholder-gray-400 focus:border-red-500 focus:bg-white focus:outline-none"
-        />
+      <div class="p-5 border-b border-gray-100">
+        <div class="relative">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="t('table.search')"
+            class="input-base pl-10"
+          />
+        </div>
       </div>
     </slot>
 
-    <!-- Table -->
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-200">
+        <thead class="sticky top-0 z-10 bg-gray-50">
           <tr>
             <th
               v-for="column in columns"
               :key="column.key"
-              class="px-6 py-4 text-left font-semibold text-gray-900"
+              class="px-5 py-3.5 text-left font-semibold text-gray-700 text-xs uppercase tracking-wider"
             >
               <button
                 v-if="column.sortable !== false"
                 @click="toggleSort(column.key)"
-                class="flex items-center gap-2 hover:text-gray-600 transition"
+                class="flex items-center gap-1.5 hover:text-gray-900 transition-colors duration-150"
               >
                 {{ column.label }}
-                <component :is="getSortIcon(column.key)" class="h-4 w-4" />
+                <component :is="getSortIcon(column.key)" class="h-3.5 w-3.5 text-gray-300" />
               </button>
-              <span v-else>{{ column.label }}</span>
+              <span v-else class="text-gray-500">{{ column.label }}</span>
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-gray-50">
           <tr v-if="paginatedRows.length === 0">
-            <td :colspan="columns.length" class="px-6 py-10 text-center text-sm text-gray-500">
-              {{ t('table.noData') }}
+            <td :colspan="columns.length">
+              <div class="flex flex-col items-center justify-center py-16 px-6">
+                <div class="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
+                  <svg class="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                </div>
+                <p class="text-sm font-medium text-gray-900">{{ t('table.noData') }}</p>
+                <p class="text-xs text-gray-500 mt-1">Try adjusting your search or filters.</p>
+              </div>
             </td>
           </tr>
           <tr
             v-for="(row, index) in paginatedRows"
             :key="index"
-            class="border-b border-gray-200 hover:bg-gray-50 transition"
+            class="transition-all duration-150 hover:bg-gray-50"
           >
             <td
               v-for="column in columns"
               :key="column.key"
-              class="px-6 py-4"
+              class="px-5 py-3.5"
             >
               <slot :name="`cell-${column.key}`" :row="row" :value="row[column.key]">
-                {{ row[column.key] }}
+                <span class="text-gray-700">{{ row[column.key] }}</span>
               </slot>
             </td>
           </tr>
@@ -134,8 +143,7 @@ const getSortIcon = (field) => {
       </table>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="totalPages > 1" class="px-6 py-4 border-t border-gray-200">
+    <div v-if="totalPages > 1" class="px-5 py-3.5 border-t border-gray-100">
       <AdminPagination
         :current-page="currentPage"
         :total-pages="totalPages"

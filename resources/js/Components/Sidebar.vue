@@ -2,17 +2,15 @@
     <transition name="slide">
         <aside
             v-if="isMobile && mobileOpen"
-            class="fixed left-0 top-16 z-50 bg-white text-gray-900 w-64 flex flex-col border-r border-gray-200 lg:hidden shadow-xl"
-            style="height: calc(100vh - 4rem); overflow-y: auto;"
+            class="fixed left-0 top-16 z-50 flex h-screen w-[300px] flex-col border-r border-gray-200 bg-white text-gray-900 shadow-xl lg:hidden"
         >
             <SidebarContent :collapsed="false" :is-mobile="true" @close="$emit('close-mobile')" />
         </aside>
     </transition>
 
     <aside
-        class="hidden lg:flex flex-col border-r border-gray-200 bg-white text-gray-900 fixed left-0 top-16 z-40 transition-all duration-300 ease-in-out"
-        :class="collapsed ? 'w-16' : 'w-64'"
-        style="height: calc(100vh - 4rem); overflow-y: auto;"
+        class="fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-gray-200 bg-white text-gray-900 transition-all duration-300 ease-in-out lg:flex"
+        :class="collapsed ? 'w-[80px]' : 'w-[300px]'"
     >
         <SidebarContent :collapsed="collapsed" :is-mobile="false" @toggle="$emit('toggle')" />
     </aside>

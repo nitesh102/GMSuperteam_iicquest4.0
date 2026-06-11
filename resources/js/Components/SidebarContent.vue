@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
+import AppLogo from '@/Components/common/AppLogo.vue'
 
 const { t } = useI18n()
 
@@ -15,121 +16,106 @@ const page  = usePage()
 const roles = computed(() => page.props.auth?.roles ?? [])
 const isCitizen = computed(() => roles.value.includes('Citizen'))
 
-/* ── Active path helper ── */
 const currentPath = computed(() =>
     (page.url || (typeof window !== 'undefined' ? window.location.pathname : '/')).split('?')[0]
 )
 
-const isActive    = (path) => currentPath.value === path || currentPath.value.startsWith(path + '/')
+const isActive = (path) => currentPath.value === path || currentPath.value.startsWith(path + '/')
 
-/* ── Close mobile drawer on link click ── */
 const onLink = () => { if (props.isMobile) emit('close') }
 
-/* ── Nav item classes ── */
 const linkClass = (path) => [
-    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 no-underline',
+    'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 no-underline group overflow-hidden',
     isActive(path)
         ? 'bg-indigo-50 text-indigo-700 font-medium'
-        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
+        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
 ]
 </script>
 
 <template>
-    <!-- Mobile: close button -->
-    <div v-if="isMobile" class="flex items-center justify-between px-4 pt-3 pb-1 lg:hidden">
-        <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">{{ t('nav.menu') }}</span>
-        <button
-            @click="emit('close')"
-            class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200"
+    <div
+        class="flex min-h-0 flex-1 flex-col"
+        :class="{ 'sidebar-collapsed': collapsed }"
+    >
+        <div
+            class="flex h-20 shrink-0 items-center border-b border-gray-100"
+            :class="collapsed ? 'justify-center px-2' : 'justify-center px-6'"
         >
-            <i class="fas fa-times text-xs"></i>
-        </button>
-    </div>
+            <AppLogo />
+        </div>
 
-    <nav class="flex-1 overflow-y-auto overflow-x-hidden py-2 px-3">
-        <ul class="space-y-0.5">
-            <li v-if="!collapsed" class="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                {{ t('nav.main') }}
-            </li>
+        <nav class="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2">
+            <ul class="space-y-0.5">
+                <li v-if="!collapsed" class="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                    {{ t('nav.main') }}
+                </li>
 
-            <!-- Citizen Dashboard -->
-            <li v-if="isCitizen">
-                <a :href="route('citizen.dashboard')" :class="linkClass('/citizen/dashboard')" @click="onLink">
-                    <i class="fas fa-home icon" :class="isActive('/citizen/dashboard') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">Dashboard</span>
-                </a>
-            </li>
+                <li>
+                    <a :href="route('dashboard')" :class="linkClass('/dashboard')" @click="onLink">
+                        <span class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full transition-all duration-200"
+                            :class="isActive('/dashboard') ? 'bg-indigo-600' : 'bg-transparent'"></span>
+                        <i class="fas fa-home w-5 text-center transition-colors duration-200"
+                            :class="isActive('/dashboard') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500'"></i>
+                        <span v-if="!collapsed">{{ t('nav.dashboard') }}</span>
+                    </a>
+                </li>
 
-            <!-- Admin Dashboard -->
-            <li v-else>
-                <a :href="route('dashboard')" :class="linkClass('/dashboard')" @click="onLink">
-                    <i class="fas fa-home icon" :class="isActive('/dashboard') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">{{ t('nav.dashboard') }}</span>
-                </a>
-            </li>
-
-            <!-- Citizen Complaints -->
-            <li v-if="isCitizen">
-                <a :href="route('citizen.complaints.index')" :class="linkClass('/citizen/complaints')" @click="onLink">
-                    <i class="fas fa-flag icon" :class="isActive('/citizen/complaints') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">My Complaints</span>
-                </a>
-            </li>
-
-            <!-- Admin Management section -->
-            <template v-if="!isCitizen">
-                <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
                     {{ t('nav.management') }}
                 </li>
-                <li v-else class="my-2 border-t border-gray-100 mx-1" />
+                <li v-else class="my-2 border-t border-gray-100 mx-2" />
 
                 <li>
                     <a :href="route('departments.index')" :class="linkClass('/departments')" @click="onLink">
-                        <i class="fas fa-building icon" :class="isActive('/departments') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                        <span class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full transition-all duration-200"
+                            :class="isActive('/departments') ? 'bg-indigo-600' : 'bg-transparent'"></span>
+                        <i class="fas fa-building w-5 text-center transition-colors duration-200"
+                            :class="isActive('/departments') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500'"></i>
                         <span v-if="!collapsed">{{ t('nav.departments') }}</span>
                     </a>
                 </li>
 
                 <li>
                     <a :href="route('complaint-categories.index')" :class="linkClass('/complaint-categories')" @click="onLink">
-                        <i class="fas fa-tags icon" :class="isActive('/complaint-categories') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                        <span class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full transition-all duration-200"
+                            :class="isActive('/complaint-categories') ? 'bg-indigo-600' : 'bg-transparent'"></span>
+                        <i class="fas fa-tags w-5 text-center transition-colors duration-200"
+                            :class="isActive('/complaint-categories') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500'"></i>
                         <span v-if="!collapsed">{{ t('nav.categories') }}</span>
                     </a>
                 </li>
 
                 <li>
                     <a :href="route('complaints.index')" :class="linkClass('/complaints')" @click="onLink">
-                        <i class="fas fa-flag icon" :class="isActive('/complaints') ? 'text-indigo-600' : 'text-gray-400'"></i>
+                        <span class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full transition-all duration-200"
+                            :class="isActive('/complaints') ? 'bg-indigo-600' : 'bg-transparent'"></span>
+                        <i class="fas fa-flag w-5 text-center transition-colors duration-200"
+                            :class="isActive('/complaints') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500'"></i>
                         <span v-if="!collapsed">{{ t('nav.complaints') }}</span>
                     </a>
                 </li>
-            </template>
 
-            <!-- Profile -->
-            <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                {{ t('nav.account') }}
-            </li>
-            <li v-else class="my-2 border-t border-gray-100 mx-1" />
+                <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                    {{ t('nav.account') }}
+                </li>
+                <li v-else class="my-2 border-t border-gray-100 mx-2" />
 
-            <li>
-                <a :href="route('profile.edit')" :class="linkClass('/profile')" @click="onLink">
-                    <i class="fas fa-user icon" :class="isActive('/profile') ? 'text-indigo-600' : 'text-gray-400'"></i>
-                    <span v-if="!collapsed">{{ t('nav.profile') }}</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+                <li>
+                    <a :href="route('profile.edit')" :class="linkClass('/profile')" @click="onLink">
+                        <span class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full transition-all duration-200"
+                            :class="isActive('/profile') ? 'bg-indigo-600' : 'bg-transparent'"></span>
+                        <i class="fas fa-user w-5 text-center transition-colors duration-200"
+                            :class="isActive('/profile') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500'"></i>
+                        <span v-if="!collapsed">{{ t('nav.profile') }}</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
 </template>
 
 <style scoped>
-.icon          { inline-size: 18px; font-size: 16px; text-align: center; flex-shrink: 0; }
-.submenu-icon  { inline-size: 14px; font-size: 13px; text-align: center; flex-shrink: 0; }
-.submenu       { margin-inline-start: 2rem; padding-inline-start: 0.75rem; border-inline-start: 2px solid #e5e7eb; }
-
-.slide-enter-active,
-.slide-leave-active { transition: all 0.2s ease; overflow: hidden; }
-.slide-enter-from,
-.slide-leave-to     { opacity: 0; max-block-size: 0; }
-.slide-enter-to,
-.slide-leave-from   { opacity: 1; max-block-size: 300px; }
+.sidebar-collapsed :deep(.brand-text) {
+    display: none;
+}
 </style>

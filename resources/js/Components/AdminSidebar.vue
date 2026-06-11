@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
+import AppLogo from '@/Components/common/AppLogo.vue'
 import {
   HomeIcon,
   BuildingOffice2Icon,
@@ -38,7 +39,7 @@ const isActive = (href) => {
   <!-- Desktop Sidebar -->
   <aside class="hidden lg:fixed lg:left-0 lg:top-0 lg:flex lg:h-screen lg:w-60 lg:flex-col lg:bg-white lg:border-r lg:border-gray-200 lg:z-40">
     <div class="flex h-20 items-center justify-center border-b border-gray-200">
-      <span class="text-2xl font-bold text-red-500">CiviSense</span>
+      <AppLogo />
     </div>
 
     <nav class="flex-1 space-y-1 px-4 py-6">
@@ -75,7 +76,7 @@ const isActive = (href) => {
     class="fixed inset-y-0 left-0 z-40 w-60 bg-white border-r border-gray-200 lg:hidden flex flex-col"
   >
     <div class="flex h-20 items-center justify-center border-b border-gray-200">
-      <span class="text-2xl font-bold text-red-500">CiviSense</span>
+      <AppLogo />
     </div>
 
     <nav class="flex-1 space-y-1 px-4 py-6">

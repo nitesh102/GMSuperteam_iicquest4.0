@@ -13,9 +13,8 @@ const mobileSidebarOpen = ref(false)
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
 const isMobile    = computed(() => windowWidth.value < 1024)
 
-const SIDEBAR_EXPANDED  = 256
-const SIDEBAR_COLLAPSED = 64
-const NAVBAR_HEIGHT     = 64
+const SIDEBAR_EXPANDED  = 300
+const SIDEBAR_COLLAPSED = 80
 
 const sidebarWidth = computed(() => {
     if (isMobile.value) return 0
@@ -70,6 +69,7 @@ onUnmounted(() => {
     <div class="min-h-screen bg-gray-50">
 
         <Navbar
+            :sidebar-width="sidebarWidth"
             :sidebar-collapsed="sidebarCollapsed"
             :mobile-sidebar-open="mobileSidebarOpen"
             @toggle-sidebar="toggleSidebar"
@@ -92,9 +92,8 @@ onUnmounted(() => {
         </Transition>
 
         <div
-            class="flex min-h-screen flex-col transition-all duration-300 ease-in-out"
+            class="flex min-h-screen flex-col pt-20 transition-all duration-300 ease-in-out"
             :style="{
-                paddingBlockStart:  NAVBAR_HEIGHT + 'px',
                 paddingInlineStart: sidebarWidth + 'px',
             }"
         >
