@@ -21,7 +21,12 @@
 
             <!-- Brand -->
             <div class="hidden md:flex items-center gap-3">
-                <AppLogo class="navbar-logo" />
+                <div class="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary">
+                    <i class="fas fa-store"></i>
+                </div>
+                <h2 class="text-lg font-bold leading-tight tracking-tight text-gray-900">
+                   CiviSense
+                </h2>
             </div>
         </div>
 
@@ -36,7 +41,7 @@
                     v-model="searchQuery"
                     @input="handleSearch"
                     type="search"
-                    placeholder="Search..."
+                    :placeholder="t('nav.search')"
                     class="block w-full pl-10 pr-10 py-2.5 border-none bg-gray-100 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 />
 
@@ -53,6 +58,8 @@
 
         <!-- Right side -->
         <div class="flex items-center gap-3">
+            <LanguageSwitcher />
+
             <!-- Notifications / Help (Desktop only) -->
             <div class="hidden md:flex gap-2">
                 <div class="relative">
@@ -76,9 +83,9 @@
                         >
                             <div class="p-4 border-b border-gray-200">
                                 <div class="flex justify-between items-center">
-                                    <h3 class="font-semibold text-gray-900">Notifications</h3>
+                                    <h3 class="font-semibold text-gray-900">{{ t('nav.notifications') }}</h3>
                                     <button @click="markAllAsRead" class="text-sm text-primary font-medium">
-                                        Mark all as read
+                                        {{ t('nav.markAllRead') }}
                                     </button>
                                 </div>
                             </div>
@@ -95,13 +102,13 @@
 
                                 <div v-if="notifications.length === 0" class="p-8 text-center">
                                     <i class="fas fa-bell-slash text-3xl text-gray-300 mb-3"></i>
-                                    <p class="text-gray-500">No notifications yet</p>
+                                    <p class="text-gray-500">{{ t('nav.noNotifications') }}</p>
                                 </div>
                             </div>
 
                             <div class="p-3 border-t border-gray-200 text-center">
                                 <a href="/notifications" class="text-sm text-primary font-medium">
-                                    View all notifications
+                                    {{ t('nav.viewAllNotifications') }}
                                 </a>
                             </div>
                         </div>
@@ -158,7 +165,7 @@
                                 @click="closeUserMenu"
                             >
                                 <i class="fas fa-user text-gray-400 w-5"></i>
-                                <span>Profile</span>
+                                <span>{{ t('nav.profile') }}</span>
                             </a>
 
                             <a
@@ -167,7 +174,7 @@
                                 @click="closeUserMenu"
                             >
                                 <i class="fas fa-cog text-gray-400 w-5"></i>
-                                <span>Settings</span>
+                                <span>{{ t('nav.settings') }}</span>
                             </a>
 
                             <hr class="my-1 border-gray-200" />
@@ -178,7 +185,7 @@
                                     class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50"
                                 >
                                     <i class="fas fa-sign-out-alt w-5"></i>
-                                    <span>Log Out</span>
+                                    <span>{{ t('nav.logout') }}</span>
                                 </button>
                             </form>
                         </div>
@@ -192,7 +199,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
-import AppLogo from '@/Components/common/AppLogo.vue'
+import { useI18n } from 'vue-i18n'
+import LanguageSwitcher from '@/Components/LanguageSwitcher.vue'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['toggle-sidebar'])
 
@@ -296,12 +306,4 @@ onUnmounted(() => {
 .slide-down-leave-active { transition: all 0.2s ease-out; }
 .slide-down-enter-from,
 .slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
-
-.navbar-logo :deep(.logo-image) {
-    height: 32px;
-}
-
-.navbar-logo :deep(.brand-text) {
-    font-size: 20px;
-}
 </style>

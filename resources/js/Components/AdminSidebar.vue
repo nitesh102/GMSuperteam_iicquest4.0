@@ -1,6 +1,6 @@
 <script setup>
 import { Link } from '@inertiajs/vue3'
-import AppLogo from '@/Components/common/AppLogo.vue'
+import { useI18n } from 'vue-i18n'
 import {
   HomeIcon,
   BuildingOffice2Icon,
@@ -16,28 +16,16 @@ defineProps({
 
 defineEmits(['closeMobile'])
 
-const sections = [
-  {
-    title: 'Main',
-    items: [
-      { name: 'Dashboard', href: route('dashboard'), icon: HomeIcon },
-      { name: 'Complaints', href: route('complaints.index'), icon: ClipboardDocumentListIcon },
-    ],
-  },
-  {
-    title: 'Management',
-    items: [
-      { name: 'Departments', href: route('departments.index'), icon: BuildingOffice2Icon },
-      { name: 'Categories', href: route('complaint-categories.index'), icon: ListBulletIcon },
-    ],
-  },
-  {
-    title: 'Account',
-    items: [
-      { name: 'Profile', href: route('profile.edit'), icon: UserCircleIcon },
-    ],
-  },
-]
+const { t } = useI18n()
+const page = usePage()
+
+const menuItems = computed(() => [
+  { name: t('nav.dashboard'), href: route('dashboard'), icon: HomeIcon },
+  { name: t('nav.departments'), href: route('departments.index'), icon: BuildingOffice2Icon },
+  { name: t('nav.categories'), href: route('complaint-categories.index'), icon: ListBulletIcon },
+  { name: t('nav.complaints'), href: route('complaints.index'), icon: ClipboardDocumentListIcon },
+  { name: t('nav.profile'), href: route('profile.edit'), icon: UserCircleIcon },
+])
 
 const isActive = (href) => {
   const target = new URL(href, window.location.origin).pathname
@@ -47,99 +35,76 @@ const isActive = (href) => {
 
 <template>
   <!-- Desktop Sidebar -->
-  <aside class="hidden lg:fixed lg:left-0 lg:top-0 lg:z-50 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-gray-200/80 lg:bg-white/95 lg:shadow-[10px_0_30px_rgba(15,23,42,0.03)] lg:backdrop-blur-xl">
-    <!-- Logo -->
-    <div class="flex h-20 items-center px-6">
-      <AppLogo class="sidebar-logo" />
+  <aside class="hidden lg:fixed lg:left-0 lg:top-0 lg:flex lg:h-screen lg:w-60 lg:flex-col lg:bg-white lg:border-r lg:border-gray-200 lg:z-40">
+    <div class="flex h-20 items-center justify-center border-b border-gray-200">
+      <span class="text-2xl font-bold text-red-500">CiviSense</span>
     </div>
 
-    <!-- Menu Items -->
-    <nav class="flex-1 space-y-8 px-4 py-4">
-      <div v-for="section in sections" :key="section.title">
-        <p class="mb-3 px-3 text-xs font-bold uppercase tracking-widest text-gray-400">
-          {{ section.title }}
-        </p>
-        <div class="space-y-1">
-          <Link
-            v-for="item in section.items"
-            :key="item.name"
-            :href="item.href"
-            class="group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-200 hover:translate-x-1 hover:bg-gray-50"
-            :class="isActive(item.href)
-              ? 'bg-indigo-50 font-semibold text-indigo-600 shadow-sm'
-              : 'font-medium text-gray-600 hover:text-gray-900'"
-          >
-            <span
-              v-if="isActive(item.href)"
-              class="absolute left-0 h-8 w-1 rounded-r-full bg-indigo-600 transition-all duration-200"
-            />
-            <component
-              :is="item.icon"
-              class="h-5 w-5 transition-colors duration-200"
-              :class="isActive(item.href) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'"
-            />
-            <span>{{ item.name }}</span>
-          </Link>
-        </div>
-      </div>
+    <nav class="flex-1 space-y-1 px-4 py-6">
+      <Link
+        v-for="item in menuItems"
+        :key="item.href"
+        :href="item.href"
+        class="group flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors"
+        :class="isActive(item.href)
+          ? 'bg-red-50 text-red-500'
+          : 'text-gray-600 hover:bg-gray-50'"
+      >
+        <component :is="item.icon" class="h-5 w-5" />
+        <span>{{ item.name }}</span>
+      </Link>
     </nav>
 
-    <!-- Help Card -->
-    <div class="p-4">
-      <div class="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+    <div class="border-t border-gray-200 p-4">
+      <div class="rounded-lg bg-blue-50 p-4">
         <div class="flex items-center gap-2 mb-3">
-          <QuestionMarkCircleIcon class="h-5 w-5 text-indigo-500" />
-          <span class="font-semibold text-gray-900">Need Help?</span>
+          <QuestionMarkCircleIcon class="h-5 w-5 text-blue-500" />
+          <span class="font-semibold text-gray-900">{{ t('dashboard.needHelp') }}</span>
         </div>
-        <button class="w-full rounded-xl bg-red-500 px-3 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md">
-          View Support
+        <button class="w-full rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white hover:bg-blue-600 transition">
+          {{ t('dashboard.viewSupport') }}
         </button>
       </div>
     </div>
   </aside>
 
   <!-- Mobile Sidebar -->
-  <Transition name="sidebar-slide">
-    <aside
-      v-if="mobileOpen"
-      class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-gray-200 bg-white shadow-2xl lg:hidden"
-    >
-      <div class="flex h-20 items-center px-6">
-        <AppLogo class="sidebar-logo" />
-      </div>
+  <aside
+    v-if="mobileOpen"
+    class="fixed inset-y-0 left-0 z-40 w-60 bg-white border-r border-gray-200 lg:hidden flex flex-col"
+  >
+    <div class="flex h-20 items-center justify-center border-b border-gray-200">
+      <span class="text-2xl font-bold text-red-500">CiviSense</span>
+    </div>
 
-      <nav class="flex-1 space-y-8 px-4 py-4">
-        <div v-for="section in sections" :key="section.title">
-          <p class="mb-3 px-3 text-xs font-bold uppercase tracking-widest text-gray-400">
-            {{ section.title }}
-          </p>
-          <div class="space-y-1">
-            <Link
-              v-for="item in section.items"
-              :key="item.name"
-              :href="item.href"
-              class="group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-200 hover:translate-x-1 hover:bg-gray-50"
-              :class="isActive(item.href)
-                ? 'bg-indigo-50 font-semibold text-indigo-600 shadow-sm'
-                : 'font-medium text-gray-600 hover:text-gray-900'"
-              @click="$emit('closeMobile')"
-            >
-              <span
-                v-if="isActive(item.href)"
-                class="absolute left-0 h-8 w-1 rounded-r-full bg-indigo-600 transition-all duration-200"
-              />
-              <component
-                :is="item.icon"
-                class="h-5 w-5 transition-colors duration-200"
-                :class="isActive(item.href) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'"
-              />
-              <span>{{ item.name }}</span>
-            </Link>
-          </div>
+    <nav class="flex-1 space-y-1 px-4 py-6">
+      <Link
+        v-for="item in menuItems"
+        :key="item.href"
+        :href="item.href"
+        class="group flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors"
+        :class="isActive(item.href)
+          ? 'bg-red-50 text-red-500'
+          : 'text-gray-600 hover:bg-gray-50'"
+        @click="$emit('closeMobile')"
+      >
+        <component :is="item.icon" class="h-5 w-5" />
+        <span>{{ item.name }}</span>
+      </Link>
+    </nav>
+
+    <div class="border-t border-gray-200 p-4">
+      <div class="rounded-lg bg-blue-50 p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <QuestionMarkCircleIcon class="h-5 w-5 text-blue-500" />
+          <span class="font-semibold text-gray-900">{{ t('dashboard.needHelp') }}</span>
         </div>
-      </nav>
-    </aside>
-  </Transition>
+        <button class="w-full rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white hover:bg-blue-600 transition">
+          {{ t('dashboard.viewSupport') }}
+        </button>
+      </div>
+    </div>
+  </aside>
 </template>
 
 <style scoped>

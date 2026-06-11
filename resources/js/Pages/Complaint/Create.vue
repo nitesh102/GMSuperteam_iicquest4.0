@@ -1,8 +1,11 @@
 <script setup>
-import { ref, watch } from 'vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import AdminLayout from '@/Layouts/AdminLayout.vue';
-import PageHeader from '@/Components/PageHeader.vue';
+import { ref, watch, onMounted } from 'vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useVoicePageHandlers } from '@/Composables/useVoiceContext';
+
+const { t } = useI18n();
 
 const form = useForm({
     title:       '',
@@ -57,12 +60,35 @@ function submitForm() {
         },
     });
 }
+
+function handleVoiceFillField(field, value) {
+    if (field in form) {
+        form[field] = value;
+    }
+}
+
+useVoicePageHandlers({
+    onFillField: handleVoiceFillField,
+    onSubmitForm: submitForm,
+}, 'complaint');
+
+onMounted(() => {
+    const pending = sessionStorage.getItem('voice_fill');
+    if (!pending) return;
+    try {
+        const { field, value } = JSON.parse(pending);
+        handleVoiceFillField(field, value);
+    } finally {
+        sessionStorage.removeItem('voice_fill');
+    }
+});
+
 </script>
 
 <template>
-    <Head title="Submit Complaint" />
+    <Head :title="t('complaint.submitTitle')" />
 
-    <AdminLayout>
+    <AuthenticatedLayout>
         <!-- Flash toast -->
         <teleport to="body">
             <div v-if="flashMessage" class="fixed top-5 right-5 z-[100] animate-slide-in" @click="flashMessage = null">
@@ -75,29 +101,15 @@ function submitForm() {
             </div>
         </teleport>
 
-        <div>
-            <div class="max-w-3xl space-y-6">
-
-                <PageHeader
-                    title="Submit Complaint"
-                    description="Describe the issue - our AI will handle category and priority automatically."
-                >
-                    <template #actions>
-                        <Link
-                            :href="route('complaints.index')"
-                            class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-gray-50 hover:shadow-md"
-                        >
-                            Cancel
-                        </Link>
-                    </template>
-                </PageHeader>
+        <div class="py-6">
+            <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
                 <!-- Header -->
-                <div class="hidden">
+                <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Submit Complaint</h1>
+                        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ t('complaint.submitTitle') }}</h1>
                         <p class="mt-1 text-sm text-gray-500">
-                            Describe the issue — our AI will handle category and priority automatically.
+                            {{ t('complaint.describeIssue') }}
                         </p>
                     </div>
                     <a
@@ -105,17 +117,17 @@ function submitForm() {
                         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-150"
                     >
                         <i class="fas fa-arrow-left text-xs"></i>
-                        Back
+                        {{ t('complaint.back') }}
                     </a>
                 </div>
 
                 <!-- AI badge -->
-                <div class="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-robot text-indigo-600 text-sm"></i>
                     </div>
                     <p class="text-sm text-indigo-700">
-                        <span class="font-semibold">AI-powered routing</span> — department, category, and priority are detected automatically from your submission.
+                        <span class="font-semibold">{{ t('complaint.aiRouting') }}</span> — {{ t('complaint.aiRoutingDesc') }}
                     </p>
                 </div>
 
@@ -138,14 +150,13 @@ function submitForm() {
                 </div>
 
                 <!-- Form Card -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-lg">
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="px-6 py-6 sm:px-8">
                         <form @submit.prevent="submitForm" class="space-y-6">
 
-                            <!-- Title -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                                    Title <span class="text-red-400">*</span>
+                                    {{ t('complaint.title') }} <span class="text-red-400">*</span>
                                 </label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -160,7 +171,7 @@ function submitForm() {
                                                 ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
                                                 : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
                                         ]"
-                                        placeholder="e.g. Pothole on Main Street"
+                                        :placeholder="t('complaint.titlePlaceholder')"
                                         required
                                     />
                                 </div>
@@ -170,10 +181,9 @@ function submitForm() {
                                 </p>
                             </div>
 
-                            <!-- Description -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                                    Description <span class="text-red-400">*</span>
+                                    {{ t('complaint.description') }} <span class="text-red-400">*</span>
                                 </label>
                                 <textarea
                                     v-model="form.description"
@@ -197,7 +207,6 @@ function submitForm() {
                                 </div>
                             </div>
 
-                            <!-- Photos -->
                             <div class="border-t border-gray-100 pt-6">
                                 <div class="flex items-center justify-between mb-3">
                                     <div>
@@ -249,7 +258,6 @@ function submitForm() {
                                 </div>
                             </div>
 
-                            <!-- Location -->
                             <div class="border-t border-gray-100 pt-6">
                                 <h4 class="text-sm font-semibold text-gray-900 mb-4">
                                     Location
@@ -291,7 +299,6 @@ function submitForm() {
                                 </div>
                             </div>
 
-                            <!-- Buttons -->
                             <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                                 <a
                                     :href="route('complaints.index')"
@@ -315,7 +322,7 @@ function submitForm() {
 
             </div>
         </div>
-    </AdminLayout>
+    </AuthenticatedLayout>
 </template>
 
 <style scoped>

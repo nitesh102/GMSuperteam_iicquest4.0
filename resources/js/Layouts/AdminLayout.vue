@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import Sidebar from '@/Components/AdminSidebar.vue'
 import TopNavbar from '@/Components/AdminTopNavbar.vue'
+import VoiceGlobalAssistant from '@/Components/VoiceGlobalAssistant.vue'
 
 const mobileSidebarOpen = ref(false)
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
@@ -81,6 +82,8 @@ onUnmounted(() => {
         </main>
       </Transition>
     </div>
+
+    <VoiceGlobalAssistant />
   </div>
 </template>
 

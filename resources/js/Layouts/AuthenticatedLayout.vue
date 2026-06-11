@@ -4,6 +4,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Navbar  from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
 import Footer  from '@/Components/Footer.vue'
+import VoiceGlobalAssistant from '@/Components/VoiceGlobalAssistant.vue'
 
 /* ── Sidebar state ── */
 const sidebarCollapsed  = ref(false)
@@ -126,6 +127,8 @@ onUnmounted(() => {
 
             <Footer />
         </div>
+
+        <VoiceGlobalAssistant />
     </div>
 </template>
 

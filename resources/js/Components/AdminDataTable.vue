@@ -1,7 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ChevronUpDownIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
 import AdminPagination from '@/Components/AdminPagination.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   columns: Array,
@@ -71,15 +74,15 @@ const getSortIcon = (field) => {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-lg">
+  <div class="rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden">
     <!-- Search -->
     <slot name="header">
-      <div class="border-b border-gray-200 p-5">
+      <div class="p-6 border-b border-gray-200">
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search..."
-          class="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 px-4 text-sm placeholder-gray-400 transition-all duration-200 focus:border-red-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-red-500/10"
+          :placeholder="t('table.search')"
+          class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 px-4 text-sm placeholder-gray-400 focus:border-red-500 focus:bg-white focus:outline-none"
         />
       </div>
     </slot>
@@ -92,12 +95,12 @@ const getSortIcon = (field) => {
             <th
               v-for="column in columns"
               :key="column.key"
-              class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-gray-500"
+              class="px-6 py-4 text-left font-semibold text-gray-900"
             >
               <button
                 v-if="column.sortable !== false"
                 @click="toggleSort(column.key)"
-                class="flex items-center gap-2 transition hover:text-gray-800"
+                class="flex items-center gap-2 hover:text-gray-600 transition"
               >
                 {{ column.label }}
                 <component :is="getSortIcon(column.key)" class="h-4 w-4" />
@@ -107,15 +110,20 @@ const getSortIcon = (field) => {
           </tr>
         </thead>
         <tbody>
+          <tr v-if="paginatedRows.length === 0">
+            <td :colspan="columns.length" class="px-6 py-10 text-center text-sm text-gray-500">
+              {{ t('table.noData') }}
+            </td>
+          </tr>
           <tr
             v-for="(row, index) in paginatedRows"
             :key="index"
-            class="border-b border-gray-100 transition hover:bg-gray-50"
+            class="border-b border-gray-200 hover:bg-gray-50 transition"
           >
             <td
               v-for="column in columns"
               :key="column.key"
-              class="px-6 py-4 text-gray-700"
+              class="px-6 py-4"
             >
               <slot :name="`cell-${column.key}`" :row="row" :value="row[column.key]">
                 {{ row[column.key] }}

@@ -1,16 +1,21 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdminDataTable from '@/Components/AdminDataTable.vue'
-import PageHeader from '@/Components/PageHeader.vue'
-import ComplaintCategoryModal from '@/Pages/ComplaintCategory/ComplaintCategoryModal.vue'
+import ComplaintCategoryModal from './ComplaintCategoryModal.vue'
+import { useLocalizedContent } from '@/Composables/useLocalizedContent'
+import { useVoicePageHandlers } from '@/Composables/useVoiceContext'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+
+const { t } = useI18n()
+const { localizeDepartment, localizeDepartments, statusLabel } = useLocalizedContent()
 
 const page = usePage()
 
 const items = ref([...(page.props.categories ?? [])])
-const departments = computed(() => page.props.departments ?? [])
+const localizedDepartments = computed(() => localizeDepartments(page.props.departments ?? []))
 
 watch(() => page.props.categories, (v) => {
     items.value = [...(v ?? [])]
@@ -45,7 +50,7 @@ function closeModal() {
 }
 
 function deleteCategory(category) {
-    if (!confirm(`Delete category "${category.name}"? This cannot be undone.`)) return
+    if (!confirm(t('category.deleteConfirm', { name: category.name }))) return
     items.value = items.value.filter(c => c.id !== category.id)
     router.delete(route('complaint-categories.destroy', category.id), {
         preserveScroll: true,
@@ -56,26 +61,39 @@ function deleteCategory(category) {
 const totalCategories = computed(() => items.value.length)
 
 const tableRows = computed(() =>
-    items.value.map(cat => ({
-        ...cat,
-        department_name: cat.department?.name ?? '—',
-    }))
+    items.value.map(cat => {
+        const dept = cat.department
+            ? localizeDepartment(cat.department)
+            : localizeDepartment((page.props.departments ?? []).find(d => d.id === cat.department_id))
+
+        return {
+            ...cat,
+            department_name: dept?.name ?? '—',
+        }
+    })
 )
 
-const columns = [
-    { key: 'name', label: 'Category Name' },
-    { key: 'department_name', label: 'Department' },
-    { key: 'description', label: 'Description' },
-    { key: 'status', label: 'Status' },
-    { key: 'actions', label: 'Actions', sortable: false },
-]
+const columns = computed(() => [
+    { key: 'name', label: t('category.colName') },
+    { key: 'department_name', label: t('category.colDepartment') },
+    { key: 'description', label: t('category.colDescription') },
+    { key: 'status', label: t('category.colStatus') },
+    { key: 'actions', label: t('category.colActions'), sortable: false },
+])
+
+useVoicePageHandlers({
+    onOpenCreate: (target) => {
+        if (!target || target === 'category' || target === 'auto') {
+            openCreateModal()
+        }
+    },
+}, 'category')
 </script>
 
 <template>
-    <Head title="Complaint Categories" />
+    <Head :title="t('category.title')" />
 
     <AdminLayout>
-        <!-- Flash -->
         <Teleport to="body">
             <Transition enter-active-class="transition duration-300 ease-out" enter-from-class="translate-x-full opacity-0" enter-to-class="translate-x-0 opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="translate-x-0 opacity-100" leave-to-class="translate-x-full opacity-0">
                 <div v-if="flashMessage" class="fixed top-5 right-5 z-50 flex items-center gap-3 rounded-xl bg-white border border-green-200 shadow-lg px-5 py-3.5 cursor-pointer" @click="flashMessage = null">
@@ -87,26 +105,26 @@ const columns = [
             </Transition>
         </Teleport>
 
-        <PageHeader
-            title="Complaint Categories"
-            description="Manage complaint categories for departments."
-        >
-            <template #actions>
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-semibold text-gray-900">{{ t('category.title') }}</h1>
+                    <p class="mt-1 text-sm text-gray-500">{{ t('category.subtitle') }}</p>
+                </div>
                 <button
                     @click="openCreateModal"
                     class="inline-flex items-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md"
                 >
                     <PlusIcon class="h-5 w-5" />
-                    New Category
+                    {{ t('category.newCategory') }}
                 </button>
             </template>
         </PageHeader>
 
-        <!-- Summary Card -->
-        <div class="mb-6 rounded-2xl bg-white border border-gray-200 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">Total Categories</p>
+                    <p class="text-sm text-gray-500">{{ t('category.totalCategories') }}</p>
                     <p class="mt-1 text-3xl font-semibold text-gray-900">{{ totalCategories }}</p>
                 </div>
                 <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-red-50">
@@ -115,7 +133,6 @@ const columns = [
             </div>
         </div>
 
-        <!-- Data Table -->
         <AdminDataTable
             :columns="columns"
             :rows="tableRows"
@@ -132,14 +149,14 @@ const columns = [
                     class="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700"
                 >
                     <span class="h-2 w-2 rounded-full bg-green-500" />
-                    Active
+                    {{ statusLabel('active') }}
                 </span>
                 <span
                     v-else
                     class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500"
                 >
                     <span class="h-2 w-2 rounded-full bg-gray-400" />
-                    Inactive
+                    {{ statusLabel('inactive') }}
                 </span>
             </template>
 
@@ -148,16 +165,16 @@ const columns = [
                     <button
                         type="button"
                         @click="openEditModal(row)"
-                        class="rounded-lg p-2 text-blue-500 transition-all duration-200 hover:scale-110 hover:bg-blue-50 hover:text-blue-600"
-                        title="Edit"
+                        class="text-blue-500 hover:text-blue-600 transition"
+                        :title="t('category.edit')"
                     >
                         <PencilIcon class="h-4 w-4" />
                     </button>
                     <button
                         type="button"
                         @click="deleteCategory(row)"
-                        class="rounded-lg p-2 text-red-500 transition-all duration-200 hover:scale-110 hover:bg-red-50 hover:text-red-600"
-                        title="Delete"
+                        class="text-red-500 hover:text-red-600 transition"
+                        :title="t('category.delete')"
                     >
                         <TrashIcon class="h-4 w-4" />
                     </button>
@@ -165,11 +182,10 @@ const columns = [
             </template>
         </AdminDataTable>
 
-        <!-- Modal -->
         <ComplaintCategoryModal
             :show="showModal"
             :category="selectedCategory"
-            :departments="departments"
+            :departments="localizedDepartments"
             @close="closeModal"
             @success="closeModal"
         />
