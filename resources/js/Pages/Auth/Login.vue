@@ -199,8 +199,8 @@ import AppLogo from '@/Components/common/AppLogo.vue';
 
 // Inertia Form for login submission
 const form = useForm({
-    email: 'admin@gmail.com',
-    password: 'admin@123',
+    email: '',
+    password: '',
     remember: false,
 });
 

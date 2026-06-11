@@ -1,9 +1,10 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import BackButton from '@/Components/common/BackButton.vue'
+import MapDisplay from '@/Components/MapDisplay.vue'
 
 const { t } = useI18n();
 
@@ -162,6 +163,30 @@ function dueLabel() {
 
 function getGoogleMapsLink(lat, lng) {
     return `https://www.google.com/maps?q=${lat},${lng}`
+}
+
+const togglingVerification = ref(false)
+function toggleLocationVerification() {
+    if (!isAdmin.value) return
+    const newValue = !props.complaint.location_verified
+    togglingVerification.value = true
+    router.put(route('complaints.update', props.complaint.id), {
+        location_verified: newValue,
+        title: props.complaint.title,
+        description: props.complaint.description,
+        category_id: props.complaint.category_id,
+        current_status: props.complaint.current_status,
+        priority: props.complaint.priority,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            props.complaint.location_verified = newValue
+            togglingVerification.value = false
+        },
+        onError: () => {
+            togglingVerification.value = false
+        },
+    })
 }
 
 const lifecycleStep = computed(() => {
@@ -324,29 +349,94 @@ const lifecycleStep = computed(() => {
                             </div>
                         </div>
 
+                        <!-- ── Duplicate Notice ──────────────────────────── -->
+                        <div v-if="complaint.duplicate_of" class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-copy text-amber-500 mt-0.5"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-amber-800">Marked as duplicate</p>
+                                    <p class="text-sm text-amber-700 mt-1">
+                                        This complaint reports the same issue as
+                                        <Link :href="route('complaints.show', complaint.duplicate_of.id)" class="font-medium text-amber-900 underline hover:no-underline">
+                                            {{ complaint.duplicate_of.complaint_no }} — {{ complaint.duplicate_of.title }}
+                                        </Link>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="complaint.duplicates?.length" class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-copy text-amber-500 mt-0.5"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-amber-800">
+                                        {{ complaint.duplicates.length }} other {{ complaint.duplicates.length === 1 ? 'report' : 'reports' }} linked as duplicate{{ complaint.duplicates.length === 1 ? '' : 's' }}
+                                    </p>
+                                    <ul class="mt-1 space-y-0.5">
+                                        <li v-for="dup in complaint.duplicates" :key="dup.id">
+                                            <Link :href="route('complaints.show', dup.id)" class="text-sm text-amber-700 underline hover:no-underline">
+                                                {{ dup.complaint_no }} — {{ dup.title }}
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
                         <div
                             v-if="complaint.location || complaint.latitude || complaint.longitude"
                             class="bg-white rounded-xl border border-gray-200 shadow-sm p-5"
                         >
-                            <h2 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                <i class="fas fa-map-marker-alt text-gray-400 text-xs"></i>
-                                Location
-                                <a
-                                    v-if="complaint.latitude && complaint.longitude"
-                                    :href="getGoogleMapsLink(complaint.latitude, complaint.longitude)"
-                                    target="_blank"
-                                    class="ml-auto inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
-                                >
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                                    </svg>
-                                    Open in Google Maps
-                                </a>
-                            </h2>
-                            <p v-if="complaint.location" class="text-sm text-gray-700">{{ complaint.location }}</p>
-                            <p v-if="complaint.latitude && complaint.longitude" class="text-xs text-gray-400 mt-1">
-                                {{ complaint.latitude }}, {{ complaint.longitude }}
-                            </p>
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                    <i class="fas fa-map-marker-alt text-gray-400 text-xs"></i>
+                                    Location
+                                </h2>
+                                <div class="flex items-center gap-3">
+                                    <span v-if="complaint.location_verified === true"
+                                        class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 ring-1 ring-green-600/20"
+                                    >
+                                        <i class="fas fa-check-circle text-[10px]"></i>
+                                        Verified
+                                        <span v-if="complaint.location_distance" class="text-green-500 font-normal">
+                                            ({{ complaint.location_distance < 1000 ? Math.round(complaint.location_distance) + 'm' : (complaint.location_distance / 1000).toFixed(2) + 'km' }})
+                                        </span>
+                                    </span>
+                                    <span v-else-if="complaint.latitude"
+                                        class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-red-600/20"
+                                    >
+                                        <i class="fas fa-times-circle text-[10px]"></i>
+                                        Unverified
+                                    </span>
+                                    <span v-else class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-500 ring-1 ring-gray-300/20">
+                                        <i class="fas fa-minus-circle text-[10px]"></i>
+                                        No GPS
+                                    </span>
+                                    <button
+                                        v-if="isAdmin && complaint.latitude && complaint.longitude"
+                                        @click="toggleLocationVerification"
+                                        :disabled="togglingVerification"
+                                        class="text-xs font-medium text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
+                                    >
+                                        <i class="fas" :class="togglingVerification ? 'fa-spinner fa-spin' : (complaint.location_verified ? 'fa-times' : 'fa-check')"></i>
+                                        {{ complaint.location_verified ? 'Mark Unverified' : 'Mark Verified' }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p v-if="complaint.location" class="text-sm text-gray-700 mb-3">{{ complaint.location }}</p>
+
+                            <div v-if="complaint.latitude && complaint.longitude">
+                                <MapDisplay
+                                    :latitude="Number(complaint.latitude)"
+                                    :longitude="Number(complaint.longitude)"
+                                    :reporter-latitude="complaint.reporter_latitude ? Number(complaint.reporter_latitude) : null"
+                                    :reporter-longitude="complaint.reporter_longitude ? Number(complaint.reporter_longitude) : null"
+                                    :location-verified="complaint.location_verified"
+                                    :location-distance="complaint.location_distance"
+                                    :location="complaint.location"
+                                />
+                            </div>
                         </div>
 
                         <!-- ── Resolution Workflow ──────────────────────────── -->

@@ -20,11 +20,13 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             DepartmentSeeder::class,
         ]);
+        $password = bin2hex(random_bytes(4));
         $user = User::create([
             'name' => 'Super User',
             'email' => 'admin@gmail.com',
-            'password' =>Hash::make('admin@123'),
+            'password' => Hash::make($password),
         ]);
+        $this->command->info("Superadmin credentials: admin@gmail.com / $password");
         $user->assignRole('Superadmin');
     }
 }

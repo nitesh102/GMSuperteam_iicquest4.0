@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Services\ComplaintAiService;
+use App\Services\DuplicateDetectionService;
+use App\Services\GeolocationService;
 
 class CitizenController extends Controller
 {
@@ -42,7 +44,7 @@ class CitizenController extends Controller
         $complaints = Complaint::where('citizen_id', $userId)
             ->with(['category.department', 'department'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->take(100)->get();
 
         return Inertia::render('Citizen/Dashboard', [
             'stats' => [
@@ -65,7 +67,7 @@ class CitizenController extends Controller
                 'tracks.changer',
             ])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->take(200)->get();
 
         return Inertia::render('Citizen/Index', [
             'complaints'  => $complaints,
@@ -85,15 +87,39 @@ class CitizenController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'title'         => ['required', 'string', 'max:255'],
-            'description'   => ['required', 'string', 'max:10000'],
-            'category_id'   => ['nullable', 'exists:complaint_categories,id'],
-            'location'      => ['nullable', 'string', 'max:500'],
-            'latitude'      => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude'     => ['nullable', 'numeric', 'between:-180,180'],
-            'attachments'   => ['nullable', 'array', 'max:5'],
-            'attachments.*' => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
+            'title'              => ['required', 'string', 'max:255'],
+            'description'        => ['required', 'string', 'max:10000'],
+            'category_id'        => ['nullable', 'exists:complaint_categories,id'],
+            'location'           => ['nullable', 'string', 'max:500'],
+            'latitude'           => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude'          => ['nullable', 'numeric', 'between:-180,180'],
+            'reporter_latitude'  => ['nullable', 'numeric', 'between:-90,90'],
+            'reporter_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'reporter_accuracy'  => ['nullable', 'numeric', 'min:0'],
+            'attachments'        => ['nullable', 'array', 'max:5'],
+            'attachments.*'      => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
         ]);
+
+        // Verify reporter location against complaint location
+        if (!empty($validated['latitude']) && !empty($validated['longitude']) && !empty($validated['reporter_latitude']) && !empty($validated['reporter_longitude'])) {
+            $geo = app(GeolocationService::class);
+            $verification = $geo->verifyLocation(
+                $validated['reporter_latitude'],
+                $validated['reporter_longitude'],
+                $validated['latitude'],
+                $validated['longitude'],
+            );
+            $validated['location_distance'] = $verification['distance'];
+            $validated['location_verified'] = $verification['verified'];
+        } else {
+            $validated['location_distance'] = null;
+            $validated['location_verified'] = false;
+        }
+
+        $validated['reporter_latitude']  = $validated['reporter_latitude'] ?? null;
+        $validated['reporter_longitude'] = $validated['reporter_longitude'] ?? null;
+        $validated['reporter_accuracy']  = $validated['reporter_accuracy'] ?? null;
+        $validated['location_verification_method'] = !empty($validated['reporter_latitude']) ? 'gps' : null;
 
         $tempPaths = [];
         if ($request->hasFile('attachments')) {
@@ -162,10 +188,36 @@ class CitizenController extends Controller
         $validated['created_by']       = $request->user()->id;
         $validated['current_status']   = 'submitted';
         $validated['priority']         = $ai['priority'];
-        $validated['is_spam']          = false;
+        $validated['is_spam']          = !empty($validated['latitude']) && !empty($validated['longitude']) && !empty($validated['reporter_latitude']) && !$validated['location_verified'];
         $validated['ai_summary']       = $ai['summary'];
         $validated['escalation_level'] = 0;
         $validated['due_at']           = $this->calculateDueAt($ai['priority']);
+
+        if (!empty($validated['latitude']) && !empty($validated['longitude'])) {
+            $duplicates = app(DuplicateDetectionService::class)->checkForDuplicates(
+                (float) $validated['latitude'],
+                (float) $validated['longitude'],
+                $validated['title'],
+            );
+
+            if ($duplicates->isNotEmpty() && empty($request->input('ignore_duplicate'))) {
+                $top = $duplicates->first();
+                throw ValidationException::withMessages([
+                    'duplicate' => json_encode([
+                        'title'           => $top['title'],
+                        'complaint_no'    => $top['complaint_no'],
+                        'status'          => $top['current_status'],
+                        'confidence'      => $top['confidence'],
+                        'distance_meters' => $top['distance_meters'],
+                        'id'              => $top['id'],
+                    ]),
+                ]);
+            }
+
+            if ($duplicates->isNotEmpty() && !empty($request->input('ignore_duplicate'))) {
+                $validated['duplicate_of_id'] = $duplicates->first()['id'];
+            }
+        }
 
         $complaint = Complaint::create($validated);
 
@@ -192,8 +244,38 @@ class CitizenController extends Controller
             }
         }
 
+        $message = 'Complaint submitted successfully. CiviSense AI analysis complete.';
+        if (!empty($validated['duplicate_of_id'])) {
+            $message = 'This issue is near an existing complaint and has been linked as a duplicate.';
+        }
+
         return redirect()->route('citizen.complaints.index')
-            ->with('success', 'Complaint submitted successfully. CiviSense AI analysis complete.');
+            ->with('success', $message);
+    }
+
+    public function checkDuplicates(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $data = $request->validate([
+            'title'     => ['required', 'string', 'max:255'],
+            'latitude'  => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+        ]);
+
+        $duplicates = app(DuplicateDetectionService::class)->checkForDuplicates(
+            (float) $data['latitude'],
+            (float) $data['longitude'],
+            $data['title'],
+        );
+
+        $highestConfidence = $duplicates->isNotEmpty()
+            ? $duplicates->first()['confidence']
+            : 0;
+
+        return response()->json([
+            'has_duplicates'  => $duplicates->isNotEmpty(),
+            'duplicates'      => $duplicates,
+            'confidence'      => $highestConfidence,
+        ]);
     }
 
     public function show(Complaint $complaint): Response
@@ -208,6 +290,8 @@ class CitizenController extends Controller
             'attachments',
             'tracks.changer',
             'aiAnalysis',
+            'duplicateOf',
+            'duplicates',
         ]);
 
         return Inertia::render('Citizen/Show', [

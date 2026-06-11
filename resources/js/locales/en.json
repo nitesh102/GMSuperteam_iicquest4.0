@@ -118,7 +118,12 @@
         "aiNoteDesc": "Our AI will automatically analyze the complaint to determine priority, category, and generate a summary.",
         "aiRouting": "AI-powered routing",
         "aiRoutingDesc": "Department, category, and priority are detected automatically from your submission.",
-        "describeIssue": "Describe the issue — our AI will handle category and priority automatically."
+        "describeIssue": "Describe the issue — our AI will handle category and priority automatically.",
+        "searchMap": "Search for a place...",
+        "allVerified": "All Locations",
+        "verified": "Verified",
+        "unverified": "Unverified",
+        "gpsRequired": "GPS location is required to submit a complaint."
     },
     "voice": {
         "startListening": "Start voice input",

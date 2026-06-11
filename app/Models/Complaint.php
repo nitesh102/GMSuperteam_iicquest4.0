@@ -35,8 +35,15 @@ class Complaint extends Model
         'after_photo',
         'due_at',
         'escalation_level',
+        'reporter_latitude',
+        'reporter_longitude',
+        'reporter_accuracy',
+        'location_distance',
+        'location_verified',
+        'location_verification_method',
         'created_by',
         'updated_by',
+        'duplicate_of_id',
     ];
 
     protected function casts(): array
@@ -47,7 +54,12 @@ class Complaint extends Model
             'longitude'        => 'decimal:7',
             'resolved_at'      => 'datetime',
             'due_at'           => 'datetime',
-            'escalation_level' => 'integer',
+            'escalation_level'      => 'integer',
+            'reporter_latitude'     => 'decimal:7',
+            'reporter_longitude'    => 'decimal:7',
+            'reporter_accuracy'     => 'decimal:1',
+            'location_distance'     => 'decimal:1',
+            'location_verified'     => 'boolean',
         ];
     }
 
@@ -94,5 +106,15 @@ class Complaint extends Model
     public function tracks(): HasMany
     {
         return $this->hasMany(ComplaintTrack::class)->orderBy('created_at', 'desc');
+    }
+
+    public function duplicateOf(): BelongsTo
+    {
+        return $this->belongsTo(Complaint::class, 'duplicate_of_id');
+    }
+
+    public function duplicates(): HasMany
+    {
+        return $this->hasMany(Complaint::class, 'duplicate_of_id');
     }
 }

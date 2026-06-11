@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Complaint;
 use Gemini\Data\Blob;
 use Gemini\Data\GenerationConfig;
 use Gemini\Data\Schema;
@@ -94,7 +95,7 @@ class ComplaintAiService
             }
         }
 
-        $response = Gemini::generativeModel(model: 'gemini-2.0-flash')
+        $response = Gemini::generativeModel(model: 'gemini-2.5-flash')
             ->withGenerationConfig(new GenerationConfig(
                 responseMimeType: ResponseMimeType::APPLICATION_JSON,
                 responseSchema: $schema,
@@ -102,5 +103,74 @@ class ComplaintAiService
             ->generateContent(...$arguments);
 
         return json_decode($response->text(), true);
+    }
+
+    public function checkDuplicates(
+        string $title,
+        string $description,
+        array $nearbyComplaints,
+        ?float $latitude = null,
+        ?float $longitude = null,
+    ): array {
+        if (empty($nearbyComplaints)) {
+            return ['is_duplicate' => false, 'matched_complaint_id' => null, 'match_reason' => ''];
+        }
+
+        $existingList = collect($nearbyComplaints)->map(fn($c) => sprintf(
+            "[ID:%d] \"%s\"\n   Location: %s\n   Description: %s",
+            $c['id'],
+            $c['title'],
+            $c['location'] ?? 'N/A',
+            mb_strlen($c['description'] ?? '') > 300 ? mb_substr($c['description'], 0, 300) . '...' : ($c['description'] ?? 'N/A'),
+        ))->implode("\n\n");
+
+        $schema = new Schema(
+            type: DataType::OBJECT,
+            properties: [
+                'is_duplicate' => new Schema(
+                    type: DataType::BOOLEAN,
+                    description: 'true if this new complaint describes the same real-world issue as any existing complaint above.',
+                ),
+                'matched_complaint_id' => new Schema(
+                    type: DataType::INTEGER,
+                    description: 'The ID of the existing complaint that reports the same issue. Return 0 if no match.',
+                ),
+                'match_reason' => new Schema(
+                    type: DataType::STRING,
+                    description: 'Explain why these are duplicates — what specific detail matches (e.g. same location, same problem description). Empty if not a duplicate.',
+                ),
+            ],
+            required: ['is_duplicate', 'matched_complaint_id', 'match_reason'],
+        );
+
+        $prompt  = "You are the CiviSense AI duplicate detection engine.\n\n";
+        $prompt .= "A new complaint has been submitted at the same location as existing complaints:\n";
+        $prompt .= "Title: {$title}\n";
+        $prompt .= "Description: {$description}\n";
+        if ($latitude && $longitude) {
+            $prompt .= "GPS: {$latitude}, {$longitude}\n";
+        }
+        $prompt .= "\nThese existing complaints are nearby. Determine if the NEW complaint reports the IDENTICAL real-world issue as any of them.\n\n";
+        $prompt .= "{$existingList}\n\n";
+        $prompt .= "Guidelines:\n";
+        $prompt .= "  • Set is_duplicate=true ONLY if they are clearly about the SAME SPECIFIC problem (e.g. same pothole, same broken streetlight, same garbage pile)\n";
+        $prompt .= "  • A different problem type at the same location is NOT a duplicate (e.g. pothole vs broken light at the same spot)\n";
+        $prompt .= "  • General similarity (both about roads or both about water) is NOT enough\n";
+        $prompt .= "  • If not a duplicate, return matched_complaint_id=0 and empty match_reason";
+
+        $response = Gemini::generativeModel(model: 'gemini-2.5-flash')
+            ->withGenerationConfig(new GenerationConfig(
+                responseMimeType: ResponseMimeType::APPLICATION_JSON,
+                responseSchema: $schema,
+            ))
+            ->generateContent($prompt);
+
+        $result = json_decode($response->text(), true);
+
+        return [
+            'is_duplicate' => $result['is_duplicate'] ?? false,
+            'matched_complaint_id' => $result['is_duplicate'] ? ($result['matched_complaint_id'] ?? null) : null,
+            'match_reason' => $result['is_duplicate'] ? ($result['match_reason'] ?? '') : '',
+        ];
     }
 }

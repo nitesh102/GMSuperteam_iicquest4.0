@@ -19,6 +19,13 @@ const selectedDepartment = computed(() => {
     return departments.value.find(d => d.id === cat.department_id) ?? null;
 });
 
+const gpsStatus = ref('idle')
+const gpsError = ref(null)
+
+const reporterLat = ref(null)
+const reporterLng = ref(null)
+const reporterAccuracy = ref(null)
+
 const form = useForm({
     title:       '',
     description: '',
@@ -27,6 +34,43 @@ const form = useForm({
     latitude:    '',
     longitude:   '',
 });
+
+function captureGps() {
+    if (!navigator.geolocation) {
+        gpsStatus.value = 'error'
+        gpsError.value = 'Geolocation is not supported by your browser.'
+        return
+    }
+    gpsStatus.value = 'locating'
+    gpsError.value = null
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            form.latitude = pos.coords.latitude
+            form.longitude = pos.coords.longitude
+            reporterLat.value = pos.coords.latitude
+            reporterLng.value = pos.coords.longitude
+            reporterAccuracy.value = pos.coords.accuracy
+            gpsStatus.value = 'done'
+        },
+        (err) => {
+            gpsStatus.value = 'error'
+            switch (err.code) {
+                case err.PERMISSION_DENIED:
+                    gpsError.value = 'Location access is required to submit a complaint. Please enable location permissions in your browser settings.'
+                    break
+                case err.POSITION_UNAVAILABLE:
+                    gpsError.value = 'Location information is unavailable. Try again later.'
+                    break
+                case err.TIMEOUT:
+                    gpsError.value = 'The request to get your location timed out. Please try again.'
+                    break
+                default:
+                    gpsError.value = 'An unknown error occurred while getting your location.'
+            }
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    )
+}
 
 const attachments = ref([]);
 const fileInput    = ref(null);
@@ -54,57 +98,65 @@ watch(() => usePage().props.flash?.success, (val) => {
     if (flashMessage.value) flashTimer = setTimeout(() => flashMessage.value = null, 4000);
 }, { immediate: true });
 
-// ── GPS Location Capture ─────────────────────────────────────────────────
-const geolocating = ref(false);
-const geoError    = ref(null);
+const detectedDuplicates = ref(null)
+const checkingDuplicates = ref(false)
+let duplicateCheckTimer = null
 
-function getCurrentLocation() {
-    if (!navigator.geolocation) {
-        geoError.value = 'Geolocation is not supported by your browser.';
-        return;
+function checkDuplicates() {
+    const title = form.title?.trim()
+    const lat = form.latitude
+    const lng = form.longitude
+    if (!title || !lat || !lng) {
+        detectedDuplicates.value = null
+        return
     }
-
-    geoError.value = null;
-    geolocating.value = true;
-
-    navigator.geolocation.getCurrentPosition(
-        (pos) => {
-            form.latitude  = pos.coords.latitude.toFixed(7);
-            form.longitude = pos.coords.longitude.toFixed(7);
-            geolocating.value = false;
-        },
-        (err) => {
-            geolocating.value = false;
-            switch (err.code) {
-                case err.PERMISSION_DENIED:
-                    geoError.value = 'Location permission denied. Please enable location access in your browser settings.';
-                    break;
-                case err.POSITION_UNAVAILABLE:
-                    geoError.value = 'Location information is unavailable. Try again later.';
-                    break;
-                case err.TIMEOUT:
-                    geoError.value = 'The request to get your location timed out. Please try again.';
-                    break;
-                default:
-                    geoError.value = 'An unknown error occurred while getting your location.';
-            }
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
+    checkingDuplicates.value = true
+    axios.post(route('complaints.check-duplicates'), {
+        title,
+        latitude: lat,
+        longitude: lng,
+    }).then(res => {
+        detectedDuplicates.value = res.data.has_duplicates ? res.data.duplicates : null
+    }).catch(() => {
+        detectedDuplicates.value = null
+    }).finally(() => {
+        checkingDuplicates.value = false
+    })
 }
 
-function getGoogleMapsLink(lat, lng) {
-    return `https://www.google.com/maps?q=${lat},${lng}`;
+watch([() => form.title, () => form.latitude, () => form.longitude], () => {
+    if (duplicateCheckTimer) clearTimeout(duplicateCheckTimer)
+    detectedDuplicates.value = null
+    duplicateCheckTimer = setTimeout(checkDuplicates, 600)
+}, { deep: true })
+
+function parseDuplicateError(raw) {
+    if (!raw) return null
+    try {
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+        if (parsed && parsed.title) return parsed
+    } catch {}
+    return null
 }
+
+const duplicateErrorData = computed(() => parseDuplicateError(form.errors.duplicate))
+
+const ignoreDuplicate = ref(false)
 
 function submitForm() {
     const data = new FormData();
-    data.append('title',       form.title);
-    data.append('description', form.description);
+    data.append('title',              form.title);
+    data.append('description',        form.description);
     if (form.category_id) data.append('category_id', form.category_id);
     if (form.location)    data.append('location',    form.location);
     if (form.latitude)    data.append('latitude',    form.latitude);
     if (form.longitude)   data.append('longitude',   form.longitude);
+    if (reporterLat.value && reporterLng.value) {
+        data.append('reporter_latitude',  reporterLat.value);
+        data.append('reporter_longitude', reporterLng.value);
+        if (reporterAccuracy.value) data.append('reporter_accuracy', reporterAccuracy.value);
+    }
+    if (ignoreDuplicate.value) data.append('ignore_duplicate', '1');
     attachments.value.forEach(f => data.append('attachments[]', f));
 
     form.post(route('complaints.store'), {
@@ -114,8 +166,15 @@ function submitForm() {
             form.reset();
             attachments.value = [];
             previews.value    = [];
+            detectedDuplicates.value = null
+            ignoreDuplicate.value = false
         },
     });
+}
+
+function submitAnyway() {
+    ignoreDuplicate.value = true
+    submitForm()
 }
 
 function handleVoiceFillField(field, value) {
@@ -130,6 +189,7 @@ useVoicePageHandlers({
 }, 'complaint');
 
 onMounted(() => {
+    captureGps()
     const pending = sessionStorage.getItem('voice_fill');
     if (!pending) return;
     try {
@@ -199,6 +259,113 @@ onMounted(() => {
                             Please review your title and description to ensure it describes a real civic issue.
                             <template v-if="attachments.length"> Make sure the attached photos match the problem you described.</template>
                         </p>
+                    </div>
+                </div>
+
+                <div
+                    v-if="checkingDuplicates"
+                    class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-3"
+                >
+                    <i class="fas fa-spinner fa-spin text-blue-500 text-sm"></i>
+                    <span class="text-sm text-blue-700">Checking for similar complaints...</span>
+                </div>
+
+                <div
+                    v-if="detectedDuplicates && detectedDuplicates.length > 0"
+                    class="bg-amber-50 border border-amber-300 rounded-xl px-4 py-4"
+                >
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fas fa-copy text-amber-600 text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-amber-800">Potential Duplicate Detected</p>
+                            <p class="text-xs text-amber-600 mt-0.5">
+                                A similar complaint was found near this location.
+                            </p>
+                            <div
+                                v-for="dup in detectedDuplicates"
+                                :key="dup.id"
+                                class="mt-3 bg-white rounded-lg border border-amber-200 p-3"
+                            >
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ dup.title }}</p>
+                                        <p class="text-xs text-gray-500 mt-0.5">
+                                            {{ dup.complaint_no }} &middot;
+                                            {{ dup.distance_meters }}m away &middot;
+                                            {{ dup.status?.replace(/_/g, ' ') }}
+                                        </p>
+                                    </div>
+                                    <div class="flex-shrink-0 text-right">
+                                        <span
+                                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                                            :class="dup.confidence >= 80 ? 'bg-red-100 text-red-700' : dup.confidence >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-yellow-100 text-yellow-700'"
+                                        >
+                                            {{ dup.confidence }}% match
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <a
+                                        :href="route('complaints.show', dup.id)"
+                                        class="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                                    >
+                                        View Existing &rarr;
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    v-if="duplicateErrorData"
+                    class="bg-amber-50 border border-amber-300 rounded-xl px-4 py-4"
+                >
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fas fa-exclamation-triangle text-amber-600 text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-amber-800">Duplicate Complaint Detected</p>
+                            <div class="mt-2 bg-white rounded-lg border border-amber-200 p-3">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ duplicateErrorData.title }}</p>
+                                        <p class="text-xs text-gray-500 mt-0.5">
+                                            {{ duplicateErrorData.complaint_no }} &middot;
+                                            {{ duplicateErrorData.distance_meters }}m away &middot;
+                                            {{ duplicateErrorData.status?.replace(/_/g, ' ') }}
+                                        </p>
+                                    </div>
+                                    <div class="flex-shrink-0 text-right">
+                                        <span
+                                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                                            :class="duplicateErrorData.confidence >= 80 ? 'bg-red-100 text-red-700' : duplicateErrorData.confidence >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-yellow-100 text-yellow-700'"
+                                        >
+                                            {{ duplicateErrorData.confidence }}% match
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-amber-700 mt-2">This issue appears to have already been reported. Would you like to:</p>
+                            <div class="mt-3 flex items-center gap-2">
+                                <a
+                                    :href="route('complaints.show', duplicateErrorData.id)"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100"
+                                >
+                                    View Existing Complaint
+                                </a>
+                                <button
+                                    type="button"
+                                    @click="submitAnyway"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 border border-amber-200 rounded-lg hover:bg-amber-200"
+                                >
+                                    Submit Anyway
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -334,89 +501,66 @@ onMounted(() => {
                             </div>
 
                             <div class="border-t border-gray-100 pt-6">
-                                <div class="flex items-center justify-between mb-4">
-                                    <h4 class="text-sm font-semibold text-gray-900">
-                                        Location
-                                        <span class="ml-1 text-xs font-normal text-gray-400">(optional)</span>
-                                    </h4>
+                                <h4 class="text-sm font-semibold text-gray-900 mb-4">
+                                    Location
+                                </h4>
 
-                                    <button
-                                        type="button"
-                                        @click="getCurrentLocation"
-                                        :disabled="geolocating"
-                                        class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium rounded-lg border transition-all duration-150"
-                                        :class="geolocating
-                                            ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
-                                            : 'bg-white border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300'"
-                                    >
-                                        <i v-if="geolocating" class="fas fa-spinner fa-spin text-xs"></i>
-                                        <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        </svg>
-                                        {{ geolocating ? 'Detecting...' : 'Use Current Location' }}
-                                    </button>
+                                <div v-if="gpsStatus === 'locating'" class="mb-4 rounded-lg bg-blue-50 border border-blue-200 p-3 flex items-center gap-3">
+                                    <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                                    <span class="text-sm text-blue-700">Detecting your location via GPS...</span>
                                 </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i class="fas fa-map-marker-alt text-gray-400 text-sm"></i>
+                                <div v-if="gpsStatus === 'done'" class="mb-4 rounded-lg bg-green-50 border border-green-200 p-3 flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-500"></i>
+                                    <span class="text-sm text-green-700">Location detected via GPS</span>
+                                    <span v-if="reporterAccuracy" class="ml-auto text-xs text-green-600">Accuracy: {{ Math.round(reporterAccuracy) }}m</span>
+                                </div>
+                                <div v-if="gpsStatus === 'error'" class="mb-4 rounded-lg bg-red-50 border border-red-200 p-4">
+                                    <div class="flex items-start gap-3">
+                                        <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-red-800">Location Required</p>
+                                            <p class="text-sm text-red-600 mt-1">{{ gpsError }}</p>
+                                            <button @click="captureGps" class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-red-700 hover:text-red-800">
+                                                <i class="fas fa-redo"></i> Retry
+                                            </button>
                                         </div>
-                                        <input
-                                            type="text"
-                                            v-model="form.location"
-                                            class="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-gray-400"
-                                            placeholder="e.g. 123 Main Street, Downtown"
-                                        />
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-4 mt-4">
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Latitude</label>
-                                        <input
-                                            type="number" step="any" v-model="form.latitude"
-                                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-gray-400"
-                                            placeholder="-90 to 90"
-                                        />
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-map-marker-alt text-gray-400 text-sm"></i>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                v-model="form.location"
+                                                class="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-gray-400"
+                                                placeholder="e.g. 123 Main Street, Downtown"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Longitude</label>
-                                        <input
-                                            type="number" step="any" v-model="form.longitude"
-                                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-gray-400"
-                                            placeholder="-180 to 180"
-                                        />
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Latitude</label>
+                                            <input
+                                                type="number" step="any" v-model="form.latitude"
+                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-gray-400"
+                                                placeholder="-90 to 90"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Longitude</label>
+                                            <input
+                                                type="number" step="any" v-model="form.longitude"
+                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-gray-400"
+                                                placeholder="-180 to 180"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div
-                                    v-if="form.latitude && form.longitude"
-                                    class="mt-3 flex items-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-lg"
-                                >
-                                    <i class="fas fa-check-circle text-green-500 text-xs"></i>
-                                    <span class="text-xs text-green-700">
-                                        Location captured: {{ form.latitude }}, {{ form.longitude }}
-                                    </span>
-                                    <a
-                                        :href="getGoogleMapsLink(form.latitude, form.longitude)"
-                                        target="_blank"
-                                        class="ml-auto inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700"
-                                    >
-                                        <i class="fas fa-external-link-alt text-[10px]"></i>
-                                        View on Maps
-                                    </a>
-                                </div>
-
-                                <p
-                                    v-if="geoError"
-                                    class="mt-3 text-xs text-red-600 flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
-                                >
-                                    <i class="fas fa-exclamation-circle text-xs flex-shrink-0"></i>
-                                    {{ geoError }}
-                                </p>
                             </div>
 
                             <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">

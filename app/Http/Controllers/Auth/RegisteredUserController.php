@@ -42,11 +42,11 @@ class RegisteredUserController extends Controller
         ]);
 
         $citizenshipFrontPath = $request->hasFile('citizenship_front')
-            ? $request->file('citizenship_front')->store('citizenship', 'public')
+            ? $request->file('citizenship_front')->store('citizenship', 'local')
             : null;
 
         $citizenshipBackPath = $request->hasFile('citizenship_back')
-            ? $request->file('citizenship_back')->store('citizenship', 'public')
+            ? $request->file('citizenship_back')->store('citizenship', 'local')
             : null;
 
         $user = User::create([

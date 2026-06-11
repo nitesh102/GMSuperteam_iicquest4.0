@@ -6,6 +6,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ComplaintModal from '@/Pages/Complaint/ComplaintModal.vue'
 import { useVoicePageHandlers } from '@/Composables/useVoiceContext'
 import BackButton from '@/Components/common/BackButton.vue'
+import MapOverview from '@/Components/MapOverview.vue'
 
 const { t } = useI18n();
 const { complaints, departments, categories, users } = usePage().props
@@ -37,6 +38,8 @@ const filterDepartment = ref('')
 const filterCategory = ref('')
 const filterStatus = ref('')
 const filterPriority = ref('')
+const filterVerified = ref('')
+const viewMode = ref('table')
 const sortKey = ref('created_at')
 const sortDir = ref('desc')
 const currentPage = ref(1)
@@ -79,6 +82,13 @@ const filteredItems = computed(() => {
   }
   if (filterPriority.value) {
     result = result.filter(c => c.priority === filterPriority.value)
+  }
+  if (filterVerified.value === 'verified') {
+    result = result.filter(c => c.location_verified === true)
+  } else if (filterVerified.value === 'unverified') {
+    result = result.filter(c => c.location_verified === false && c.latitude && c.longitude)
+  } else if (filterVerified.value === 'no_gps') {
+    result = result.filter(c => !c.latitude || !c.longitude)
   }
   return result
 })
@@ -270,13 +280,13 @@ function handleOptimisticUpdate(data) {
 }
 
 function clearFilters() {
-  search.value = ''
-  filterDepartment.value = ''
-  filterCategory.value = ''
-  filterStatus.value = ''
-  filterPriority.value = ''
-  currentPage.value = 1
-}
+    filterDepartment.value = ''
+    filterCategory.value = ''
+    filterStatus.value = ''
+    filterPriority.value = ''
+    filterVerified.value = ''
+    search.value = ''
+  }
 
 const visiblePages = computed(() => {
   const total = totalPages.value
@@ -517,14 +527,44 @@ useVoicePageHandlers({
               <option value="high">{{ t('complaint.priorityHigh') }}</option>
               <option value="emergency">{{ t('complaint.priorityEmergency') }}</option>
             </select>
+            <select
+              v-model="filterVerified"
+              class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-gray-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+            >
+              <option value="">{{ t('complaint.allVerified') }}</option>
+              <option value="verified">Verified</option>
+              <option value="unverified">Unverified</option>
+              <option value="no_gps">No GPS</option>
+            </select>
             <button
-              v-if="filterDepartment || filterCategory || filterStatus || filterPriority || search"
+              v-if="filterDepartment || filterCategory || filterStatus || filterPriority || filterVerified || search"
               @click="clearFilters"
               class="text-xs text-indigo-600 hover:text-indigo-700 font-medium px-2 py-1.5 transition-colors"
             >
               {{ t('complaint.clearAll') }}
             </button>
+            <div class="ml-auto flex items-center gap-1 border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                @click="viewMode = 'table'"
+                class="px-3 py-1.5 text-xs font-medium transition-colors"
+                :class="viewMode === 'table' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500 hover:text-gray-700'"
+              >
+                <i class="fas fa-table mr-1"></i>Table
+              </button>
+              <button
+                @click="viewMode = 'map'"
+                class="px-3 py-1.5 text-xs font-medium transition-colors"
+                :class="viewMode === 'map' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500 hover:text-gray-700'"
+              >
+                <i class="fas fa-map mr-1"></i>Map
+              </button>
+            </div>
           </div>
+        </div>
+
+        <!-- Map View -->
+        <div v-if="viewMode === 'map'" class="p-4">
+          <MapOverview :complaints="filteredItems" />
         </div>
 
         <!-- Desktop Table -->

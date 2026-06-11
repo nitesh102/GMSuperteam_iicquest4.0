@@ -164,7 +164,28 @@
                     </div>
                 </div>
 
-                <!-- Lat / Lng -->
+                <div v-if="gpsStatus === 'locating'" class="mb-4 rounded-lg bg-blue-50 border border-blue-200 p-3 flex items-center gap-3">
+                    <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                    <span class="text-sm text-blue-700">Detecting your location via GPS...</span>
+                </div>
+                <div v-if="gpsStatus === 'done'" class="mb-4 rounded-lg bg-green-50 border border-green-200 p-3 flex items-center gap-3">
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-sm text-green-700">Location detected via GPS</span>
+                    <span v-if="form.reporter_accuracy" class="ml-auto text-xs text-green-600">Accuracy: {{ Math.round(form.reporter_accuracy) }}m</span>
+                </div>
+                <div v-if="gpsStatus === 'error'" class="mb-4 rounded-lg bg-red-50 border border-red-200 p-4">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-red-800">Location Required</p>
+                            <p class="text-sm text-red-600 mt-1">{{ gpsError }}</p>
+                            <button @click="captureGps" class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-red-700 hover:text-red-800">
+                                <i class="fas fa-redo"></i> Retry
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Latitude</label>
@@ -364,7 +385,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import Modal from '@/Components/Modal.vue';
@@ -395,19 +416,62 @@ const emit = defineEmits(['close', 'success', 'submitting']);
 const isEditMode = computed(() => !!props.complaint);
 
 const form = useForm({
-    department_id:    props.complaint?.category?.department_id ?? '',
-    category_id:      props.complaint?.category_id ?? '',
-    title:            props.complaint?.title ?? '',
-    description:      props.complaint?.description ?? '',
-    location:         props.complaint?.location ?? '',
-    latitude:         props.complaint?.latitude ?? '',
-    longitude:        props.complaint?.longitude ?? '',
-    current_status:   props.complaint?.current_status ?? 'submitted',
-    priority:         props.complaint?.priority ?? 'medium',
-    assigned_to:      props.complaint?.assigned_to ?? '',
-    resolution_notes: props.complaint?.resolution_notes ?? '',
-    track_notes:      '',
+    department_id:      props.complaint?.category?.department_id ?? '',
+    category_id:        props.complaint?.category_id ?? '',
+    title:              props.complaint?.title ?? '',
+    description:        props.complaint?.description ?? '',
+    location:           props.complaint?.location ?? '',
+    latitude:           props.complaint?.latitude ?? '',
+    longitude:          props.complaint?.longitude ?? '',
+    current_status:     props.complaint?.current_status ?? 'submitted',
+    priority:           props.complaint?.priority ?? 'medium',
+    assigned_to:        props.complaint?.assigned_to ?? '',
+    resolution_notes:   props.complaint?.resolution_notes ?? '',
+    track_notes:        '',
+    reporter_latitude:  null,
+    reporter_longitude: null,
+    reporter_accuracy:  null,
 });
+
+const gpsStatus = ref('idle')
+const gpsError = ref(null)
+
+function captureGps() {
+    if (!navigator.geolocation) {
+        gpsStatus.value = 'error'
+        gpsError.value = 'Geolocation is not supported by your browser.'
+        return
+    }
+    gpsStatus.value = 'locating'
+    gpsError.value = null
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            form.latitude = pos.coords.latitude
+            form.longitude = pos.coords.longitude
+            form.reporter_latitude = pos.coords.latitude
+            form.reporter_longitude = pos.coords.longitude
+            form.reporter_accuracy = pos.coords.accuracy
+            gpsStatus.value = 'done'
+        },
+        (err) => {
+            gpsStatus.value = 'error'
+            switch (err.code) {
+                case err.PERMISSION_DENIED:
+                    gpsError.value = 'Location access is required to submit a complaint. Please enable location permissions in your browser settings.'
+                    break
+                case err.POSITION_UNAVAILABLE:
+                    gpsError.value = 'Location information is unavailable. Try again later.'
+                    break
+                case err.TIMEOUT:
+                    gpsError.value = 'The request to get your location timed out. Please try again.'
+                    break
+                default:
+                    gpsError.value = 'An unknown error occurred while getting your location.'
+            }
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    )
+}
 
 const filteredCategories = computed(() => {
     if (!form.department_id || !props.categories) return [];
@@ -493,6 +557,9 @@ function submitForm() {
         location:         form.location || null,
         latitude:         form.latitude || null,
         longitude:        form.longitude || null,
+        reporter_latitude:  form.reporter_latitude,
+        reporter_longitude: form.reporter_longitude,
+        reporter_accuracy:  form.reporter_accuracy,
     };
 
     if (isEditMode.value) {
@@ -549,9 +616,18 @@ function unregisterVoiceHandlers() {
     }
 }
 
+onMounted(() => {
+    if (!isEditMode.value) {
+        captureGps()
+    }
+})
+
 watch(() => props.show, (isOpen) => {
     if (isOpen) {
         registerVoiceHandlers();
+        if (!isEditMode.value) {
+            captureGps()
+        }
     } else {
         unregisterVoiceHandlers();
     }
