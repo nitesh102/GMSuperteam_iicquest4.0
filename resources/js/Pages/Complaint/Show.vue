@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({
     complaint:   Object,
@@ -150,7 +150,7 @@ const lifecycleStep = computed(() => {
         </div>
     </teleport>
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <div class="py-6">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
@@ -494,7 +494,7 @@ const lifecycleStep = computed(() => {
 
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <style scoped>

@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ComplaintModal from '@/Pages/Complaint/ComplaintModal.vue'
 import { useVoicePageHandlers } from '@/Composables/useVoiceContext'
 
@@ -329,7 +329,7 @@ useVoicePageHandlers({
     </div>
   </teleport>
 
-  <AuthenticatedLayout>
+  <AdminLayout>
     <div class="py-6 space-y-6">
       <!-- HEADER -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -452,7 +452,7 @@ useVoicePageHandlers({
               <input
                 v-model="search"
                 type="text"
-                placeholder="{{ t('complaint.searchPlaceholder') }}"
+                :placeholder="t('complaint.searchPlaceholder')"
                 class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-150 placeholder:text-gray-400"
               />
               <button
@@ -778,7 +778,7 @@ useVoicePageHandlers({
         </div>
       </div>
     </div>
-  </AuthenticatedLayout>
+  </AdminLayout>
 
   <!-- EDIT MODAL -->
   <ComplaintModal

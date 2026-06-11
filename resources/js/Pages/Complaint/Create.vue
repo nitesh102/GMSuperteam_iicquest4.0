@@ -2,7 +2,7 @@
 import { ref, watch, onMounted } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { useVoicePageHandlers } from '@/Composables/useVoiceContext';
 
 const { t } = useI18n();
@@ -88,7 +88,7 @@ onMounted(() => {
 <template>
     <Head :title="t('complaint.submitTitle')" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <!-- Flash toast -->
         <teleport to="body">
             <div v-if="flashMessage" class="fixed top-5 right-5 z-[100] animate-slide-in" @click="flashMessage = null">
@@ -322,7 +322,7 @@ onMounted(() => {
 
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <style scoped>
