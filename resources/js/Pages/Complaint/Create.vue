@@ -1,7 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import PageHeader from '@/Components/PageHeader.vue';
 
 const form = useForm({
     title:       '',
@@ -61,7 +62,7 @@ function submitForm() {
 <template>
     <Head title="Submit Complaint" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <!-- Flash toast -->
         <teleport to="body">
             <div v-if="flashMessage" class="fixed top-5 right-5 z-[100] animate-slide-in" @click="flashMessage = null">
@@ -74,11 +75,25 @@ function submitForm() {
             </div>
         </teleport>
 
-        <div class="py-6">
-            <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div>
+            <div class="max-w-3xl space-y-6">
+
+                <PageHeader
+                    title="Submit Complaint"
+                    description="Describe the issue - our AI will handle category and priority automatically."
+                >
+                    <template #actions>
+                        <Link
+                            :href="route('complaints.index')"
+                            class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-gray-50 hover:shadow-md"
+                        >
+                            Cancel
+                        </Link>
+                    </template>
+                </PageHeader>
 
                 <!-- Header -->
-                <div class="flex items-center justify-between">
+                <div class="hidden">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Submit Complaint</h1>
                         <p class="mt-1 text-sm text-gray-500">
@@ -95,7 +110,7 @@ function submitForm() {
                 </div>
 
                 <!-- AI badge -->
-                <div class="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 flex items-center gap-3">
+                <div class="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
                     <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-robot text-indigo-600 text-sm"></i>
                     </div>
@@ -105,7 +120,7 @@ function submitForm() {
                 </div>
 
                 <!-- Form Card -->
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-lg">
                     <div class="px-6 py-6 sm:px-8">
                         <form @submit.prevent="submitForm" class="space-y-6">
 
@@ -282,7 +297,7 @@ function submitForm() {
 
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <style scoped>

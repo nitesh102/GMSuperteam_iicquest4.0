@@ -13,15 +13,15 @@ defineEmits(['button-click', 'link-click'])
 </script>
 
 <template>
-  <div class="rounded-xl bg-white border border-gray-200 shadow-sm">
+  <div class="rounded-2xl bg-white border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-lg">
     <div class="flex flex-col items-center justify-center py-20 px-6">
       <!-- Icon -->
-      <div v-if="icon" class="rounded-full bg-red-50 p-8 mb-6">
+      <div v-if="icon" class="rounded-3xl bg-red-50 p-8 mb-6 shadow-inner">
         <component :is="icon" class="h-16 w-16 text-red-500" />
       </div>
 
       <!-- Title -->
-      <h3 class="text-3xl font-semibold text-gray-900 mb-3">{{ title }}</h3>
+      <h3 class="text-2xl font-bold text-gray-900 mb-3">{{ title }}</h3>
 
       <!-- Description -->
       <p class="text-gray-600 text-center mb-8 max-w-md leading-relaxed">{{ description }}</p>
@@ -30,14 +30,14 @@ defineEmits(['button-click', 'link-click'])
       <a
         v-if="buttonHref"
         :href="buttonHref"
-        class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-medium text-white hover:bg-red-600 transition mb-4"
+        class="inline-flex items-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md mb-4"
       >
         {{ buttonText }}
       </a>
       <button
         v-else-if="buttonText"
         @click="$emit('button-click')"
-        class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-medium text-white hover:bg-red-600 transition mb-4"
+        class="inline-flex items-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md mb-4"
       >
         {{ buttonText }}
       </button>

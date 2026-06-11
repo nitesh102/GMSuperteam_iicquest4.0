@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Head, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdminStatsCard from '@/Components/AdminStatsCard.vue'
+import PageHeader from '@/Components/PageHeader.vue'
 import { Line, Doughnut } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -181,20 +182,18 @@ const doughnutChartOptions = {
   <Head title="Dashboard" />
 
   <AdminLayout>
-   
+    <PageHeader
+      title="Dashboard"
+      description="Welcome back! Here's what's happening with citizen complaints."
+      :show-back="false"
+    >
+      <template #actions>
+        <button class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-gray-50 hover:shadow-md">
+          Jun 4 - Jun 10, 2026
+        </button>
+      </template>
+    </PageHeader>
 
-    <!-- Page Header -->
-    <div class="mb-8 flex items-start justify-between">
-      <div>
-        <h1 class="text-3xl font-semibold text-gray-900">Dashboard</h1>
-        <p class="text-sm text-gray-500 mt-1">Welcome back! Here's what's happening with citizen complaints.</p>
-      </div>
-      <button class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-        📅 Jun 4 – Jun 10, 2026
-      </button>
-    </div>
-
-    <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <AdminStatsCard
         v-for="stat in stats"
@@ -206,18 +205,15 @@ const doughnutChartOptions = {
       />
     </div>
 
-    <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Complaints Over Time Chart -->
-      <div class="lg:col-span-2 rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
+      <div class="lg:col-span-2 rounded-2xl bg-white border border-gray-200 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
         <h2 class="text-lg font-semibold text-gray-900 mb-6">Complaints Over Time</h2>
         <div class="h-80">
           <Line :data="lineChartData" :options="lineChartOptions" />
         </div>
       </div>
 
-      <!-- Top Departments Chart -->
-      <div class="rounded-xl bg-white border border-gray-200 p-6 shadow-sm flex flex-col">
+      <div class="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
         <h2 class="text-lg font-semibold text-gray-900 mb-6">Top Departments</h2>
         <div class="relative flex-1 flex items-center justify-center">
           <div class="absolute inset-0 flex items-center justify-center">

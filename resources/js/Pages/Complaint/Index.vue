@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import AdminLayout from '@/Layouts/AdminLayout.vue'
+import PageHeader from '@/Components/PageHeader.vue'
 import ComplaintModal from '@/Pages/Complaint/ComplaintModal.vue'
 
 const { complaints, departments, categories, users } = usePage().props
@@ -297,34 +298,32 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
     </div>
   </teleport>
 
-  <AuthenticatedLayout>
-    <div class="py-6 space-y-6">
-      <!-- HEADER -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Complaints</h1>
-          <p class="mt-1 text-sm text-gray-500">
-            Track and manage citizen complaints across departments.
-          </p>
-        </div>
+  <AdminLayout>
+    <div class="space-y-6">
+      <PageHeader
+        title="Complaints"
+        description="Manage citizen complaints submitted by residents."
+      >
+        <template #actions>
         <Link
           :href="route('complaints.create')"
-          class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 hover:shadow-md transition-all duration-150 flex-shrink-0"
+          class="inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-red-500 px-5 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md"
         >
           <i class="fas fa-plus text-xs"></i>
           New Complaint
         </Link>
-      </div>
+        </template>
+      </PageHeader>
 
       <!-- SKELETON LOADING -->
       <div v-if="loading" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div v-for="n in 5" :key="n" class="bg-white rounded-xl border border-gray-200 p-5 animate-pulse">
+          <div v-for="n in 5" :key="n" class="bg-white rounded-2xl border border-gray-200 p-5 animate-pulse">
             <div class="h-3 w-20 bg-gray-200 rounded mb-3"></div>
             <div class="h-6 w-12 bg-gray-200 rounded"></div>
           </div>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-6 animate-pulse space-y-4">
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse space-y-4">
           <div class="h-4 w-48 bg-gray-200 rounded"></div>
           <div class="h-10 bg-gray-200 rounded-lg"></div>
           <div class="space-y-3">
@@ -335,7 +334,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
 
       <!-- STATS CARDS -->
       <div v-if="!loading && hasItems" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <div class="bg-white rounded-xl border border-gray-200 p-5 transition-all duration-200 hover:shadow-md hover:border-gray-300">
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
               <i class="fas fa-flag text-indigo-600 text-sm"></i>
@@ -346,7 +345,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
             </div>
           </div>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-5 transition-all duration-200 hover:shadow-md hover:border-gray-300">
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center flex-shrink-0">
               <i class="fas fa-clock text-yellow-600 text-sm"></i>
@@ -357,7 +356,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
             </div>
           </div>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-5 transition-all duration-200 hover:shadow-md hover:border-gray-300">
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
               <i class="fas fa-spinner text-blue-600 text-sm"></i>
@@ -368,7 +367,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
             </div>
           </div>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-5 transition-all duration-200 hover:shadow-md hover:border-gray-300">
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
               <i class="fas fa-check-circle text-green-600 text-sm"></i>
@@ -379,7 +378,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
             </div>
           </div>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-5 transition-all duration-200 hover:shadow-md hover:border-gray-300">
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
               <i class="fas fa-shield-alt text-red-600 text-sm"></i>
@@ -403,7 +402,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
         </p>
         <Link
           :href="route('complaints.create')"
-          class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 hover:shadow-md transition-all duration-150"
+          class="inline-flex items-center gap-2 rounded-xl bg-red-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md"
         >
           <i class="fas fa-plus text-xs"></i>
           Submit Complaint
@@ -411,7 +410,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
       </div>
 
       <!-- TABLE CARD -->
-      <div v-if="!loading && hasItems" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div v-if="!loading && hasItems" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
         <!-- Toolbar + Filters -->
         <div class="p-4 border-b border-gray-100 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -495,7 +494,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
         <div class="hidden md:block overflow-x-auto">
           <table class="w-full">
             <thead>
-              <tr class="border-b border-gray-100 bg-gray-50/50">
+              <tr class="border-b border-gray-100 bg-gray-50">
                 <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">#</th>
                 <th
                   @click="toggleSort('title')"
@@ -545,7 +544,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
               <tr
                 v-for="item in paginatedItems"
                 :key="item.id"
-                class="group transition-colors duration-150 hover:bg-indigo-50/40"
+                class="group transition-colors duration-150 hover:bg-gray-50"
               >
                 <td class="px-5 py-4">
                   <span class="text-xs font-mono text-gray-400">{{ item.complaint_no }}</span>
@@ -779,7 +778,7 @@ watch([filterCategory, filterStatus, filterPriority], () => { currentPage.value 
         </div>
       </div>
     </div>
-  </AuthenticatedLayout>
+  </AdminLayout>
 
   <!-- EDIT MODAL -->
   <ComplaintModal

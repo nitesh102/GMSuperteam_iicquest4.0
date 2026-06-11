@@ -1,9 +1,10 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
 import { Head } from '@inertiajs/vue3';
+import PageHeader from '@/Components/PageHeader.vue';
 
 defineProps({
     mustVerifyEmail: {
@@ -18,19 +19,16 @@ defineProps({
 <template>
     <Head title="Profile" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800"
-            >
-                Profile
-            </h2>
-        </template>
+    <AdminLayout>
+        <PageHeader
+            title="Profile"
+            description="Manage your account information, password, and preferences."
+        />
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+        <div>
+            <div class="max-w-7xl space-y-6">
                 <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
+                    class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-8"
                 >
                     <UpdateProfileInformationForm
                         :must-verify-email="mustVerifyEmail"
@@ -40,7 +38,7 @@ defineProps({
                 </div>
 
                 <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
+                    class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-8"
                 >
                     <UpdatePasswordForm class="max-w-xl" />
                 </div>
@@ -52,5 +50,5 @@ defineProps({
 <!--                </div>-->
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

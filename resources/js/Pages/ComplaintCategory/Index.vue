@@ -3,11 +3,8 @@ import { ref, computed, watch } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdminDataTable from '@/Components/AdminDataTable.vue'
-<<<<<<< HEAD
+import PageHeader from '@/Components/PageHeader.vue'
 import ComplaintCategoryModal from '@/Pages/ComplaintCategory/ComplaintCategoryModal.vue'
-=======
-import ComplaintCategoryModal from './ComplaintCategoryModal.vue'
->>>>>>> f3dc52ac83576c2ed1e0b81e13c6826220779da9
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const page = usePage()
@@ -90,25 +87,23 @@ const columns = [
             </Transition>
         </Teleport>
 
-        <!-- Page Header -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-semibold text-gray-900">Complaint Categories</h1>
-                    <p class="mt-1 text-sm text-gray-500">Manage complaint categories for departments.</p>
-                </div>
+        <PageHeader
+            title="Complaint Categories"
+            description="Manage complaint categories for departments."
+        >
+            <template #actions>
                 <button
                     @click="openCreateModal"
-                    class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-medium text-white hover:bg-red-600 transition"
+                    class="inline-flex items-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md"
                 >
                     <PlusIcon class="h-5 w-5" />
                     New Category
                 </button>
-            </div>
-        </div>
+            </template>
+        </PageHeader>
 
         <!-- Summary Card -->
-        <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
+        <div class="mb-6 rounded-2xl bg-white border border-gray-200 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500">Total Categories</p>
@@ -153,7 +148,7 @@ const columns = [
                     <button
                         type="button"
                         @click="openEditModal(row)"
-                        class="text-blue-500 hover:text-blue-600 transition"
+                        class="rounded-lg p-2 text-blue-500 transition-all duration-200 hover:scale-110 hover:bg-blue-50 hover:text-blue-600"
                         title="Edit"
                     >
                         <PencilIcon class="h-4 w-4" />
@@ -161,7 +156,7 @@ const columns = [
                     <button
                         type="button"
                         @click="deleteCategory(row)"
-                        class="text-red-500 hover:text-red-600 transition"
+                        class="rounded-lg p-2 text-red-500 transition-all duration-200 hover:scale-110 hover:bg-red-50 hover:text-red-600"
                         title="Delete"
                     >
                         <TrashIcon class="h-4 w-4" />

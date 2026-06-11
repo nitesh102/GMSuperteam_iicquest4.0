@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdminDataTable from '@/Components/AdminDataTable.vue'
+import PageHeader from '@/Components/PageHeader.vue'
 import DepartmentModal from './DepartmentModal.vue'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
@@ -75,25 +76,23 @@ const handleSuccess = () => {
   <Head title="Departments" />
 
   <AdminLayout>
-    <!-- Page Header -->
-    <div class="mb-8">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-semibold text-gray-900">Departments</h1>
-          <p class="text-sm text-gray-500 mt-1">Manage departments for complaint routing and organization.</p>
-        </div>
+    <PageHeader
+      title="Departments"
+      description="Manage departments for complaint routing and organization."
+    >
+      <template #actions>
         <button
           @click="openCreateModal"
-          class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-medium text-white hover:bg-red-600 transition"
+          class="inline-flex items-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md"
         >
           <PlusIcon class="h-5 w-5" />
           New Department
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Summary Card -->
-    <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
+    <div class="mb-6 rounded-2xl bg-white border border-gray-200 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-sm text-gray-500">Total Departments</p>
@@ -120,11 +119,11 @@ const handleSuccess = () => {
         <div class="flex items-center gap-3">
           <button
             @click="openEditModal(row)"
-            class="text-blue-500 hover:text-blue-600 font-medium text-sm transition"
+            class="rounded-lg p-2 text-blue-500 transition-all duration-200 hover:scale-110 hover:bg-blue-50 hover:text-blue-600"
           >
             <PencilIcon class="h-4 w-4" />
           </button>
-          <button class="text-red-500 hover:text-red-600 font-medium text-sm transition">
+          <button class="rounded-lg p-2 text-red-500 transition-all duration-200 hover:scale-110 hover:bg-red-50 hover:text-red-600">
             <TrashIcon class="h-4 w-4" />
           </button>
         </div>
