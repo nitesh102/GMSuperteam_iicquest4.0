@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\ComplaintCategory;
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -14,6 +15,7 @@ class ComplaintFactory extends Factory
             'complaint_no' => 'CMP-' . now()->format('Ymd') . '-' . strtoupper(substr(uniqid(), -5)),
             'citizen_id' => User::factory(),
             'category_id' => ComplaintCategory::factory(),
+            'department_id' => fn (array $attrs) => ComplaintCategory::find($attrs['category_id'])?->department_id ?? Department::factory(),
             'title' => fake()->sentence(),
             'description' => fake()->paragraph(),
             'location' => fake()->optional()->address(),

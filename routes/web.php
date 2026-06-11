@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\CitizenController;
 use App\Http\Controllers\ComplaintCategoryController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DepartmentController;
@@ -37,9 +38,20 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('departments', DepartmentController::class)->except(['create', 'edit', 'show']);
     Route::resource('complaint-categories', ComplaintCategoryController::class)->except(['create', 'edit', 'show']);
+});
+
+Route::middleware(['auth', 'role:Superadmin'])->group(function () {
     Route::resource('complaints', ComplaintController::class)->except(['edit', 'show']);
     Route::get('complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
+});
 
+Route::middleware(['auth', 'role:Citizen'])->prefix('citizen')->name('citizen.')->group(function () {
+    Route::get('/dashboard', [CitizenController::class, 'dashboard'])->name('dashboard');
+    Route::get('/complaints', [CitizenController::class, 'index'])->name('complaints.index');
+    Route::get('/complaints/create', [CitizenController::class, 'create'])->name('complaints.create');
+    Route::post('/complaints', [CitizenController::class, 'store'])->name('complaints.store');
+    Route::get('/complaints/{complaint}', [CitizenController::class, 'show'])->name('complaints.show');
+    Route::post('/voice/interpret', [VoiceCommandController::class, 'interpret'])->name('voice.interpret');
 });
 
 require __DIR__.'/auth.php';

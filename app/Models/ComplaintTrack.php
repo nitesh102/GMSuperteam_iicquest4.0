@@ -12,7 +12,7 @@ class ComplaintTrack extends Model
         'old_status',
         'new_status',
         'changed_by',
-        'notes',
+        'remarks',
     ];
 
     public function complaint(): BelongsTo

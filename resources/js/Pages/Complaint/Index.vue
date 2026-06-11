@@ -604,7 +604,7 @@ useVoicePageHandlers({
                   <span class="text-sm text-gray-500">{{ item.category?.name || '—' }}</span>
                 </td>
                 <td class="px-5 py-4 hidden lg:table-cell">
-                  <span class="text-sm text-gray-500">{{ item.category?.department?.name || '—' }}</span>
+                  <span class="text-sm text-gray-500">{{ item.department?.name || item.category?.department?.name || '—' }}</span>
                 </td>
                 <td class="px-5 py-4">
                   <span
@@ -703,7 +703,13 @@ useVoicePageHandlers({
               </span>
               <span class="text-xs text-gray-400">{{ item.citizen?.name || '—' }}</span>
             </div>
-            <p class="text-xs text-gray-400 mt-1.5 ml-11 truncate">{{ item.category?.name || 'No category' }}</p>
+            <div class="flex items-center gap-2 mt-1.5 ml-11">
+              <span class="text-xs text-gray-400">{{ item.category?.name || 'No category' }}</span>
+              <span v-if="item.department?.name || item.category?.department?.name" class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                <i class="fas fa-building text-[9px]"></i>
+                {{ item.department?.name || item.category?.department?.name }}
+              </span>
+            </div>
           </div>
         </div>
 

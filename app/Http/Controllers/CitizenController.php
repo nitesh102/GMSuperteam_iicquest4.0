@@ -16,7 +16,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Services\ComplaintAiService;
 
-class ComplaintController extends Controller
+class CitizenController extends Controller
 {
     private const STATUS_TRANSITIONS = [
         'submitted'    => ['under_review', 'rejected'],
@@ -35,104 +35,48 @@ class ComplaintController extends Controller
         $this->aiService = $aiService;
     }
 
-    public function create(): Response
+    public function dashboard(): Response
     {
-        return Inertia::render('Complaint/Create', [
-            'departments' => Department::orderBy('name')->get(['id', 'name']),
-            'categories'  => ComplaintCategory::with('department')->orderBy('name')->get(),
+        $userId = request()->user()->id;
+
+        $complaints = Complaint::where('citizen_id', $userId)
+            ->with(['category.department', 'department'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('Citizen/Dashboard', [
+            'stats' => [
+                'total'      => $complaints->count(),
+                'pending'    => $complaints->whereIn('current_status', ['submitted', 'under_review'])->count(),
+                'inProgress' => $complaints->whereIn('current_status', ['assigned', 'in_progress'])->count(),
+                'resolved'   => $complaints->where('current_status', 'resolved')->count(),
+            ],
+            'recentComplaints' => $complaints->take(5)->values(),
         ]);
     }
 
     public function index(): Response
     {
-        $complaints = Complaint::with([
-            'citizen',
-            'category.department',
-            'department',
-            'assignee',
-            'attachments',
-            'tracks.changer',
-        ])->orderBy('created_at', 'desc')->get();
+        $complaints = Complaint::where('citizen_id', request()->user()->id)
+            ->with([
+                'category.department',
+                'department',
+                'attachments',
+                'tracks.changer',
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        return Inertia::render('Complaint/Index', [
+        return Inertia::render('Citizen/Index', [
             'complaints'  => $complaints,
             'departments' => Department::orderBy('name')->get(['id', 'name']),
             'categories'  => ComplaintCategory::with('department')->orderBy('name')->get(),
-            'users'       => User::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
-    public function getGroupedByLocation(): Response
+    public function create(): Response
     {
-        $complaints = Complaint::with([
-            'citizen',
-            'category.department',
-            'assignee',
-        ])
-        ->whereNotNull('location')
-        ->where('location', '!=', '')
-        ->orderBy('created_at', 'desc')
-        ->get();
-
-        $groupedComplaints = $complaints
-            ->groupBy(function ($complaint) {
-                $location = strtolower(trim($complaint->location));
-                $parts = explode(',', $location);
-                return trim($parts[0]);
-            })
-            ->map(function ($group, $location) {
-                return [
-                    'location' => ucfirst($location),
-                    'count' => $group->count(),
-                    'complaints' => $group->take(5)->map(function ($complaint) {
-                        return [
-                            'id' => $complaint->id,
-                            'complaint_no' => $complaint->complaint_no,
-                            'title' => $complaint->title,
-                            'description' => $complaint->description,
-                            'location' => $complaint->location,
-                            'priority' => $complaint->priority,
-                            'current_status' => $complaint->current_status,
-                            'created_at' => $complaint->created_at->format('Y-m-d H:i'),
-                            'citizen' => $complaint->citizen?->name,
-                            'category' => $complaint->category?->name,
-                            'department' => $complaint->category?->department?->name,
-                        ];
-                    }),
-                ];
-            })
-            ->sortByDesc('count')
-            ->values();
-
-        $total  = Complaint::count();
-        $open   = Complaint::whereIn('current_status', ['submitted', 'under_review'])->count();
-        $inProg = Complaint::where('current_status', 'in_progress')->count();
-        $resolved = Complaint::where('current_status', 'resolved')->count();
-
-        return Inertia::render('Dashboard', [
-            'groupedComplaints' => $groupedComplaints,
-            'stats' => [
-                'total'      => $total,
-                'pending'    => $open,
-                'inProgress' => $inProg,
-                'resolved'   => $resolved,
-            ],
-        ]);
-    }
-
-    public function show(Complaint $complaint): Response
-    {
-        $complaint->load([
-            'citizen',
-            'category.department',
-            'department',
-            'attachments',
-            'tracks.changer',
-            'aiAnalysis',
-        ]);
-
-        return Inertia::render('Complaint/Show', [
-            'complaint'   => $complaint,
+        return Inertia::render('Citizen/Create', [
             'departments' => Department::orderBy('name')->get(['id', 'name']),
             'categories'  => ComplaintCategory::with('department')->orderBy('name')->get(),
         ]);
@@ -158,7 +102,6 @@ class ComplaintController extends Controller
             }
         }
 
-        // Phase 1: deterministic local filter — always runs first, never skipped
         if ($this->isObviousSpam($validated['title'], $validated['description'])) {
             throw ValidationException::withMessages(['spam' => 'This submission does not appear to be a genuine civic complaint. Please describe a real issue.']);
         }
@@ -195,7 +138,6 @@ class ComplaintController extends Controller
             ];
         }
 
-        // Preserve user-selected category when provided; otherwise use AI determination
         if (empty($validated['category_id'])) {
             $deptName     = !empty($ai['department_name']) ? $ai['department_name'] : 'General';
             $categoryName = !empty($ai['category_name'])  ? $ai['category_name']  : 'General Complaint';
@@ -250,98 +192,29 @@ class ComplaintController extends Controller
             }
         }
 
-        return redirect()->route('complaints.index')
+        return redirect()->route('citizen.complaints.index')
             ->with('success', 'Complaint submitted successfully. CiviSense AI analysis complete.');
     }
 
-    public function update(Request $request, Complaint $complaint): RedirectResponse
+    public function show(Complaint $complaint): Response
     {
-        $validated = $request->validate([
-            'title'            => ['required', 'string', 'max:255'],
-            'description'      => ['required', 'string', 'max:10000'],
-            'category_id'      => ['required', 'exists:complaint_categories,id'],
-            'current_status'   => ['required', 'string', 'in:submitted,under_review,assigned,in_progress,resolved,rejected,closed'],
-            'priority'         => ['required', 'string', 'in:low,medium,high,emergency'],
-            'location'         => ['nullable', 'string', 'max:500'],
-            'latitude'         => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude'        => ['nullable', 'numeric', 'between:-180,180'],
-            'assigned_to'      => ['nullable', 'exists:users,id'],
-            'resolution_notes' => ['nullable', 'string', 'max:5000'],
-            'before_photo'     => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
-            'after_photo'      => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
-            'remarks'          => ['nullable', 'string', 'max:1000'],
+        if ($complaint->citizen_id !== request()->user()->id) {
+            abort(403, 'You can only view your own complaints.');
+        }
+
+        $complaint->load([
+            'category.department',
+            'department',
+            'attachments',
+            'tracks.changer',
+            'aiAnalysis',
         ]);
 
-        $oldStatus = $complaint->current_status;
-        $newStatus = $validated['current_status'];
-
-        if ($oldStatus !== $newStatus) {
-            $allowed = self::STATUS_TRANSITIONS[$oldStatus] ?? [];
-            if (!in_array($newStatus, $allowed)) {
-                throw ValidationException::withMessages([
-                    'current_status' => "Cannot transition from \"{$oldStatus}\" to \"{$newStatus}\".",
-                ]);
-            }
-        }
-
-        $updateData = [
-            'title'            => $validated['title'],
-            'description'      => $validated['description'],
-            'category_id'      => $validated['category_id'],
-            'department_id'    => ComplaintCategory::where('id', $validated['category_id'])->value('department_id'),
-            'current_status'   => $newStatus,
-            'priority'         => $validated['priority'],
-            'location'         => $validated['location'] ?? null,
-            'latitude'         => $validated['latitude'] ?? null,
-            'longitude'        => $validated['longitude'] ?? null,
-            'assigned_to'      => $validated['assigned_to'] ?? null,
-            'resolution_notes' => $validated['resolution_notes'] ?? null,
-            'updated_by'       => $request->user()->id,
-        ];
-
-        if ($oldStatus !== 'resolved' && $newStatus === 'resolved') {
-            $updateData['resolved_at'] = now();
-        } elseif ($oldStatus === 'resolved' && $newStatus !== 'resolved') {
-            $updateData['resolved_at'] = null;
-        }
-
-        if ($request->hasFile('before_photo')) {
-            $updateData['before_photo'] = $request->file('before_photo')
-                ->store('complaints/' . $complaint->id . '/resolution', 'public');
-        }
-
-        if ($request->hasFile('after_photo')) {
-            $updateData['after_photo'] = $request->file('after_photo')
-                ->store('complaints/' . $complaint->id . '/resolution', 'public');
-        }
-
-        $complaint->update($updateData);
-
-        if ($oldStatus !== $newStatus) {
-            if (empty(trim($validated['remarks'] ?? ''))) {
-                throw ValidationException::withMessages([
-                    'remarks' => 'Remarks are required when changing the status.',
-                ]);
-            }
-            ComplaintTrack::create([
-                'complaint_id' => $complaint->id,
-                'old_status'   => $oldStatus,
-                'new_status'   => $newStatus,
-                'changed_by'   => $request->user()->id,
-                'remarks'      => $validated['remarks'],
-            ]);
-        }
-
-        return redirect()->route('complaints.show', $complaint)
-            ->with('success', 'Complaint updated successfully.');
-    }
-
-    public function destroy(Complaint $complaint): RedirectResponse
-    {
-        $complaint->delete();
-
-        return redirect()->route('complaints.index')
-            ->with('success', 'Complaint deleted successfully.');
+        return Inertia::render('Citizen/Show', [
+            'complaint'   => $complaint,
+            'departments' => Department::orderBy('name')->get(['id', 'name']),
+            'categories'  => ComplaintCategory::with('department')->orderBy('name')->get(),
+        ]);
     }
 
     private function calculateDueAt(string $priority): \Carbon\Carbon
@@ -359,30 +232,22 @@ class ComplaintController extends Controller
         $title = trim($title);
         $desc  = trim($description);
 
-        // ── Rule 1: title made entirely of filler / greeting / test / stop words ──
         $fillerWords = [
-            // greetings & farewells
             'hello', 'hi', 'hey', 'howdy', 'sup', 'yo', 'hola', 'namaste', 'greetings', 'salut',
             'bye', 'goodbye', 'cya', 'later', 'adios', 'tata', 'farewell',
-            // affirmations / negations
             'yes', 'no', 'yep', 'nope', 'yeah', 'nah', 'ok', 'okay', 'sure', 'alright',
-            // test / dummy
             'test', 'testing', 'tested', 'check', 'checking', 'checked',
             'try', 'trying', 'tried', 'demo', 'dummy', 'sample', 'fake', 'trial', 'temp', 'temporary',
-            // gibberish keyboard patterns
             'asdf', 'qwerty', 'zxcv', 'qazwsx', 'asd', 'qwe', 'zxc',
             'abcd', 'abcde', 'efgh', 'ijkl', 'mnop', 'qrst', 'uvwx', 'wxyz',
             'aaaa', 'bbbb', 'cccc', 'dddd', 'eeee', 'ffff', 'gggg', 'hhhh',
             'aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii', 'jjj', 'kkk', 'lll',
             'abc', 'xyz', 'xyzabc', 'abcxyz',
-            // informal / social media
             'lol', 'omg', 'wtf', 'lmao', 'rofl', 'lmfao', 'brb', 'afk',
             'idk', 'tbh', 'imho', 'imo', 'smh', 'fyi', 'btw', 'ttyl', 'haha', 'hehe', 'hihi',
-            // common filler expressions
             'wow', 'great', 'nice', 'good', 'bad', 'cool', 'awesome', 'amazing',
             'terrible', 'horrible', 'please', 'sorry', 'thanks', 'thank', 'thx', 'fine',
             'interesting', 'random', 'whatever', 'nothing', 'none', 'na', 'nil', 'null',
-            // articles, pronouns, conjunctions, question words (stop words)
             'a', 'an', 'the', 'this', 'that', 'these', 'those',
             'it', 'its', 'i', 'me', 'my', 'mine', 'we', 'us', 'our', 'you', 'your',
             'he', 'she', 'they', 'them', 'their', 'his', 'her',
@@ -396,49 +261,35 @@ class ComplaintController extends Controller
             return true;
         }
 
-        // ── Rule 2: check for genuine civic / problem / location keywords ──
         $genuinePattern = '/\b('
-            // roads & transport
             . 'road|roads|pothole|potholes|speed\s*bump|divider|median|footover|overbridge|underbridge|'
             . 'pedestrian|crossing|zebra|flyover|highway|expressway|bypass|service\s*road|mud\s*road|'
             . 'bridge|underpass|junction|roundabout|lane|avenue|street|streets|footpath|path|pavement|'
             . 'sidewalk|culvert|manhole|parking|bus\s*stand|auto\s*stand|taxi\s*stand|'
-            // water & drainage
             . 'water|drinking\s*water|tap|pipeline|pipe|pipes|waterline|leakage|seepage|'
             . 'flood|flooding|waterlogging|puddle|stagnant|drain|drainage|gutter|sewage|sewer|'
             . 'borewell|tanker|reservoir|canal|ditch|trench|clogged|overflow|blockage|'
             . 'contamination|dirty\s*water|water\s*supply|shortage|outage|'
-            // electricity & utilities
             . 'electricity|electric|power|blackout|load\s*shedding|transformer|substation|'
             . 'short\s*circuit|sparking|wire|wiring|pylon|pole|post|meter|'
-            // waste & sanitation
             . 'garbage|waste|trash|rubbish|debris|litter|sewage|dump|dumping|landfill|'
             . 'open\s*defecation|urinal|toilet|dustbin|bins|collection|segregation|compost|'
             . 'cleanliness|sanitation|hygiene|slaughterhouse|'
-            // lighting & public infrastructure
             . 'light|lamp|streetlight|street\s*light|signal|traffic\s*signal|'
-            // public spaces & parks
             . 'park|garden|playground|ground|open\s*space|walkway|bench|public\s*property|'
-            // buildings & construction
             . 'building|construction|demolition|structure|wall|compound|boundary|encroachment|'
             . 'unauthorized|illegal|unsafe|dangerous|premises|demolish|collapse|crack|broken|'
-            // trees & environment
             . 'tree|branch|fallen|overgrown|trimming|pruning|pollution|dust|smoke|burning|'
             . 'noise|odor|smell|stench|fumes|landslide|erosion|'
-            // animals & pests
             . 'stray|dog|cow|cattle|animal|pest|rat|rodent|mosquito|dengue|malaria|insect|'
-            // emergency & safety
             . 'danger|hazard|risk|accident|injury|death|fire|explosion|emergency|'
             . 'live\s*wire|slippery|visibility|missing|'
-            // civic services
             . 'hospital|dispensary|clinic|ambulance|school|college|teacher|education|'
             . 'library|ration|pension|welfare|certificate|license|permit|fee|tax|bill|penalty|'
-            // general complaint language
             . 'complaint|issue|problem|concern|request|fix|repair|replace|remove|clean|'
             . 'damage|damaged|blocked|missing|broken|not\s*working|need|needs|required|'
             . 'maintenance|supply|collection|infrastructure|civic|municipal|government|'
             . 'authority|department|office|grievance|vandalism|report|'
-            // location words
             . 'area|zone|ward|sector|locality|colony|neighborhood|society|town|village|'
             . 'district|near|beside|opposite|station|market|'
             . ')\b/i';
@@ -446,11 +297,9 @@ class ComplaintController extends Controller
         $hasGenuineContent = preg_match($genuinePattern, $title) || preg_match($genuinePattern, $desc);
 
         if (!$hasGenuineContent) {
-            // No genuine civic content — reject if description is short
             if (mb_strlen($desc) < 120) {
                 return true;
             }
-            // Longer submissions with zero civic keywords: check for meta/test language
             $metaPattern = '/\b('
                 . 'test|testing|demo|dummy|sample|fake|trial|'
                 . 'check|checking|spam|filter|'
@@ -462,15 +311,12 @@ class ComplaintController extends Controller
             return (bool) preg_match($metaPattern, $desc);
         }
 
-        // ── Rule 3: has civic content but is clearly a test / meta submission ──
         $metaCommentaryPattern = '/('
-            // explicit test declarations
             . 'just\s+test(ing)?|'
             . 'this\s+(is\s+)?(a\s+|just\s+(a\s+)?)?(test|check|dummy|fake|sample)|'
             . 'i\s+am\s+(just\s+)?(testing|checking)|'
             . 'i\'m\s+(just\s+)?(testing|checking)|'
             . 'testing\s+this|checking\s+this|'
-            // spam filter probing
             . 'checking\s+(spam|filter)|testing\s+(spam|filter)|bypass\s+(spam|filter)|'
             . 'does\s+this\s+(pass|work|go\s+through|bypass)|'
             . 'will\s+this\s+(pass|work|go\s+through)|'
@@ -480,7 +326,6 @@ class ComplaintController extends Controller
             . 'went\s+through\s+(the\s+)?(spam|filter)|'
             . 'passed\s+(the\s+)?(spam|filter)|'
             . 'how\s+did\s+this\s+pass|how\s+is\s+this\s+passing|'
-            // explicit dismissals
             . 'ignore\s+this|please\s+ignore|delete\s+this|discard\s+this|'
             . 'not\s+a\s+real\s+complaint|fake\s+complaint|this\s+is\s+fake|'
             . 'random\s+text|filler\s+text|lorem\s+ipsum|placeholder'
@@ -507,7 +352,6 @@ class ComplaintController extends Controller
     {
         $cleaned = strip_tags($description);
         $cleaned = preg_replace('/\s+/', ' ', $cleaned);
-
         return mb_strlen($cleaned) > 200
             ? mb_substr($cleaned, 0, 200) . '...'
             : $cleaned;

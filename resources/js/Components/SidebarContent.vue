@@ -13,6 +13,8 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle', 'close'])
 const page  = usePage()
+const roles = computed(() => page.props.auth?.roles ?? [])
+const isCitizen = computed(() => roles.value.includes('Citizen'))
 
 const currentPath = computed(() =>
     (page.url || (typeof window !== 'undefined' ? window.location.pathname : '/')).split('?')[0]

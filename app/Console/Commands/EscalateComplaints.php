@@ -36,7 +36,7 @@ class EscalateComplaints extends Command
                 'old_status'   => $complaint->current_status,
                 'new_status'   => $complaint->current_status,
                 'changed_by'   => null,
-                'notes'        => "Auto-escalated to {$nextPriority} priority (SLA breached, escalation #{$complaint->escalation_level}).",
+                'remarks'      => "Auto-escalated to {$nextPriority} priority (SLA breached, escalation #{$complaint->escalation_level}).",
             ]);
         }
 

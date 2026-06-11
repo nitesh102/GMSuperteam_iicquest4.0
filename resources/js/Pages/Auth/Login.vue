@@ -181,7 +181,7 @@
 
           <footer class="text-center mt-9 text-sm text-slate-500">
             <span>Don't have an account? </span>
-            <a href="#signup" class="text-[#E63946] font-semibold no-underline hover:underline ml-1">Sign up</a>
+            <Link :href="route('register')" class="text-[#E63946] font-semibold no-underline hover:underline ml-1">Sign up</Link>
           </footer>
 
         </div>
@@ -194,7 +194,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import AppLogo from '@/Components/common/AppLogo.vue';
 
 // Inertia Form for login submission
