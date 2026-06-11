@@ -87,7 +87,7 @@ class ComplaintTest extends TestCase
         $response->assertSessionHasErrors('description');
     }
 
-    public function test_complaint_creation_requires_category_id(): void
+    public function test_spam_filter_rejects_non_civic_submissions(): void
     {
         $user = User::factory()->create();
 
@@ -96,7 +96,7 @@ class ComplaintTest extends TestCase
             'description' => 'Test description.',
         ]);
 
-        $response->assertSessionHasErrors('category_id');
+        $response->assertSessionHasErrors('spam');
     }
 
     public function test_complaint_creation_requires_valid_category(): void
@@ -132,13 +132,13 @@ class ComplaintTest extends TestCase
     {
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
-        $complaint = Complaint::factory()->create();
+        $complaint = Complaint::factory()->status('under_review')->create();
 
         $response = $this->actingAs($user)->put("/complaints/{$complaint->id}", [
             'title' => 'Updated Complaint',
             'description' => 'Updated description.',
             'category_id' => $category->id,
-            'current_status' => 'in_progress',
+            'current_status' => 'assigned',
             'priority' => 'high',
             'location' => 'Updated Location',
         ]);
@@ -150,7 +150,7 @@ class ComplaintTest extends TestCase
             'id' => $complaint->id,
             'title' => 'Updated Complaint',
             'description' => 'Updated description.',
-            'current_status' => 'in_progress',
+            'current_status' => 'assigned',
             'priority' => 'high',
             'location' => 'Updated Location',
             'updated_by' => $user->id,
@@ -323,10 +323,10 @@ class ComplaintTest extends TestCase
         $this->forceSimulationFallback();
         $user = User::factory()->create();
         $category = ComplaintCategory::factory()->create();
-        $longText = str_repeat('Lorem ipsum dolor sit amet ', 20); // ~400 chars
+        $longText = 'There is a large pothole on Main Street near the junction. ' . str_repeat('This is causing major traffic issues for commuters every single day. ', 10);
 
         $this->actingAs($user)->post('/complaints', [
-            'title' => 'Long Complaint',
+            'title' => 'Pothole on Main Street',
             'description' => $longText,
             'category_id' => $category->id,
         ]);

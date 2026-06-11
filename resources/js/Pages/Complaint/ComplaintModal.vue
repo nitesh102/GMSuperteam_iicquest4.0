@@ -254,33 +254,6 @@
                         </div>
                     </div>
 
-                    <!-- Assign To -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Assign To</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-user-check text-gray-400 text-sm"></i>
-                            </div>
-                            <select
-                                v-model="form.assigned_to"
-                                :class="[
-                                    'w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-150 appearance-none bg-white',
-                                    form.errors.assigned_to
-                                        ? 'border-red-300 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400'
-                                        : 'border-gray-200 bg-white focus:ring-indigo-500/20 focus:border-indigo-500'
-                                ]"
-                            >
-                                <option value="">Unassigned</option>
-                                <option v-for="u in users" :key="u.id" :value="u.id">
-                                    {{ u.name }}
-                                </option>
-                            </select>
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Status-change notes -->
                     <div v-if="form.current_status !== complaint.current_status">
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">
