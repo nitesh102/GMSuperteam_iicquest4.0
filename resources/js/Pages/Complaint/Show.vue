@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import BackButton from '@/Components/common/BackButton.vue'
 
 const props = defineProps({
     complaint:   Object,
@@ -156,18 +157,13 @@ const lifecycleStep = computed(() => {
 
                 <!-- Back + header -->
                 <div class="flex items-start justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <Link
-                            :href="route('complaints.index')"
-                            class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-                        >
-                            <i class="fas fa-arrow-left text-sm"></i>
-                        </Link>
-                        <div>
-                            <p class="text-xs font-mono text-gray-400">{{ complaint.complaint_no }}</p>
-                            <h1 class="text-xl font-bold text-gray-900 mt-0.5 leading-tight">{{ complaint.title }}</h1>
-                        </div>
+                <div class="flex items-center gap-3">
+                    <BackButton :href="route('complaints.index')" />
+                    <div>
+                        <p class="text-xs font-mono text-gray-400">{{ complaint.complaint_no }}</p>
+                        <h1 class="text-xl font-bold text-gray-900 mt-0.5 leading-tight">{{ complaint.title }}</h1>
                     </div>
+                </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <span
                             class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset"

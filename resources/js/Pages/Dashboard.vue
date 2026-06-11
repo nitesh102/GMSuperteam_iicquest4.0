@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Head, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import AppLogo from '@/Components/common/AppLogo.vue'
 import AdminStatsCard from '@/Components/AdminStatsCard.vue'
 import { Line, Doughnut } from 'vue-chartjs'
 import {
@@ -173,13 +174,8 @@ const doughnutChartOptions = {
   <Head :title="t('dashboard.title')" />
 
   <AdminLayout>
-    <div class="mb-8 flex items-center gap-3">
-      <img
-        src="/logo.png"
-        alt="CiviSense Logo"
-        class="h-[60px] md:h-[48px] object-contain"
-      />
-      <span class="text-2xl font-bold text-gray-900">CiviSense</span>
+    <div class="mb-8">
+      <AppLogo />
     </div>
 
     <div class="mb-8 flex items-start justify-between">

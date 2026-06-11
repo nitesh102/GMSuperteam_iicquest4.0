@@ -4,12 +4,7 @@
 
             <div class="flex items-center gap-4 mb-8">
                 <div class="flex items-center gap-3 flex-shrink-0">
-                    <img
-                        src="/logo.png"
-                        alt="CiviSense Logo"
-                        class="h-12 object-contain"
-                    />
-                    <span class="font-bold text-gray-900">CiviSense</span>
+                    <AppLogo />
                 </div>
 
                 <div class="flex-1">
@@ -181,6 +176,7 @@ import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
+import AppLogo from '@/Components/common/AppLogo.vue'
 import { useVoicePageHandlers } from '@/Composables/useVoiceContext'
 import { voiceHandlers } from '@/Composables/useVoiceContext'
 

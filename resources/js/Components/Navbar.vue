@@ -20,13 +20,8 @@
             </button>
 
             <!-- Brand -->
-            <div class="hidden md:flex items-center gap-3">
-                <div class="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary">
-                    <i class="fas fa-store"></i>
-                </div>
-                <h2 class="text-lg font-bold leading-tight tracking-tight text-gray-900">
-                   CiviSense
-                </h2>
+            <div class="hidden md:flex items-center">
+                <AppLogo />
             </div>
         </div>
 
@@ -201,6 +196,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '@/Components/LanguageSwitcher.vue'
+import AppLogo from '@/Components/common/AppLogo.vue'
 
 const { t } = useI18n()
 

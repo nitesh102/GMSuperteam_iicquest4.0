@@ -8,6 +8,7 @@ import DepartmentModal from './DepartmentModal.vue'
 import { useLocalizedContent } from '@/Composables/useLocalizedContent'
 import { useVoicePageHandlers } from '@/Composables/useVoiceContext'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import BackButton from '@/Components/common/BackButton.vue'
 
 const { t } = useI18n()
 const { localizeDepartments, statusLabel, formatDate } = useLocalizedContent()
@@ -106,14 +107,17 @@ useVoicePageHandlers({
         </Teleport>
 
         <div class="mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-semibold text-gray-900">{{ t('department.title') }}</h1>
-                    <p class="text-sm text-gray-500 mt-1">{{ t('department.subtitle') }}</p>
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <BackButton />
+                    <div>
+                        <h1 class="text-3xl font-semibold text-gray-900">{{ t('department.title') }}</h1>
+                        <p class="text-sm text-gray-500 mt-1">{{ t('department.subtitle') }}</p>
+                    </div>
                 </div>
                 <button
                     @click="openCreateModal"
-                    class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-medium text-white hover:bg-red-600 transition"
+                    class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-6 py-3 text-sm font-medium text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                 >
                     <PlusIcon class="h-5 w-5" />
                     {{ t('department.newDepartment') }}
@@ -121,11 +125,14 @@ useVoicePageHandlers({
             </div>
         </div>
 
-        <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
+        <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500">{{ t('department.totalDepartments') }}</p>
                     <p class="text-3xl font-semibold text-gray-900 mt-1">{{ totalDepartments }}</p>
+                </div>
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-50">
+                    <i class="fas fa-building text-xl text-indigo-500"></i>
                 </div>
             </div>
         </div>
@@ -141,7 +148,7 @@ useVoicePageHandlers({
             </template>
 
             <template #cell-status="{ value }">
-                <span class="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                <span class="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-600/20">
                     <span class="h-2 w-2 rounded-full bg-green-500" />
                     {{ value }}
                 </span>
@@ -152,7 +159,7 @@ useVoicePageHandlers({
                     <button
                         type="button"
                         @click="openEditModal(row)"
-                        class="text-blue-500 hover:text-blue-600 transition"
+                        class="flex h-8 w-8 items-center justify-center rounded-lg text-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200"
                         :title="t('department.edit')"
                     >
                         <PencilIcon class="h-4 w-4" />
@@ -160,7 +167,7 @@ useVoicePageHandlers({
                     <button
                         type="button"
                         @click="deleteDepartment(row)"
-                        class="text-red-500 hover:text-red-600 transition"
+                        class="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
                         :title="t('department.delete')"
                     >
                         <TrashIcon class="h-4 w-4" />

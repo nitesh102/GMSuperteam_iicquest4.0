@@ -78,19 +78,24 @@ const getSortIcon = (field) => {
     <!-- Search -->
     <slot name="header">
       <div class="p-6 border-b border-gray-200">
-        <input
-          v-model="searchQuery"
-          type="text"
-          :placeholder="t('table.search')"
-          class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 px-4 text-sm placeholder-gray-400 focus:border-red-500 focus:bg-white focus:outline-none"
-        />
+        <div class="relative">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="t('table.search')"
+            class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm placeholder-gray-400 focus:border-red-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/10 transition-all duration-200"
+          />
+        </div>
       </div>
     </slot>
 
     <!-- Table -->
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-200">
+        <thead class="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
           <tr>
             <th
               v-for="column in columns"
@@ -100,12 +105,12 @@ const getSortIcon = (field) => {
               <button
                 v-if="column.sortable !== false"
                 @click="toggleSort(column.key)"
-                class="flex items-center gap-2 hover:text-gray-600 transition"
+                class="flex items-center gap-2 hover:text-gray-600 transition-colors duration-150"
               >
                 {{ column.label }}
                 <component :is="getSortIcon(column.key)" class="h-4 w-4" />
               </button>
-              <span v-else>{{ column.label }}</span>
+              <span v-else class="text-gray-900">{{ column.label }}</span>
             </th>
           </tr>
         </thead>

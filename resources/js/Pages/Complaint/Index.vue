@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ComplaintModal from '@/Pages/Complaint/ComplaintModal.vue'
 import { useVoicePageHandlers } from '@/Composables/useVoiceContext'
+import BackButton from '@/Components/common/BackButton.vue'
 
 const { t } = useI18n();
 const { complaints, departments, categories, users } = usePage().props
@@ -156,11 +157,11 @@ function formatDate(date) {
 
 function statusBadge(status) {
   const map = {
-    submitted: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-    under_review: 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
-    assigned: 'bg-purple-50 text-purple-700 ring-purple-600/20',
+    submitted: 'bg-orange-50 text-orange-700 ring-orange-600/20',
+    under_review: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+    assigned: 'bg-blue-50 text-blue-700 ring-blue-600/20',
     in_progress: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
-    resolved: 'bg-green-50 text-green-700 ring-green-600/20',
+    resolved: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
     rejected: 'bg-red-50 text-red-700 ring-red-600/20',
     closed: 'bg-gray-50 text-gray-700 ring-gray-600/20',
   }
@@ -333,15 +334,18 @@ useVoicePageHandlers({
     <div class="py-6 space-y-6">
       <!-- HEADER -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ t('complaint.listTitle') }}</h1>
-          <p class="mt-1 text-sm text-gray-500">
-            {{ t('complaint.listSubtitle') }}
-          </p>
+        <div class="flex items-center gap-4">
+          <BackButton />
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ t('complaint.listTitle') }}</h1>
+            <p class="mt-1 text-sm text-gray-500">
+              {{ t('complaint.listSubtitle') }}
+            </p>
+          </div>
         </div>
         <Link
           :href="route('complaints.create')"
-          class="inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-red-500 px-5 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-red-600 hover:shadow-md"
+          class="inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-5 py-3 text-sm font-medium text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
         >
           <i class="fas fa-plus text-xs"></i>
           {{ t('complaint.newComplaint') }}
@@ -367,9 +371,9 @@ useVoicePageHandlers({
 
       <!-- STATS CARDS -->
       <div v-if="!loading && hasItems" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
+        <div class="group bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-indigo-300">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 group-hover:bg-indigo-100 flex items-center justify-center flex-shrink-0 transition-colors duration-200">
               <i class="fas fa-flag text-indigo-600 text-sm"></i>
             </div>
             <div>
@@ -378,10 +382,10 @@ useVoicePageHandlers({
             </div>
           </div>
         </div>
-        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
+        <div class="group bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-amber-300">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-clock text-yellow-600 text-sm"></i>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 group-hover:bg-amber-100 flex items-center justify-center flex-shrink-0 transition-colors duration-200">
+              <i class="fas fa-clock text-amber-600 text-sm"></i>
             </div>
             <div>
               <p class="text-xs font-medium text-gray-500">{{ t('dashboard.openPending') }}</p>
@@ -389,9 +393,9 @@ useVoicePageHandlers({
             </div>
           </div>
         </div>
-        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
+        <div class="group bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-300">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center flex-shrink-0 transition-colors duration-200">
               <i class="fas fa-spinner text-blue-600 text-sm"></i>
             </div>
             <div>
@@ -400,10 +404,10 @@ useVoicePageHandlers({
             </div>
           </div>
         </div>
-        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
+        <div class="group bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-emerald-300">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-check-circle text-green-600 text-sm"></i>
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 group-hover:bg-emerald-100 flex items-center justify-center flex-shrink-0 transition-colors duration-200">
+              <i class="fas fa-check-circle text-emerald-600 text-sm"></i>
             </div>
             <div>
               <p class="text-xs font-medium text-gray-500">{{ t('dashboard.resolved') }}</p>
@@ -411,9 +415,9 @@ useVoicePageHandlers({
             </div>
           </div>
         </div>
-        <div class="bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300">
+        <div class="group bg-white rounded-2xl border border-gray-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-red-300">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+            <div class="w-10 h-10 rounded-xl bg-red-50 group-hover:bg-red-100 flex items-center justify-center flex-shrink-0 transition-colors duration-200">
               <i class="fas fa-shield-alt text-red-600 text-sm"></i>
             </div>
             <div>
@@ -445,7 +449,7 @@ useVoicePageHandlers({
       <!-- TABLE CARD -->
       <div v-if="!loading && hasItems" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
         <!-- Toolbar + Filters -->
-        <div class="p-4 border-b border-gray-100 space-y-3">
+        <div class="sticky top-0 z-10 bg-white border-b border-gray-100 p-4 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div class="relative flex-1 max-w-xs">
               <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
@@ -575,7 +579,7 @@ useVoicePageHandlers({
               <tr
                 v-for="item in paginatedItems"
                 :key="item.id"
-                class="group transition-colors duration-150 hover:bg-gray-50"
+                class="group transition-all duration-150 hover:bg-gray-50 hover:shadow-sm"
               >
                 <td class="px-5 py-4">
                   <span class="text-xs font-mono text-gray-400">{{ item.complaint_no }}</span>
@@ -627,27 +631,27 @@ useVoicePageHandlers({
                 </td>
                 <td class="px-5 py-4 text-right">
                   <div class="flex items-center justify-end gap-1">
-                    <Link
-                      :href="route('complaints.show', item.id)"
-                      class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-150"
-                      title="View complaint"
-                    >
-                      <i class="fas fa-eye text-sm"></i>
-                    </Link>
-                    <button
-                      @click="openEditModal(item)"
-                      class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-150"
-                      title="Edit complaint"
-                    >
-                      <i class="fas fa-edit text-sm"></i>
-                    </button>
-                    <button
-                      @click="confirmDelete(item)"
-                      class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150"
-                      title="Delete complaint"
-                    >
-                      <i class="fas fa-trash text-sm"></i>
-                    </button>
+                <Link
+                  :href="route('complaints.show', item.id)"
+                  class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200"
+                  title="View complaint"
+                >
+                  <i class="fas fa-eye text-sm"></i>
+                </Link>
+                <button
+                  @click="openEditModal(item)"
+                  class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200"
+                  title="Edit complaint"
+                >
+                  <i class="fas fa-edit text-sm"></i>
+                </button>
+                <button
+                  @click="confirmDelete(item)"
+                  class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+                  title="Delete complaint"
+                >
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
                   </div>
                 </td>
               </tr>
@@ -660,7 +664,7 @@ useVoicePageHandlers({
           <div
             v-for="item in paginatedItems"
             :key="item.id"
-            class="p-4 hover:bg-gray-50 transition-colors duration-150"
+            class="p-4 hover:bg-gray-50 transition-all duration-150 hover:shadow-sm active:scale-[1.01]"
           >
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-center gap-3 min-w-0">

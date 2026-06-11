@@ -21,7 +21,7 @@
                         <path d="M55,66 C55,61 65,61 65,66 Z" fill="#1d2a42" />
                         <path d="M36,65 Q50,80 64,65 Q50,84 36,65" fill="none" stroke="#1d2a42" stroke-width="3" />
                     </svg>
-                    <span class="font-bold text-gray-900">CiviSense</span>
+                    <AppLogo />
                 </div>
                 <div class="flex-1">
                     <h3 class="text-2xl font-bold text-gray-900">
@@ -200,6 +200,7 @@ import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
+import AppLogo from '@/Components/common/AppLogo.vue'
 import { useVoicePageHandlers } from '@/Composables/useVoiceContext'
 import { voiceHandlers } from '@/Composables/useVoiceContext'
 

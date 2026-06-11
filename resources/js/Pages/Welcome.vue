@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
+import AppLogo from '@/Components/common/AppLogo.vue';
 
 defineProps({
     canLogin: Boolean,
@@ -23,7 +24,7 @@ const { t } = useI18n();
 
                 <header class="w-full z-10">
                     <div class="flex items-center justify-between gap-3">
-                        <img src="logo.png" alt="CiviSense Logo" class="h-12 w-auto object-contain" />
+                        <AppLogo />
                         <LanguageSwitcher />
                     </div>
                 </header>
@@ -31,7 +32,7 @@ const { t } = useI18n();
                 <div class="my-auto max-w-xl z-10">
                     <h1 class="m-0 text-white leading-tight">
                         <span class="block text-4xl font-normal text-slate-200 opacity-90">{{ t('welcome.title') }}</span>
-                        <span class="block text-5xl font-bold tracking-tight">Civi<span class="text-[#E63946]">Sense</span></span>
+                        <AppLogo />
                     </h1>
                     <p class="mt-4 text-[15.5px] text-slate-400 font-light leading-relaxed">
                         {{ t('welcome.subtitle') }}
@@ -86,7 +87,7 @@ const { t } = useI18n();
                 <div class="mx-auto flex w-full max-w-md flex-col justify-center">
                     <div class="text-center">
                         <div class="mb-4 flex justify-center">
-                            <img :src="logo" alt="CiviSense Logo" class="h-16 w-auto object-contain" />
+                            <AppLogo />
                         </div>
 
                 <div class="absolute top-0 right-0 h-full w-40 z-20 pointer-events-none">
@@ -107,7 +108,7 @@ const { t } = useI18n();
 
                     <div class="text-center mb-10">
                         <div class="flex flex-col items-center gap-2 mb-6">
-                            <img src="logo.png" alt="CiviSense Logo Workspace Banner" class="w-44 h-auto object-contain mb-2" />
+                            <AppLogo />
 
                             <div class="w-full flex flex-col items-center mt-1">
                                 <div class="flex items-center w-full justify-center gap-2">
