@@ -69,7 +69,6 @@ function closeModal() {
 function deleteDepartment(dept) {
     const original = items.value.find(d => d.id === dept.id) ?? dept
     if (!confirm(t('department.deleteConfirm', { name: original.name }))) return
-
     items.value = items.value.filter(d => d.id !== dept.id)
     router.delete(route('departments.destroy', dept.id), {
         preserveScroll: true,
@@ -106,33 +105,30 @@ useVoicePageHandlers({
             </Transition>
         </Teleport>
 
-        <div class="mb-8">
+        <div class="mb-10">
             <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <BackButton />
                     <div>
-                        <h1 class="text-3xl font-semibold text-gray-900">{{ t('department.title') }}</h1>
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ t('department.title') }}</h1>
                         <p class="text-sm text-gray-500 mt-1">{{ t('department.subtitle') }}</p>
                     </div>
                 </div>
-                <button
-                    @click="openCreateModal"
-                    class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-6 py-3 text-sm font-medium text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                >
+                <button @click="openCreateModal" class="btn-accent">
                     <PlusIcon class="h-5 w-5" />
                     {{ t('department.newDepartment') }}
                 </button>
             </div>
         </div>
 
-        <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div class="mb-6 card p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">{{ t('department.totalDepartments') }}</p>
-                    <p class="text-3xl font-semibold text-gray-900 mt-1">{{ totalDepartments }}</p>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('department.totalDepartments') }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1.5">{{ totalDepartments }}</p>
                 </div>
-                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-50">
-                    <i class="fas fa-building text-xl text-indigo-500"></i>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50">
+                    <i class="fas fa-building text-lg text-indigo-500"></i>
                 </div>
             </div>
         </div>
@@ -148,14 +144,14 @@ useVoicePageHandlers({
             </template>
 
             <template #cell-status="{ value }">
-                <span class="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-600/20">
-                    <span class="h-2 w-2 rounded-full bg-green-500" />
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-600/20">
+                    <span class="h-1.5 w-1.5 rounded-full bg-green-500" />
                     {{ value }}
                 </span>
             </template>
 
             <template #cell-actions="{ row }">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <button
                         type="button"
                         @click="openEditModal(row)"

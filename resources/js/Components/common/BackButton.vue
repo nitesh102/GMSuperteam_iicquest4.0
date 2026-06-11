@@ -22,9 +22,9 @@ const goBack = () => {
 <template>
   <button
     @click="goBack"
-    class="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-[18px] h-[44px] text-sm font-medium text-gray-700 shadow-sm hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-all duration-200 flex-shrink-0"
+    class="btn-secondary flex-shrink-0"
   >
-    <svg class="w-4 h-4 text-[#1D4ED8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+    <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
       <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
     </svg>
     <span>Back</span>

@@ -106,33 +106,30 @@ useVoicePageHandlers({
             </Transition>
         </Teleport>
 
-        <div class="mb-8">
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-                <BackButton />
-                <div>
-                    <h1 class="text-3xl font-semibold text-gray-900">{{ t('category.title') }}</h1>
-                    <p class="mt-1 text-sm text-gray-500">{{ t('category.subtitle') }}</p>
+        <div class="mb-10">
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <BackButton />
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ t('category.title') }}</h1>
+                        <p class="text-sm text-gray-500 mt-1">{{ t('category.subtitle') }}</p>
+                    </div>
                 </div>
+                <button @click="openCreateModal" class="btn-accent">
+                    <PlusIcon class="h-5 w-5" />
+                    {{ t('category.newCategory') }}
+                </button>
             </div>
-            <button
-                @click="openCreateModal"
-                class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-6 py-3 text-sm font-medium text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-            >
-                <PlusIcon class="h-5 w-5" />
-                {{ t('category.newCategory') }}
-            </button>
-        </div>
         </div>
 
-        <div class="mb-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div class="mb-6 card p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">{{ t('category.totalCategories') }}</p>
-                    <p class="mt-1 text-3xl font-semibold text-gray-900">{{ totalCategories }}</p>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('category.totalCategories') }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1.5">{{ totalCategories }}</p>
                 </div>
-                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-red-50">
-                    <i class="fas fa-tags text-xl text-red-500"></i>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50">
+                    <i class="fas fa-tags text-lg text-red-500"></i>
                 </div>
             </div>
         </div>
@@ -150,22 +147,22 @@ useVoicePageHandlers({
             <template #cell-status="{ value }">
                 <span
                     v-if="value === 'active' || value == null"
-                    class="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-600/20"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-600/20"
                 >
-                    <span class="h-2 w-2 rounded-full bg-green-500" />
+                    <span class="h-1.5 w-1.5 rounded-full bg-green-500" />
                     {{ statusLabel('active') }}
                 </span>
                 <span
                     v-else
-                    class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 ring-1 ring-gray-400/30"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-500 ring-1 ring-gray-400/30"
                 >
-                    <span class="h-2 w-2 rounded-full bg-gray-400" />
+                    <span class="h-1.5 w-1.5 rounded-full bg-gray-400" />
                     {{ statusLabel('inactive') }}
                 </span>
             </template>
 
             <template #cell-actions="{ row }">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <button
                         type="button"
                         @click="openEditModal(row)"

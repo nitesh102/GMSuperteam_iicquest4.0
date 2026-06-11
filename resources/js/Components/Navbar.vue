@@ -1,5 +1,5 @@
 <template>
-    <nav class="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white text-gray-900 px-6 fixed top-0 right-0 z-50 transition-all duration-300 ease-in-out"
+    <nav class="flex h-20 shrink-0 items-center justify-between border-b border-gray-200 bg-white text-gray-900 px-8 fixed top-0 right-0 z-50 transition-all duration-300 ease-in-out"
         :style="{ left: sidebarWidth + 'px' }"
         <!-- Left side -->
         <div class="flex items-center gap-4">

@@ -15,7 +15,6 @@ const isMobile    = computed(() => windowWidth.value < 1024)
 
 const SIDEBAR_EXPANDED  = 300
 const SIDEBAR_COLLAPSED = 80
-const NAVBAR_HEIGHT     = 64
 
 const sidebarWidth = computed(() => {
     if (isMobile.value) return 0
@@ -93,9 +92,8 @@ onUnmounted(() => {
         </Transition>
 
         <div
-            class="flex min-h-screen flex-col transition-all duration-300 ease-in-out"
+            class="flex min-h-screen flex-col pt-20 transition-all duration-300 ease-in-out"
             :style="{
-                paddingBlockStart:  NAVBAR_HEIGHT + 'px',
                 paddingInlineStart: sidebarWidth + 'px',
             }"
         >

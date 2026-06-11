@@ -40,7 +40,7 @@ const handleNext = () => {
       <button
         @click="handlePrevious"
         :disabled="currentPage === 1"
-        class="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        class="btn-ghost text-xs disabled:opacity-30 disabled:cursor-not-allowed"
       >
         <ChevronLeftIcon class="h-4 w-4" />
         {{ t('table.previous') }}
@@ -55,7 +55,7 @@ const handleNext = () => {
       <button
         @click="handleNext"
         :disabled="currentPage === totalPages"
-        class="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        class="btn-ghost text-xs disabled:opacity-30 disabled:cursor-not-allowed"
       >
         {{ t('table.next') }}
         <ChevronRightIcon class="h-4 w-4" />

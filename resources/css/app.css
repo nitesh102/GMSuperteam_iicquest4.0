@@ -3,6 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-primary: #1D4ED8;
+    --color-accent: #EF4444;
+    --color-success: #22C55E;
+    --color-bg: #F8FAFC;
+    --color-surface: #FFFFFF;
+    --color-text: #0F172A;
+    --color-muted: #64748B;
+    --color-border: #E2E8F0;
+  }
+
   html {
     scroll-behavior: smooth;
   }
@@ -17,12 +28,60 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: #cbd5e1;
     border-radius: 999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: #94a3b8;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200;
+    background: linear-gradient(135deg, var(--color-primary), #1e40af);
+  }
+  .btn-primary:hover {
+    @apply shadow-md;
+    filter: brightness(1.08);
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200;
+    background: linear-gradient(135deg, var(--color-accent), #dc2626);
+  }
+  .btn-accent:hover {
+    @apply shadow-md;
+    filter: brightness(1.08);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900;
+  }
+
+  .card {
+    @apply rounded-2xl bg-white border border-gray-200 shadow-sm transition-all duration-300;
+  }
+  .card:hover {
+    @apply shadow-lg;
+  }
+
+  .input-base {
+    @apply w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition-all duration-200;
+  }
+  .input-base:focus {
+    @apply border-indigo-500 bg-white outline-none ring-2 ring-indigo-500/10;
   }
 }
 
@@ -37,3 +96,9 @@
     opacity: 0;
   }
 }
+
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.animate-slide-in { animation: slide-in 0.3s ease-out; }
