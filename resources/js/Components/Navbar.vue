@@ -77,10 +77,18 @@
                                 <div
                                     v-for="notification in notifications"
                                     :key="notification.id"
-                                    class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                                    @click="markAsRead(notification.id)"
+                                    class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                                    :class="{ 'bg-indigo-50/30': !notification.read }"
                                 >
-                                    <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
-                                    <p class="text-xs text-gray-600 mt-1">{{ notification.message }}</p>
+                                    <div class="flex items-start gap-2">
+                                        <div v-if="!notification.read" class="mt-1.5 w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0"></div>
+                                        <div :class="{ 'ml-0': notification.read, 'ml-0': !notification.read }" class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
+                                            <p class="text-xs text-gray-600 mt-0.5">{{ notification.message }}</p>
+                                            <p v-if="notification.created_at" class="text-[10px] text-gray-400 mt-1">{{ notification.created_at }}</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div v-if="notifications.length === 0" class="p-8 text-center">
@@ -222,9 +230,26 @@ const userAvatar = computed(() => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=5048e5&color=fff&size=128`
 })
 
-// Notifications (replace with real data later)
 const notifications = ref([])
 const unreadNotifications = computed(() => notifications.value.filter(n => !n.read).length)
+
+function fetchNotifications() {
+    axios.get('/notifications').then(res => {
+        notifications.value = res.data
+    }).catch(() => {})
+}
+
+function markAsRead(id) {
+    const n = notifications.value.find(n => n.id === id)
+    if (!n || n.read) return
+    axios.post(`/notifications/${id}/read`).catch(() => {})
+    n.read = true
+}
+
+function markAllAsRead() {
+    axios.post('/notifications/read-all').catch(() => {})
+    notifications.value = notifications.value.map(n => ({ ...n, read: true }))
+}
 
 const toggleMobileSidebar = () => emit('toggle-sidebar')
 
@@ -242,10 +267,6 @@ const closeUserMenu = () => (userMenuOpen.value = false)
 
 const handleSearch = () => {}
 const clearSearch = () => (searchQuery.value = '')
-
-const markAllAsRead = () => {
-    notifications.value = notifications.value.map(n => ({ ...n, read: true }))
-}
 
 const logout = () => {
     router.post('/logout', {}, {
@@ -274,6 +295,7 @@ const handleEscapeKey = (e) => {
 }
 
 onMounted(() => {
+    fetchNotifications()
     document.addEventListener('click', handleClickOutside)
     document.addEventListener('keydown', handleEscapeKey)
 })

@@ -150,7 +150,7 @@ class ComplaintTest extends TestCase
             'remarks' => 'Reviewed citizen report, assigning to field team.',
         ]);
 
-        $response->assertRedirect(route('complaints.index'));
+        $response->assertRedirect(route('complaints.show', $complaint));
         $response->assertSessionHas('success', 'Complaint updated successfully.');
 
         $this->assertDatabaseHas('complaints', [
@@ -466,6 +466,7 @@ class ComplaintTest extends TestCase
 
     public function test_complaint_can_be_created_with_image_attachments(): void
     {
+        $this->forceSimulationFallback();
         Storage::fake('public');
         $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
@@ -562,7 +563,7 @@ class ComplaintTest extends TestCase
             'remarks' => '',
         ]);
 
-        $response->assertRedirect(route('complaints.index'));
+        $response->assertRedirect(route('complaints.show', $complaint));
     }
 
     public function test_update_creates_track_record_with_correct_remarks(): void

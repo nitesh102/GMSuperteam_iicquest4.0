@@ -11,9 +11,15 @@ class DepartmentTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Superadmin']);
+    }
+
     public function test_index_page_can_be_rendered(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         Department::factory()->count(3)->create();
 
         $response = $this->actingAs($user)->get('/departments');
@@ -23,7 +29,7 @@ class DepartmentTest extends TestCase
 
     public function test_department_can_be_created(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
 
         $response = $this->actingAs($user)->post('/departments', [
             'name' => 'Health Department',
@@ -41,7 +47,7 @@ class DepartmentTest extends TestCase
 
     public function test_department_creation_requires_name(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
 
         $response = $this->actingAs($user)->post('/departments', [
             'description' => 'Missing name.',
@@ -52,7 +58,7 @@ class DepartmentTest extends TestCase
 
     public function test_department_creation_name_cannot_exceed_255_chars(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
 
         $response = $this->actingAs($user)->post('/departments', [
             'name' => str_repeat('a', 256),
@@ -63,7 +69,7 @@ class DepartmentTest extends TestCase
 
     public function test_department_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $department = Department::factory()->create();
 
         $response = $this->actingAs($user)->put("/departments/{$department->id}", [
@@ -83,7 +89,7 @@ class DepartmentTest extends TestCase
 
     public function test_department_can_be_deleted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $department = Department::factory()->create();
 
         $response = $this->actingAs($user)->delete("/departments/{$department->id}");

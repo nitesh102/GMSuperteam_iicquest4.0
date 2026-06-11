@@ -8,6 +8,7 @@ use App\Models\ComplaintCategory;
 use App\Models\ComplaintTrack;
 use App\Models\Department;
 use App\Models\User;
+use App\Notifications\NewComplaintSubmitted;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -243,6 +244,8 @@ class CitizenController extends Controller
                 ]);
             }
         }
+
+        User::role('Superadmin')->each(fn ($admin) => $admin->notify(new NewComplaintSubmitted($complaint)));
 
         $message = 'Complaint submitted successfully. CiviSense AI analysis complete.';
         if (!empty($validated['duplicate_of_id'])) {

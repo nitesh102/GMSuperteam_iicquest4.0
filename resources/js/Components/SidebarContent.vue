@@ -45,7 +45,55 @@ const linkClass = (path) => [
         </div>
 
         <nav class="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2">
-            <ul class="space-y-0.5">
+            <!-- Citizen sidebar -->
+            <ul v-if="isCitizen" class="space-y-0.5">
+                <li v-if="!collapsed" class="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                    {{ t('nav.main') }}
+                </li>
+
+                <li>
+                    <a :href="route('citizen.dashboard')" :class="linkClass('/citizen/dashboard')" @click="onLink">
+                        <span class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full transition-all duration-200"
+                            :class="isActive('/citizen/dashboard') ? 'bg-indigo-600' : 'bg-transparent'"></span>
+                        <i class="fas fa-home w-5 text-center transition-colors duration-200"
+                            :class="isActive('/citizen/dashboard') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500'"></i>
+                        <span v-if="!collapsed">{{ t('nav.dashboard') }}</span>
+                    </a>
+                </li>
+
+                <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                    {{ t('nav.management') }}
+                </li>
+                <li v-else class="my-2 border-t border-gray-100 mx-2" />
+
+                <li>
+                    <a :href="route('citizen.complaints.index')" :class="linkClass('/citizen/complaints')" @click="onLink">
+                        <span class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full transition-all duration-200"
+                            :class="isActive('/citizen/complaints') ? 'bg-indigo-600' : 'bg-transparent'"></span>
+                        <i class="fas fa-flag w-5 text-center transition-colors duration-200"
+                            :class="isActive('/citizen/complaints') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500'"></i>
+                        <span v-if="!collapsed">{{ t('nav.complaints') }}</span>
+                    </a>
+                </li>
+
+                <li v-if="!collapsed" class="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                    {{ t('nav.account') }}
+                </li>
+                <li v-else class="my-2 border-t border-gray-100 mx-2" />
+
+                <li>
+                    <a :href="route('profile.edit')" :class="linkClass('/profile')" @click="onLink">
+                        <span class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full transition-all duration-200"
+                            :class="isActive('/profile') ? 'bg-indigo-600' : 'bg-transparent'"></span>
+                        <i class="fas fa-user w-5 text-center transition-colors duration-200"
+                            :class="isActive('/profile') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500'"></i>
+                        <span v-if="!collapsed">{{ t('nav.profile') }}</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Admin/Superadmin sidebar -->
+            <ul v-else class="space-y-0.5">
                 <li v-if="!collapsed" class="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
                     {{ t('nav.main') }}
                 </li>

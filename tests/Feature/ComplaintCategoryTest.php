@@ -12,9 +12,15 @@ class ComplaintCategoryTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Superadmin']);
+    }
+
     public function test_index_page_can_be_rendered(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         ComplaintCategory::factory()->count(3)->create();
 
         $response = $this->actingAs($user)->get('/complaint-categories');
@@ -24,7 +30,7 @@ class ComplaintCategoryTest extends TestCase
 
     public function test_category_can_be_created(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $department = Department::factory()->create();
 
         $response = $this->actingAs($user)->post('/complaint-categories', [
@@ -46,7 +52,7 @@ class ComplaintCategoryTest extends TestCase
 
     public function test_category_creation_requires_department_id(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
 
         $response = $this->actingAs($user)->post('/complaint-categories', [
             'name' => 'No Department',
@@ -57,7 +63,7 @@ class ComplaintCategoryTest extends TestCase
 
     public function test_category_creation_requires_valid_department(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
 
         $response = $this->actingAs($user)->post('/complaint-categories', [
             'department_id' => 999,
@@ -69,7 +75,7 @@ class ComplaintCategoryTest extends TestCase
 
     public function test_category_creation_requires_name(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $department = Department::factory()->create();
 
         $response = $this->actingAs($user)->post('/complaint-categories', [
@@ -81,7 +87,7 @@ class ComplaintCategoryTest extends TestCase
 
     public function test_category_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $department = Department::factory()->create();
         $category = ComplaintCategory::factory()->create();
 
@@ -105,7 +111,7 @@ class ComplaintCategoryTest extends TestCase
 
     public function test_category_can_be_deleted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superadmin()->create();
         $category = ComplaintCategory::factory()->create();
 
         $response = $this->actingAs($user)->delete("/complaint-categories/{$category->id}");

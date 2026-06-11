@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::table('complaints', function (Blueprint $table) {
             $table->foreignId('duplicate_of_id')
                 ->nullable()
-                ->after('escalation_level')
                 ->constrained('complaints')
                 ->nullOnDelete();
         });

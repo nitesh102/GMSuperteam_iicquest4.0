@@ -31,6 +31,13 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            'ziggy' => fn () => array_merge(
+                (new \Tighten\Ziggy\Ziggy)->toArray(),
+                [
+                    'url'      => rtrim($request->root(), '/'),
+                    'location' => $request->url(),
+                ]
+            ),
             'locale' => app()->getLocale(),
             'availableLocales' => [
                 ['code' => 'en', 'label' => 'English'],

@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Spatie\Permission\Exceptions\UnauthorizedException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,5 +23,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (UnauthorizedException $e, $request) {
+            $user = $request->user();
+            if ($user && $user->hasRole('Citizen')) {
+                return redirect()->route('citizen.dashboard');
+            }
+            if ($user && $user->hasRole('Superadmin')) {
+                return redirect()->route('dashboard');
+            }
+            return $user ? redirect('/') : redirect()->route('login');
+        });
     })->create();

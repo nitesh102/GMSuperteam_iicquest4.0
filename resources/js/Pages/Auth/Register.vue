@@ -1,13 +1,13 @@
 <template>
-  <div class="w-screen h-screen m-0 p-0 overflow-hidden font-['Poppins'] bg-slate-50 flex">
-    <div class="flex w-full h-full">
+  <div class="w-screen min-h-screen m-0 p-0 font-['Poppins'] bg-slate-50 flex">
+    <div class="flex w-full min-h-screen">
 
       <!-- Left: Registration Form Panel -->
-      <div class="flex flex-col justify-center items-center flex-1 bg-white p-6 md:p-10 z-10 overflow-y-auto">
+      <div class="flex flex-col justify-start lg:justify-center items-center flex-1 bg-white px-5 py-8 sm:px-8 md:px-10 z-10">
         <div class="w-full max-w-[420px] flex flex-col">
 
-          <div class="text-center mb-6">
-            <div class="flex flex-col items-center gap-2 mb-6">
+          <div class="text-center mb-5">
+            <div class="flex flex-col items-center gap-2 mb-4">
               <AppLogo class="register-card-logo" />
 
               <div class="w-full flex flex-col items-center mt-2">
@@ -198,7 +198,7 @@
             </button>
           </form>
 
-          <footer class="text-center mt-6 text-sm text-slate-500">
+          <footer class="text-center mt-5 mb-4 text-sm text-slate-500">
             <span>Already have an account? </span>
             <Link :href="route('login')" class="text-[#E63946] font-semibold no-underline hover:underline ml-1">Sign in</Link>
           </footer>
@@ -207,7 +207,7 @@
       </div>
 
       <!-- Right: Decorative Panel -->
-      <div class="relative hidden lg:flex flex-col justify-between w-[58%] bg-[#091020] p-16 overflow-hidden z-10 select-none">
+      <div class="relative hidden lg:flex flex-col justify-between w-[58%] bg-[#091020] p-16 overflow-hidden z-10 select-none sticky top-0 h-screen">
         <header class="w-full z-10">
           <div class="flex items-center justify-end gap-3">
             <LanguageSwitcher />

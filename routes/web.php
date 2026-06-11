@@ -6,6 +6,7 @@ use App\Http\Controllers\ComplaintCategoryController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VoiceCommandController;
 use App\Models\Complaint;
@@ -26,7 +27,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [ComplaintController::class, 'getGroupedByLocation'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'role:Superadmin'])
     ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -35,6 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 
     Route::resource('departments', DepartmentController::class)->except(['create', 'edit', 'show'])->middleware('role:Superadmin');
     Route::resource('complaint-categories', ComplaintCategoryController::class)->except(['create', 'edit', 'show'])->middleware('role:Superadmin');
